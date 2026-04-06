@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Lord Brand Colors */
+  --color-lord-navy: #172041;
+  --color-lord-teal: #0dbaca;
+  --color-lord-silver: #bebebe;
+  --color-lord-frost: #4db8d4;
+  --color-off-white: #f8fafb;
+  --color-light-gray: #f1f3f5;
+  --color-medium-gray: #6c757d;
+  --color-dark-charcoal: #1a1a2e;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+  --color-info: #17a2b8;
+  --color-whatsapp: #25d366;
+
+  /* Fonts */
+  --font-inter: var(--font-inter-var);
+  --font-cairo: var(--font-cairo-var);
+
+  /* Border Radius */
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-input: 8px;
+}
+
+/* Base styles */
+:root {
+  --background: #f8fafb;
+  --foreground: #1a1a2e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* RTL support */
+html[dir="rtl"] body {
+  font-family: var(--font-cairo), "Noto Sans Arabic", "Segoe UI", sans-serif;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #0dbaca;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: #172041;
+  color: white;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f3f5;
+}
+::-webkit-scrollbar-thumb {
+  background: #bebebe;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6c757d;
+}
+
+/* Shimmer animation for skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f3f5 25%, #e8eaed 50%, #f1f3f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* React Toastify overrides */
+.Toastify__toast--success {
+  border-left: 4px solid #28a745 !important;
+  background: #f0fff4 !important;
+  color: #1a1a2e !important;
+}
+.Toastify__toast--error {
+  border-left: 4px solid #dc3545 !important;
+  background: #fff5f5 !important;
+  color: #1a1a2e !important;
+}
+.Toastify__toast--warning {
+  border-left: 4px solid #ffc107 !important;
+  background: #fffbeb !important;
+  color: #1a1a2e !important;
+}
+.Toastify__toast--info {
+  border-left: 4px solid #17a2b8 !important;
+  background: #f0f9ff !important;
+  color: #1a1a2e !important;
+}
