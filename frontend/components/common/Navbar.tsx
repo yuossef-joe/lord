@@ -116,8 +116,8 @@ export default function Navbar() {
           <Image
             src="/assets/logo.png"
             alt="LORD Air Conditioning"
-            width={120}
-            height={48}
+            width={256}
+            height={148}
             priority
             className="h-12 w-auto"
           />
