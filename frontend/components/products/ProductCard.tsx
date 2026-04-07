@@ -22,6 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { t } = useLanguage();
   const [addState, setAddState] = useState<AddState>("idle");
   const [isHovered, setIsHovered] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const primaryImage =
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
@@ -61,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link href={`/products/${product.slug}`} className="flex flex-col h-full">
         {/* Image Container */}
         <div className="relative aspect-square overflow-hidden bg-light-gray">
-          {primaryImage?.url ? (
+          {primaryImage?.url && !imgError ? (
             <motion.div
               whileHover={{ scale: 1.08 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
@@ -73,6 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                onError={() => setImgError(true)}
               />
             </motion.div>
           ) : (

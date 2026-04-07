@@ -18,6 +18,11 @@ export default function ImageGallery({
 }: ImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+
+  const handleImageError = (index: number) => {
+    setFailedImages((prev) => new Set(prev).add(index));
+  };
 
   if (!images || images.length === 0) {
     return (
@@ -51,14 +56,19 @@ export default function ImageGallery({
             className="relative h-full w-full cursor-zoom-in"
             onClick={() => setIsZoomed(true)}
           >
-            <Image
-              src={activeImage.url}
-              alt={activeImage.alt || productName}
-              fill
-              className="object-contain p-6"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
+            {failedImages.has(activeIndex) ? (
+              <ImagePlaceholder className="h-full w-full" />
+            ) : (
+              <Image
+                src={activeImage.url}
+                alt={activeImage.alt || productName}
+                fill
+                className="object-contain p-6"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+                onError={() => handleImageError(activeIndex)}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 
@@ -101,13 +111,18 @@ export default function ImageGallery({
                   : "border-transparent hover:border-silver"
               }`}
             >
-              <Image
-                src={img.url}
-                alt={img.alt || `${productName} ${index + 1}`}
-                fill
-                className="object-contain p-1"
-                sizes="64px"
-              />
+              {failedImages.has(index) ? (
+                <ImagePlaceholder className="h-full w-full" />
+              ) : (
+                <Image
+                  src={img.url}
+                  alt={img.alt || `${productName} ${index + 1}`}
+                  fill
+                  className="object-contain p-1"
+                  sizes="64px"
+                  onError={() => handleImageError(index)}
+                />
+              )}
             </button>
           ))}
         </div>
