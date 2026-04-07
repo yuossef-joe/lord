@@ -100,6 +100,7 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
+    <>
     <motion.header
       initial={{ y: -72 }}
       animate={{ y: 0 }}
@@ -294,6 +295,8 @@ export default function Navbar() {
         </div>
       </nav>
 
+    </motion.header>
+
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
@@ -412,6 +415,6 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </motion.header>
+    </>
   );
 }

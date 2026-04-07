@@ -61,7 +61,7 @@ export const MOCK_CATEGORIES: ProductCategory[] = [
 
 // ─── Products ────────────────────────────────────────────
 const PLACEHOLDER_IMG =
-  "https://placehold.co/600x600/172041/0DBACA?text=Lord+AC";
+  "https://placehold.co/600x600/172041/1577b6?text=Lord+AC";
 
 export const MOCK_PRODUCTS: Product[] = [
   {

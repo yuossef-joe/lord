@@ -3,9 +3,9 @@
 @theme inline {
   /* Lord Brand Colors */
   --color-lord-navy: #172041;
-  --color-lord-teal: #0dbaca;
+  --color-lord-teal: #1577b6;
   --color-lord-silver: #bebebe;
-  --color-lord-frost: #4db8d4;
+  --color-lord-frost: #3a9ad4;
   --color-off-white: #f8fafb;
   --color-light-gray: #f1f3f5;
   --color-medium-gray: #6c757d;
@@ -51,7 +51,7 @@ html[dir="rtl"] body {
 
 /* Focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid #0dbaca;
+  outline: 2px solid #1577b6;
   outline-offset: 2px;
 }
 

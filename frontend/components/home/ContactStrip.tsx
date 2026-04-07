@@ -68,7 +68,7 @@ export default function ContactStrip() {
                 className="flex items-center gap-3"
               >
                 <motion.div
-                  whileHover={{ scale: 1.1, color: "#0DBACA" }}
+                  whileHover={{ scale: 1.1, color: "#1577b6" }}
                   className="text-lord-teal"
                 >
                   {item.icon}
