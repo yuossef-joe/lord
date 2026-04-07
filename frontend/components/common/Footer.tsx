@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { AnimatePresence } from "motion/react";
 import { MapPin, Phone, MessageCircle, Mail, ChevronDown } from "lucide-react";
@@ -65,11 +66,14 @@ export default function Footer() {
         >
           {/* Column 1: Brand */}
           <motion.div variants={staggerItem}>
-            <Link
-              href="/"
-              className="inline-block text-2xl font-extrabold tracking-tight mb-4"
-            >
-              L<span className="text-lord-teal">O</span>RD
+            <Link href="/" className="inline-block mb-4">
+              <Image
+                src="/assets/logo.png"
+                alt="LORD Air Conditioning"
+                width={140}
+                height={56}
+                className="h-14 w-auto"
+              />
             </Link>
             <p className="text-sm text-white/70 leading-relaxed mb-4">
               Authorized Carrier & Midea Dealer. Air Conditioning solutions

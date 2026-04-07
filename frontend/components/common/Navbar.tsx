@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import {
@@ -111,13 +112,15 @@ export default function Navbar() {
       </a>
       <nav className="mx-auto flex h-full max-w-container items-center justify-between px-4 md:px-6">
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xl font-bold text-lord-navy"
-        >
-          <span className="text-2xl font-extrabold tracking-tight">
-            L<span className="text-lord-teal">O</span>RD
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/assets/logo.png"
+            alt="LORD Air Conditioning"
+            width={120}
+            height={48}
+            priority
+            className="h-12 w-auto"
+          />
         </Link>
 
         {/* Desktop Nav Links */}
