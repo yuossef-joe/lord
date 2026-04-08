@@ -12,7 +12,7 @@ export default function HeroSection() {
   const [videoReady, setVideoReady] = useState(false);
 
   return (
-    <section className="relative overflow-hidden min-h-[520px] md:min-h-[800px] flex items-center">
+    <section className="relative overflow-hidden min-h-[520px] md:min-h-[782] flex items-center">
       {/* Loading overlay — shown until video can play */}
       <AnimatePresence>
         {!videoReady && (
