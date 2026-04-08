@@ -11,13 +11,16 @@ export default function HeroSection() {
 
   return (
     <section className="relative overflow-hidden min-h-[520px] md:min-h-[800px] flex items-center">
-      {/* Background GIF */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/assets/hero.gif"
-        alt="Lord Air Conditioning hero"
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
         className="absolute inset-0 h-full w-full object-cover object-center"
-      />
+      >
+        <source src="/assets/herovideo.mp4" type="video/mp4" />
+      </video>
 
       {/* Dark overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-r from-lord-navy/80 via-lord-navy/60 to-lord-navy/20" />
