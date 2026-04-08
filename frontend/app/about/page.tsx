@@ -130,7 +130,7 @@ export default function AboutPage() {
               className="relative aspect-video overflow-hidden rounded-card bg-off-white"
             >
               <Image
-                src="/about-store.jpg"
+                src="/assets/about.png"
                 alt="Lord Showroom"
                 fill
                 className="object-cover"
