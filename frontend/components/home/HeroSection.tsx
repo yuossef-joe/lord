@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "motion/react";
 import Button from "@/components/common/Button";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,14 +11,12 @@ export default function HeroSection() {
 
   return (
     <section className="relative overflow-hidden min-h-[520px] md:min-h-[800px] flex items-center">
-      {/* Background Image */}
-      <Image
-        src="/assets/hero-background.png"
+      {/* Background GIF */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/assets/hero.gif"
         alt="Lord Air Conditioning hero"
-        fill
-        priority
-        className="object-cover object-center"
-        sizes="100vw"
+        className="absolute inset-0 h-full w-full object-cover object-center"
       />
 
       {/* Dark overlay for text readability */}
