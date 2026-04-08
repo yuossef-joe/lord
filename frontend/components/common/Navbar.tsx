@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import {
@@ -101,201 +100,195 @@ export default function Navbar() {
 
   return (
     <>
-    <motion.header
-      initial={{ y: -72 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", damping: 20, stiffness: 200 }}
-      style={{ boxShadow, backdropFilter: backdropBlur }}
-      className="sticky top-0 z-40 h-16 bg-white/95 md:h-[72px]"
-    >
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
-      <nav className="mx-auto flex h-full max-w-container items-center justify-between px-4 md:px-6">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/assets/logo.png"
-            alt="LORD Air Conditioning"
-            width={256}
-            height={148}
-            priority
-            className="h-32 w-auto"
-          />
-        </Link>
+      <motion.header
+        initial={{ y: -72 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 200 }}
+        style={{ boxShadow, backdropFilter: backdropBlur }}
+        className="sticky top-0 z-40 h-16 bg-white/95 md:h-[72px]"
+      >
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <nav className="mx-auto flex h-full max-w-container items-center justify-between px-4 md:px-6">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <video autoPlay loop muted playsInline className="h-14 w-auto">
+              <source src="/assets/logovideo.mp4" type="video/mp4" />
+            </video>
+          </Link>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
-            const isActive =
-              link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="relative py-1 text-sm font-medium transition-colors hover:text-lord-teal"
-              >
-                <span
-                  className={isActive ? "text-lord-teal" : "text-lord-navy"}
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => {
+              const isActive =
+                link.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="relative py-1 text-sm font-medium transition-colors hover:text-lord-teal"
                 >
-                  {t(link.key)}
-                </span>
-                {isActive && (
-                  <motion.span
-                    layoutId="navIndicator"
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-lord-teal"
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    }}
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Right Section */}
-        <div className="flex items-center gap-3">
-          <LanguageToggle />
-
-          {/* Cart Icon */}
-          <div ref={cartRef} className="relative">
-            <button
-              onClick={() => {
-                setIsCartOpen(!isCartOpen);
-                setIsAccountOpen(false);
-              }}
-              className="relative p-2 text-lord-navy hover:text-lord-teal transition-colors"
-              aria-label={`Cart (${itemCount} items)`}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              <CartBadge count={itemCount} />
-            </button>
-
-            <AnimatePresence>
-              {isCartOpen && (
-                <motion.div
-                  variants={slideDown}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="absolute right-0 top-full mt-2 z-50"
-                >
-                  <MiniCart onClose={() => setIsCartOpen(false)} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <span
+                    className={isActive ? "text-lord-teal" : "text-lord-navy"}
+                  >
+                    {t(link.key)}
+                  </span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="navIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-lord-teal"
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Account Menu */}
-          <div ref={accountRef} className="relative hidden md:block">
-            {isAuthenticated ? (
-              <>
-                <button
-                  onClick={() => {
-                    setIsAccountOpen(!isAccountOpen);
-                    setIsCartOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 p-2 text-lord-navy hover:text-lord-teal transition-colors"
+          {/* Right Section */}
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+
+            {/* Cart Icon */}
+            <div ref={cartRef} className="relative">
+              <button
+                onClick={() => {
+                  setIsCartOpen(!isCartOpen);
+                  setIsAccountOpen(false);
+                }}
+                className="relative p-2 text-lord-navy hover:text-lord-teal transition-colors"
+                aria-label={`Cart (${itemCount} items)`}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <CartBadge count={itemCount} />
+              </button>
+
+              <AnimatePresence>
+                {isCartOpen && (
+                  <motion.div
+                    variants={slideDown}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="absolute right-0 top-full mt-2 z-50"
+                  >
+                    <MiniCart onClose={() => setIsCartOpen(false)} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Account Menu */}
+            <div ref={accountRef} className="relative hidden md:block">
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsAccountOpen(!isAccountOpen);
+                      setIsCartOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 p-2 text-lord-navy hover:text-lord-teal transition-colors"
+                  >
+                    <UserCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium max-w-[100px] truncate">
+                      {customer?.name?.split(" ")[0]}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+
+                  <AnimatePresence>
+                    {isAccountOpen && (
+                      <motion.div
+                        variants={slideDown}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#E8EAED] rounded-card shadow-lg overflow-hidden z-50"
+                      >
+                        <div className="p-3 border-b border-[#E8EAED]">
+                          <p className="text-sm font-semibold text-lord-navy truncate">
+                            {customer?.name}
+                          </p>
+                          <p className="text-xs text-medium-gray truncate">
+                            {customer?.email}
+                          </p>
+                        </div>
+                        <div className="py-1">
+                          <Link
+                            href="/account/orders"
+                            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
+                          >
+                            <Package className="h-4 w-4 text-medium-gray" />
+                            {t("nav.myOrders")}
+                          </Link>
+                          <Link
+                            href="/account/addresses"
+                            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
+                          >
+                            <MapPin className="h-4 w-4 text-medium-gray" />
+                            {t("nav.myAddresses")}
+                          </Link>
+                          <Link
+                            href="/account/profile"
+                            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
+                          >
+                            <User className="h-4 w-4 text-medium-gray" />
+                            {t("nav.profile")}
+                          </Link>
+                        </div>
+                        <div className="border-t border-[#E8EAED] py-1">
+                          <button
+                            onClick={logout}
+                            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-error hover:bg-red-50 transition-colors"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            {t("nav.logout")}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 p-2 text-sm font-medium text-lord-navy hover:text-lord-teal transition-colors"
                 >
                   <UserCircle className="h-5 w-5" />
-                  <span className="text-sm font-medium max-w-[100px] truncate">
-                    {customer?.name?.split(" ")[0]}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </button>
+                  {t("nav.login")}
+                </Link>
+              )}
+            </div>
 
-                <AnimatePresence>
-                  {isAccountOpen && (
-                    <motion.div
-                      variants={slideDown}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#E8EAED] rounded-card shadow-lg overflow-hidden z-50"
-                    >
-                      <div className="p-3 border-b border-[#E8EAED]">
-                        <p className="text-sm font-semibold text-lord-navy truncate">
-                          {customer?.name}
-                        </p>
-                        <p className="text-xs text-medium-gray truncate">
-                          {customer?.email}
-                        </p>
-                      </div>
-                      <div className="py-1">
-                        <Link
-                          href="/account/orders"
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
-                        >
-                          <Package className="h-4 w-4 text-medium-gray" />
-                          {t("nav.myOrders")}
-                        </Link>
-                        <Link
-                          href="/account/addresses"
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
-                        >
-                          <MapPin className="h-4 w-4 text-medium-gray" />
-                          {t("nav.myAddresses")}
-                        </Link>
-                        <Link
-                          href="/account/profile"
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-lord-navy hover:bg-off-white transition-colors"
-                        >
-                          <User className="h-4 w-4 text-medium-gray" />
-                          {t("nav.profile")}
-                        </Link>
-                      </div>
-                      <div className="border-t border-[#E8EAED] py-1">
-                        <button
-                          onClick={logout}
-                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-error hover:bg-red-50 transition-colors"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          {t("nav.logout")}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 p-2 text-sm font-medium text-lord-navy hover:text-lord-teal transition-colors"
-              >
-                <UserCircle className="h-5 w-5" />
-                {t("nav.login")}
+            {/* Request Service CTA (desktop) */}
+            <div className="hidden lg:block">
+              <Link href="/services">
+                <Button size="sm">{t("nav.requestService")}</Button>
               </Link>
-            )}
+            </div>
+
+            {/* Mobile Hamburger */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-lord-navy md:hidden"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
-
-          {/* Request Service CTA (desktop) */}
-          <div className="hidden lg:block">
-            <Link href="/services">
-              <Button size="sm">{t("nav.requestService")}</Button>
-            </Link>
-          </div>
-
-          {/* Mobile Hamburger */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-lord-navy md:hidden"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-      </nav>
-
-    </motion.header>
+        </nav>
+      </motion.header>
 
       {/* Mobile Menu */}
       <AnimatePresence>

@@ -1,22 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import Button from "@/components/common/Button";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function HeroSection() {
   const { t } = useLanguage();
+  const [videoReady, setVideoReady] = useState(false);
 
   return (
     <section className="relative overflow-hidden min-h-[520px] md:min-h-[800px] flex items-center">
+      {/* Loading overlay — shown until video can play */}
+      <AnimatePresence>
+        {!videoReady && (
+          <motion.div
+            key="hero-loader"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 z-20 flex items-center justify-center bg-lord-navy"
+          >
+            <LoadingSpinner size="lg" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Background Video */}
       <video
         autoPlay
         loop
         muted
         playsInline
+        onCanPlay={() => setVideoReady(true)}
         className="absolute inset-0 h-full w-full object-cover object-center"
       >
         <source src="/assets/herovideo.mp4" type="video/mp4" />
