@@ -11,7 +11,7 @@ export default function HeroSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative overflow-hidden min-h-[520px] md:min-h-[600px] flex items-center">
+    <section className="relative overflow-hidden min-h-[520px] md:min-h-[800px] flex items-center">
       {/* Background Image */}
       <Image
         src="/assets/hero-background.png"
