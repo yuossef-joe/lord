@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@theme inline {
+  --color-lord-navy: #172041;
+  --color-lord-teal: #0dbaca;
+  --color-lord-silver: #bebebe;
+  --color-lord-frost: #4db8d4;
+  --color-off-white: #f8fafb;
+  --color-light-gray: #f1f3f5;
+  --color-medium-gray: #6c757d;
+  --color-dark-charcoal: #1a1a2e;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+  --color-info: #17a2b8;
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-hover: #1e293b;
+  --color-sidebar-active: #0dbaca;
+  --font-inter: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --max-width-container: 1440px;
+}
+
+body {
+  font-family: var(--font-inter);
+  background-color: var(--color-off-white);
+  color: var(--color-dark-charcoal);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-lord-silver);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-medium-gray);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-lord-teal);
+  outline-offset: 2px;
+}
