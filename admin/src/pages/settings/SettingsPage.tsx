@@ -7,7 +7,7 @@ import type {
   ContactSettings,
   EmailSettings,
   SeoSettings,
-  PaymobSettings,
+  // PaymobSettings,
   ShippingSettings,
 } from "@/types";
 import { cn } from "@/lib/utils";
