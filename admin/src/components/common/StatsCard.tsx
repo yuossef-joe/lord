@@ -28,7 +28,7 @@ export default function StatsCard({
 }: StatsCardProps) {
   const displayPrefix = format === "currency" ? "EGP " : prefix;
   const decimals = format === "currency" ? 0 : 0;
-  const countUpRef = useRef<HTMLSpanElement>(null);
+  const countUpRef = useRef<HTMLElement>(null as any);
 
   useCountUp({
     ref: countUpRef,

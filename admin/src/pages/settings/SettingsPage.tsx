@@ -98,16 +98,16 @@ const defaultSeoSettings: SeoSettings = {
   googleAnalyticsId: "",
 };
 
-const defaultPaymobSettings: PaymobSettings = {
-  apiKey: "",
-  secretKey: "",
-  merchantId: "",
-  cardIntegrationId: "",
-  walletIntegrationId: "",
-  iframeId: "",
-  hmacSecret: "",
-  environment: "sandbox",
-};
+// const defaultPaymobSettings: PaymobSettings = {
+//   apiKey: "",
+//   secretKey: "",
+//   merchantId: "",
+//   cardIntegrationId: "",
+//   walletIntegrationId: "",
+//   iframeId: "",
+//   hmacSecret: "",
+//   environment: "sandbox",
+// };
 
 const defaultShippingSettings: ShippingSettings = {
   freeShippingThreshold: 15000,
@@ -375,88 +375,88 @@ function SeoSettingsForm() {
   );
 }
 
-function PaymentSettingsForm() {
-  const { register, handleSubmit } = useForm<PaymobSettings>({
-    defaultValues: defaultPaymobSettings,
-  });
+// function PaymentSettingsForm() {
+//   const { register, handleSubmit } = useForm<PaymobSettings>({
+//     defaultValues: defaultPaymobSettings,
+//   });
 
-  const onSubmit = () => {
-    alert("Settings saved successfully");
-  };
+//   const onSubmit = () => {
+//     alert("Settings saved successfully");
+//   };
 
-  return (
-    <Card>
-      <h2 className="text-lg font-semibold text-navy mb-5">Paymob Settings</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="API Key">
-            <input
-              type="password"
-              {...register("apiKey")}
-              className={inputStyles}
-            />
-          </FormField>
+//   return (
+//     <Card>
+//       <h2 className="text-lg font-semibold text-navy mb-5">Paymob Settings</h2>
+//       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <FormField label="API Key">
+//             <input
+//               type="password"
+//               {...register("apiKey")}
+//               className={inputStyles}
+//             />
+//           </FormField>
 
-          <FormField label="Secret Key">
-            <input
-              type="password"
-              {...register("secretKey")}
-              className={inputStyles}
-            />
-          </FormField>
-        </div>
+//           <FormField label="Secret Key">
+//             <input
+//               type="password"
+//               {...register("secretKey")}
+//               className={inputStyles}
+//             />
+//           </FormField>
+//         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Merchant ID">
-            <input {...register("merchantId")} className={inputStyles} />
-          </FormField>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <FormField label="Merchant ID">
+//             <input {...register("merchantId")} className={inputStyles} />
+//           </FormField>
 
-          <FormField label="Card Integration ID">
-            <input {...register("cardIntegrationId")} className={inputStyles} />
-          </FormField>
-        </div>
+//           <FormField label="Card Integration ID">
+//             <input {...register("cardIntegrationId")} className={inputStyles} />
+//           </FormField>
+//         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Wallet Integration ID">
-            <input
-              {...register("walletIntegrationId")}
-              className={inputStyles}
-            />
-          </FormField>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <FormField label="Wallet Integration ID">
+//             <input
+//               {...register("walletIntegrationId")}
+//               className={inputStyles}
+//             />
+//           </FormField>
 
-          <FormField label="iFrame ID">
-            <input {...register("iframeId")} className={inputStyles} />
-          </FormField>
-        </div>
+//           <FormField label="iFrame ID">
+//             <input {...register("iframeId")} className={inputStyles} />
+//           </FormField>
+//         </div>
 
-        <FormField label="HMAC Secret">
-          <input
-            type="password"
-            {...register("hmacSecret")}
-            className={inputStyles}
-          />
-        </FormField>
+//         <FormField label="HMAC Secret">
+//           <input
+//             type="password"
+//             {...register("hmacSecret")}
+//             className={inputStyles}
+//           />
+//         </FormField>
 
-        <FormField label="Environment">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register("environment")}
-              className="h-4 w-4 rounded border-gray-300 text-teal focus:ring-teal"
-            />
-            <span className="text-sm text-gray-700">
-              Live mode (uncheck for sandbox)
-            </span>
-          </label>
-        </FormField>
+//         <FormField label="Environment">
+//           <label className="flex items-center gap-2 cursor-pointer">
+//             <input
+//               type="checkbox"
+//               {...register("environment")}
+//               className="h-4 w-4 rounded border-gray-300 text-teal focus:ring-teal"
+//             />
+//             <span className="text-sm text-gray-700">
+//               Live mode (uncheck for sandbox)
+//             </span>
+//           </label>
+//         </FormField>
 
-        <div className="flex justify-end pt-2">
-          <Button type="submit">Save Changes</Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
+//         <div className="flex justify-end pt-2">
+//           <Button type="submit">Save Changes</Button>
+//         </div>
+//       </form>
+//     </Card>
+//   );
+// }
 
 function ShippingSettingsForm() {
   const { register, handleSubmit } = useForm<ShippingSettings>({
@@ -602,7 +602,7 @@ export default function SettingsPage() {
         {activeTab === "contact" && <ContactSettingsForm />}
         {activeTab === "email" && <EmailSettingsForm />}
         {activeTab === "seo" && <SeoSettingsForm />}
-        {activeTab === "payment" && <PaymentSettingsForm />}
+        {/* {activeTab === "payment" && <PaymentSettingsForm />} */}
         {activeTab === "shipping" && <ShippingSettingsForm />}
       </motion.div>
     </motion.div>
