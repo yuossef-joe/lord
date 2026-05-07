@@ -1,0 +1,510 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CMS_ADMIN
+  CMS_STAFF
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  MOBILE_WALLET
+  INSTALLMENT
+  CASH_ON_DELIVERY
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum CartStatus {
+  ACTIVE
+  CONVERTED
+  ABANDONED
+}
+
+model Brands {
+  id             String     @id @default(uuid())
+  name           String
+  slug           String     @unique
+  logoUrl        String?
+  certificateUrl String?
+  description    String?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  products       Products[]
+}
+
+model ProductCategories {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  icon        String?
+  description String?
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  products    Products[]
+}
+
+model Products {
+  id            String            @id @default(uuid())
+  brandId       String
+  categoryId    String
+  name          String
+  slug          String            @unique
+  modelNumber   String?
+  type          String
+  capacity      Int?
+  capacityUnit  String?           @default("BTU")
+  horsepower    Decimal?          @db.Decimal(4, 2)
+  eerSeer       String?
+  voltage       String?
+  refrigerant   String?
+  dimensions    Json?
+  weight        Json?
+  color         String?
+  description   String?           @db.Text
+  features      String[]          @default([])
+  specs         Json?
+  price         Decimal           @db.Decimal(10, 2)
+  originalPrice Decimal?          @db.Decimal(10, 2)
+  priceVisible  Boolean           @default(true)
+  stockQuantity Int               @default(0)
+  isFeatured    Boolean           @default(false)
+  isNewArrival  Boolean           @default(false)
+  isBestseller  Boolean           @default(false)
+  isActive      Boolean           @default(true)
+  seo           Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  brand         Brands            @relation(fields: [brandId], references: [id])
+  category      ProductCategories @relation(fields: [categoryId], references: [id])
+  images        ProductImages[]
+  cartItems     CartItems[]
+  orderItems    OrderItems[]
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+  @@index([horsepower])
+}
+
+model ProductImages {
+  id           String   @id @default(uuid())
+  productId    String
+  url          String
+  altText      String?
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  product      Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Customers {
+  id                String              @id @default(uuid())
+  name              String
+  nationalId        String              @unique
+  email             String              @unique
+  phone             String?
+  passwordHash      String
+  isEmailVerified   Boolean             @default(false)
+  emailOtpCode      String?
+  emailOtpExpiresAt DateTime?
+  resetOtpCode      String?
+  resetOtpExpiresAt DateTime?
+  failedAttempts    Int                 @default(0)
+  lockedUntil       DateTime?
+  isActive          Boolean             @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  addresses         CustomerAddresses[]
+  carts             Carts[]
+  orders            Orders[]
+  couponUsages      CouponUsage[]
+}
+
+model CustomerAddresses {
+  id            String    @id @default(uuid())
+  customerId    String
+  label         String?
+  recipientName String
+  phone         String
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  governorate   String
+  postalCode    String?
+  isDefault     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  customer      Customers @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Carts {
+  id           String      @id @default(uuid())
+  customerId   String?
+  sessionId    String?
+  status       CartStatus  @default(ACTIVE)
+  couponCode   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  customer     Customers?  @relation(fields: [customerId], references: [id])
+  items        CartItems[]
+
+  @@index([customerId])
+  @@index([sessionId])
+}
+
+model CartItems {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Carts    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+model Orders {
+  id              String               @id @default(uuid())
+  orderNumber     String               @unique
+  customerId      String?
+  guestName       String?
+  guestEmail      String?
+  guestPhone      String?
+  guestNationalId String?
+  customerSnapshot Json?
+  shippingAddress Json
+  shippingMethodId String?
+  trackingNumber  String?
+  shippingCarrier String?
+  subtotal        Decimal              @db.Decimal(10, 2)
+  shippingFee     Decimal              @db.Decimal(10, 2) @default(0)
+  discountAmount  Decimal              @db.Decimal(10, 2) @default(0)
+  total           Decimal              @db.Decimal(10, 2)
+  couponCode      String?
+  notes           String?
+  paymentStatus   PaymentStatus        @default(PENDING)
+  orderStatus     OrderStatus          @default(PENDING_PAYMENT)
+  archivedAt      DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  customer        Customers?           @relation(fields: [customerId], references: [id])
+  shippingMethod  ShippingMethods?     @relation(fields: [shippingMethodId], references: [id])
+  items           OrderItems[]
+  statusHistory   OrderStatusHistory[]
+  payments        Payments[]
+  refunds         Refunds[]
+
+  @@index([orderNumber])
+  @@index([customerId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+}
+
+model OrderItems {
+  id          String   @id @default(uuid())
+  orderId     String
+  productId   String?
+  productName String
+  brandName   String?
+  modelNumber String?
+  imageUrl    String?
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  lineTotal   Decimal  @db.Decimal(10, 2)
+  order       Orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Products? @relation(fields: [productId], references: [id])
+}
+
+model OrderStatusHistory {
+  id        String       @id @default(uuid())
+  orderId   String
+  oldStatus OrderStatus?
+  newStatus OrderStatus
+  note      String?
+  changedBy String?
+  createdAt DateTime     @default(now())
+  order     Orders       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payments {
+  id                    String         @id @default(uuid())
+  orderId               String
+  paymobOrderId         String?
+  paymobTransactionId   String?
+  amount                Decimal        @db.Decimal(10, 2)
+  amountPiasters        Int
+  currency              String         @default("EGP")
+  paymentMethod         PaymentMethod?
+  cardBrand             String?
+  cardLastFour          String?
+  walletNumber          String?
+  status                PaymentStatus  @default(PENDING)
+  gatewayResponse       Json?
+  paidAt                DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  order                 Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds               Refunds[]
+}
+
+model Refunds {
+  id             String    @id @default(uuid())
+  orderId         String
+  paymentId       String?
+  paymobRefundId  String?
+  amount          Decimal   @db.Decimal(10, 2)
+  reason          String
+  initiatedBy     String?
+  createdAt       DateTime  @default(now())
+  order           Orders    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment         Payments? @relation(fields: [paymentId], references: [id])
+}
+
+model Coupons {
+  id                 String        @id @default(uuid())
+  code               String        @unique
+  discountType       String
+  discountValue      Decimal       @db.Decimal(10, 2)
+  minimumOrderAmount Decimal?      @db.Decimal(10, 2)
+  usageLimit         Int?
+  usageCount         Int           @default(0)
+  startsAt           DateTime?
+  endsAt             DateTime?
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  usages             CouponUsage[]
+}
+
+model CouponUsage {
+  id         String     @id @default(uuid())
+  couponId   String
+  customerId String?
+  orderId    String?
+  usedAt     DateTime   @default(now())
+  coupon     Coupons    @relation(fields: [couponId], references: [id])
+  customer   Customers? @relation(fields: [customerId], references: [id])
+}
+
+model ContentPages {
+  id        String   @id @default(uuid())
+  pageKey   String   @unique
+  title     String
+  content   Json
+  seo       Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServiceTypes {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  isActive    Boolean    @default(true)
+  services    Services[]
+}
+
+model Services {
+  id            String        @id @default(uuid())
+  serviceTypeId String?
+  name          String
+  slug          String        @unique
+  description   String?
+  content       Json?
+  isActive      Boolean       @default(true)
+  sortOrder     Int           @default(0)
+  serviceType   ServiceTypes? @relation(fields: [serviceTypeId], references: [id])
+}
+
+model Inquiries {
+  id          String        @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  inquiryType String?
+  message     String
+  source      String?
+  status      InquiryStatus @default(NEW)
+  notes       InquiryNotes[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model InquiryNotes {
+  id        String    @id @default(uuid())
+  inquiryId String
+  content   String
+  createdBy String?
+  createdAt DateTime  @default(now())
+  inquiry   Inquiries @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+}
+
+model ServiceRequests {
+  id          String        @id @default(uuid())
+  name        String
+  email       String
+  phone       String
+  serviceType String?
+  message     String
+  status      InquiryStatus @default(NEW)
+  notes       ServiceRequestNotes[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ServiceRequestNotes {
+  id               String          @id @default(uuid())
+  serviceRequestId String
+  content          String
+  createdBy        String?
+  createdAt        DateTime        @default(now())
+  serviceRequest   ServiceRequests @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+}
+
+model Testimonials {
+  id         String   @id @default(uuid())
+  customerName String
+  location   String?
+  rating     Int      @default(5)
+  quote      String
+  isApproved Boolean  @default(false)
+  isFeatured Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Promotions {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Faqs {
+  id           String   @id @default(uuid())
+  question     String
+  answer       String
+  category     String
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  group     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShippingZones {
+  id                    String   @id @default(uuid())
+  name                  String
+  governorates          String[] @default([])
+  cities                String[] @default([])
+  fee                   Decimal  @db.Decimal(10, 2)
+  freeShippingThreshold Decimal? @db.Decimal(10, 2)
+  estimatedDaysMin      Int?
+  estimatedDaysMax      Int?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ShippingMethods {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  description   String?
+  feeModifier   Decimal  @db.Decimal(10, 2) @default(0)
+  estimatedLabel String?
+  cutoffTime    String?
+  isRecommended Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Orders[]
+}
+
+model CmsUsers {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           UserRole  @default(CMS_STAFF)
+  otpCode        String?
+  otpExpiresAt   DateTime?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model TokenBlacklist {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model EmailQueue {
+  id          String    @id @default(uuid())
+  to          String
+  subject     String
+  html        String
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  lastError   String?
+  scheduledAt DateTime  @default(now())
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+}

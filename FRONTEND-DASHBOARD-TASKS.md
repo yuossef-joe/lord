@@ -15,8 +15,8 @@
 
 1. CMS Authentication (Admin Login with JWT)
 2. Dashboard with Revenue & Order Analytics
-3. Order Management (List, Detail, Status Updates, Refunds)
-4. Customer Management (List, Detail, Enable/Disable)
+3. Order Management (CRUD, Detail, Status Updates, Refunds)
+4. Customer Management (CRUD, List, Detail, Enable/Disable)
 5. Product Management (CRUD with Images, Specs, SEO)
 6. Brand & Category Management
 7. Service Management
@@ -25,7 +25,8 @@
 10. Content Page Management (Home, About)
 11. Testimonials Management (Approve/Reject)
 12. FAQ Management
-13. Settings (General, Contact, Email, SEO, Brands, Paymob, Shipping)
+13. Settings (General, Contact, Email, SEO, Brands, Shipping)
+14. Shipping Management (zones, methods, rates, delivery windows)
 
 **Out of Scope** (per BRD — do NOT implement):
 
@@ -156,9 +157,13 @@ src/
 │   ├── DashboardPage.tsx      # Main dashboard
 │   ├── orders/
 │   │   ├── OrdersPage.tsx     # Orders list
+│   │   ├── OrderCreatePage.tsx # Manual/admin order creation
+│   │   ├── OrderEditPage.tsx   # Edit order before fulfillment
 │   │   └── OrderDetailPage.tsx # Order detail + status updates
 │   ├── customers/
 │   │   ├── CustomersPage.tsx  # Customers list
+│   │   ├── CustomerCreatePage.tsx # Create customer
+│   │   ├── CustomerEditPage.tsx   # Edit customer profile/status
 │   │   └── CustomerDetailPage.tsx # Customer detail + orders
 │   ├── products/
 │   │   ├── ProductsPage.tsx   # Products list
@@ -172,6 +177,8 @@ src/
 │   │   └── ServiceEditPage.tsx
 │   ├── inquiries/
 │   │   └── InquiriesPage.tsx  # Inquiries & service requests (tabbed)
+│   ├── shipping/
+│   │   └── ShippingPage.tsx   # Shipping zones, methods, rates, delivery windows
 │   ├── coupons/
 │   │   ├── CouponsPage.tsx    # Coupons list
 │   │   ├── CouponCreatePage.tsx
@@ -185,7 +192,7 @@ src/
 │   │   ├── FaqCreatePage.tsx
 │   │   └── FaqEditPage.tsx
 │   └── settings/
-│       └── SettingsPage.tsx   # Settings (7 tabs)
+│       └── SettingsPage.tsx   # Settings (6 tabs; no Paymob page)
 ├── components/
 │   ├── layout/
 │   │   ├── Sidebar.tsx        # CMS sidebar navigation
@@ -242,7 +249,6 @@ src/
 │       ├── EmailSettings.tsx
 │       ├── SeoSettings.tsx
 │       ├── BrandSettings.tsx
-│       ├── PaymobSettings.tsx
 │       └── ShippingSettings.tsx
 ├── lib/
 │   ├── api.ts                 # API client (fetch wrapper)
@@ -281,9 +287,13 @@ src/
 /login                          → LoginPage (public)
 /                               → DashboardPage (protected)
 /orders                         → OrdersPage (protected)
+/orders/create                  → OrderCreatePage (protected)
 /orders/:id                     → OrderDetailPage (protected)
+/orders/:id/edit                → OrderEditPage (protected)
 /customers                      → CustomersPage (protected)
+/customers/create               → CustomerCreatePage (protected)
 /customers/:id                  → CustomerDetailPage (protected)
+/customers/:id/edit             → CustomerEditPage (protected)
 /products                       → ProductsPage (protected)
 /products/create                → ProductCreatePage (protected)
 /products/:id/edit              → ProductEditPage (protected)
@@ -292,6 +302,7 @@ src/
 /services/create                → ServiceCreatePage (protected)
 /services/:id/edit              → ServiceEditPage (protected)
 /inquiries                      → InquiriesPage (protected)
+/shipping                       → ShippingPage (protected)
 /coupons                        → CouponsPage (protected)
 /coupons/create                 → CouponCreatePage (protected)
 /coupons/:id/edit               → CouponEditPage (protected)
@@ -371,6 +382,10 @@ export const fetchLatestInquiries = (limit: number) =>
 export const fetchOrders = (params: string) =>
   cmsApiRequest(`/orders?${params}`);
 export const fetchOrder = (id: string) => cmsApiRequest(`/orders/${id}`);
+export const createOrder = (data: any) =>
+  cmsApiRequest("/orders", { method: "POST", body: JSON.stringify(data) });
+export const updateOrder = (id: string, data: any) =>
+  cmsApiRequest(`/orders/${id}`, { method: "PUT", body: JSON.stringify(data) });
 export const updateOrderStatus = (id: string, status: string, note?: string) =>
   cmsApiRequest(`/orders/${id}/status`, {
     method: "PATCH",
@@ -390,16 +405,40 @@ export const processRefund = (id: string, amount: number, reason: string) =>
     method: "POST",
     body: JSON.stringify({ amount, reason }),
   });
+export const archiveOrder = (id: string) =>
+  cmsApiRequest(`/orders/${id}`, { method: "DELETE" });
 
 // Customers
 export const fetchCustomers = (params: string) =>
   cmsApiRequest(`/customers?${params}`);
 export const fetchCustomer = (id: string) => cmsApiRequest(`/customers/${id}`);
+export const createCustomer = (data: any) =>
+  cmsApiRequest("/customers", { method: "POST", body: JSON.stringify(data) });
+export const updateCustomer = (id: string, data: any) =>
+  cmsApiRequest(`/customers/${id}`, { method: "PUT", body: JSON.stringify(data) });
 export const toggleCustomerStatus = (id: string, isActive: boolean) =>
   cmsApiRequest(`/customers/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ isActive }),
   });
+export const deactivateCustomer = (id: string) =>
+  cmsApiRequest(`/customers/${id}`, { method: "DELETE" });
+
+// Shipping
+export const fetchShippingZones = () => cmsApiRequest("/shipping/zones");
+export const createShippingZone = (data: any) =>
+  cmsApiRequest("/shipping/zones", { method: "POST", body: JSON.stringify(data) });
+export const updateShippingZone = (id: string, data: any) =>
+  cmsApiRequest(`/shipping/zones/${id}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteShippingZone = (id: string) =>
+  cmsApiRequest(`/shipping/zones/${id}`, { method: "DELETE" });
+export const fetchShippingMethods = () => cmsApiRequest("/shipping/methods");
+export const createShippingMethod = (data: any) =>
+  cmsApiRequest("/shipping/methods", { method: "POST", body: JSON.stringify(data) });
+export const updateShippingMethod = (id: string, data: any) =>
+  cmsApiRequest(`/shipping/methods/${id}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteShippingMethod = (id: string) =>
+  cmsApiRequest(`/shipping/methods/${id}`, { method: "DELETE" });
 
 // Products
 export const fetchProducts = (params: string) =>
@@ -567,8 +606,6 @@ export const updateSettings = (group: string, data: any) =>
   });
 export const testEmailSettings = () =>
   cmsApiRequest("/settings/email/test", { method: "POST" });
-export const testPaymobConnection = () =>
-  cmsApiRequest("/settings/paymob/test", { method: "POST" });
 ```
 
 ### Task 1.7: Setup CMS Authentication Context
@@ -593,7 +630,7 @@ export const testPaymobConnection = () =>
 - [ ] Inquiry, InquiryNote, ServiceRequest (ServiceRequest includes `installationAddress?: string`)
 - [ ] Coupon, CouponUsage
 - [ ] Testimonial, FAQ, ContentPage
-- [ ] SiteSettings, ContactSettings, EmailSettings, SeoSettings, PaymobSettings, ShippingSettings
+- [ ] SiteSettings, ContactSettings, EmailSettings, SeoSettings, ShippingSettings
 - [ ] DashboardStats, RevenueData
 - [ ] Common: ApiResponse, PaginatedResponse, etc.
 
@@ -961,23 +998,42 @@ export const sidebarCollapse = {
 **File:** `src/pages/orders/OrdersPage.tsx`
 
 - [ ] Page title: "Orders"
+- [ ] "Create Order" Primary button → `/orders/create`
 - [ ] **Filters bar:**
   - Status dropdown: All, Pending Payment, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded
   - Date range picker (from–to)
   - Search: by order number, customer name, or email
   - "Export CSV" button (optional)
 - [ ] **Data Table** (reusable `DataTable` component):
-  - Columns: Order # (link), Customer, Items Count, Total (EGP), Payment Status (badge), Order Status (badge), Date, Actions (eye icon → detail)
+  - Columns: Order # (link), Customer, National ID, Items Count, Total (EGP), Payment Status (badge), Order Status (badge), Date, Actions (view/edit/archive icons)
   - Sortable columns: Date, Total, Status
   - Pagination (10/25/50 per page)
 - [ ] Status badges per UI/UX spec:
   - **Order Status:** Pending Payment (Gray), Confirmed (Blue), Processing (Amber), Shipped (Teal), Delivered (Green), Cancelled (Red), Refunded (Purple)
   - **Payment Status:** Pending (Gray), Paid (Green), Failed (Red), Refunded (Purple)
 - [ ] Click row or eye icon → `/orders/:id`
+- [ ] Edit icon → `/orders/:id/edit` when order is still editable; archive icon only for cancelled/refunded/test duplicate orders
 
 **API Integration:**
 
 - [ ] `GET /api/cms/orders?page=1&limit=10&status=all&search=&dateFrom=&dateTo=`
+- [ ] `POST /api/cms/orders`
+- [ ] `PUT /api/cms/orders/:id`
+- [ ] `DELETE /api/cms/orders/:id`
+
+### Task 5.1A: Order Create / Edit Pages
+
+**File:** `src/pages/orders/OrderCreatePage.tsx` + `src/pages/orders/OrderEditPage.tsx`
+
+- [ ] Manual order form for phone/store orders:
+  - Customer picker with search by name, phone, email, national ID
+  - Guest/customer snapshot fields: name, national ID, email, phone
+  - Product line items with searchable product picker, quantity, stock warning, unit price snapshot
+  - Shipping method selector and address form
+  - Coupon code, internal notes, subtotal/shipping/discount/total preview
+- [ ] Edit page pre-populates editable order fields; lock line-item edits after processing starts
+- [ ] Validation: national ID 14 digits, required customer contact, in-stock quantities, valid shipping zone
+- [ ] Success toast and redirect to order detail
 
 ### Task 5.2: Order Detail Page
 
@@ -1010,7 +1066,7 @@ export const sidebarCollapse = {
   - Product image (thumbnail 48px), name, brand, model, SKU, quantity, unit price, line total
   - Subtotal, Shipping, Discount (coupon code shown), Grand Total (bold)
 - [ ] **Customer Information:**
-  - Name, national ID, email, phone
+  - Name, national ID (14-digit Egyptian National ID), email, phone
   - Link to customer detail: "View Customer" → `/customers/:id`
 - [ ] **Shipping Address:**
   - Full address display
@@ -1043,17 +1099,30 @@ export const sidebarCollapse = {
 **File:** `src/pages/customers/CustomersPage.tsx`
 
 - [ ] Page title: "Customers"
+- [ ] "Add Customer" Primary button → `/customers/create`
 - [ ] **Filters:** Search (name, email, phone), Status (All, Active, Disabled)
 - [ ] **Data Table:**
   - Columns: Name, National ID, Email, Phone, Orders Count, Total Spent (EGP), Status (Active/Disabled badge), Joined Date, Actions
   - Sortable: Name, Orders Count, Total Spent, Joined Date
   - Pagination
 - [ ] Status toggle: Green "Active" / Red "Disabled" — click to toggle (with confirmation); **Motion:** toggle switch uses `motion.div layout` for smooth knob sliding + background color transition
-- [ ] Click row → `/customers/:id`
+- [ ] Actions: view, edit, deactivate/restore; click row → `/customers/:id`
 
 **API Integration:**
 
 - [ ] `GET /api/cms/customers?page=1&limit=10&search=&status=all`
+- [ ] `POST /api/cms/customers`
+- [ ] `PUT /api/cms/customers/:id`
+- [ ] `DELETE /api/cms/customers/:id`
+
+### Task 6.1A: Customer Create / Edit Pages
+
+**File:** `src/pages/customers/CustomerCreatePage.tsx` + `src/pages/customers/CustomerEditPage.tsx`
+
+- [ ] Customer form fields: name, national ID, email, phone, password/reset invitation option, active toggle
+- [ ] Validate national ID as exactly 14 digits and email as unique
+- [ ] Edit page preserves order history and saved addresses; show warning before deactivation
+- [ ] Success toast and redirect to customer detail
 
 ### Task 6.2: Customer Detail Page
 
@@ -1429,16 +1498,42 @@ export const sidebarCollapse = {
 
 ---
 
-## **PHASE 11: SETTINGS** (Day 29–31)
+## **PHASE 11: SHIPPING MANAGEMENT** (Day 29–30)
 
-### Task 11.1: Settings Page (7 Tabs)
+### Task 11.1: Shipping Page
+
+**File:** `src/pages/shipping/ShippingPage.tsx`
+
+- [ ] Page title: "Shipping"
+- [ ] Two tabs: Shipping Zones | Shipping Methods
+- [ ] **Shipping Zones CRUD:**
+  - Table columns: Zone name, governorates/cities, fee (EGP), free-shipping threshold, active status, Actions
+  - Add/Edit modal: zone name, governorates multi-select, cities optional, fee, free-shipping threshold, estimated delivery range, active toggle
+  - Delete/deactivate confirmation; prevent deleting zones used by active orders
+- [ ] **Shipping Methods CRUD:**
+  - Table columns: Method, description, estimated delivery, cutoff time, active status, Actions
+  - Add/Edit modal: delivery, pickup, installation-bundled delivery, customer-facing label, note, active toggle
+- [ ] UX goal: make shipping choices easy for customers by using clear labels, delivery estimates, default recommended method, and free-shipping eligibility preview
+- [ ] Motion: Add/edit modals use `AnimatePresence` + `scaleIn`; table rows use `@formkit/auto-animate`
+
+**API Integration:**
+
+- [ ] `GET/POST/PUT/DELETE /api/cms/shipping/zones`
+- [ ] `GET/POST/PUT/DELETE /api/cms/shipping/methods`
+
+---
+
+## **PHASE 12: SETTINGS** (Day 31)
+
+### Task 12.1: Settings Page (6 Tabs)
 
 **File:** `src/pages/settings/SettingsPage.tsx`
 
 - [ ] Page title: "Settings"
-- [ ] **7 tabs** (Radix UI Tabs): General | Contact | Email | SEO | Brands | Paymob | Shipping
+- [ ] **6 tabs** (Radix UI Tabs): General | Contact | Email | SEO | Brands | Shipping
 - [ ] Each tab is a separate component; each has its own "Save" button
 - [ ] Success toast on save; error handling for validation
+- [ ] Do not include a Paymob/payment integration settings page in the CMS; payment gateway credentials are backend-only environment/deployment secrets
 
 **Motion Animations (Settings Page):**
 
@@ -1505,23 +1600,7 @@ export const sidebarCollapse = {
 - [ ] Authorized dealer certificate images: Carrier + Midea (upload)
 - [ ] Partner logos display order
 
-#### Tab 6: Paymob Settings
-
-**File:** `src/components/settings/PaymobSettings.tsx`
-
-- [ ] Paymob API Key (masked input)
-- [ ] Paymob Secret Key (masked input)
-- [ ] Paymob Merchant ID
-- [ ] Card Integration ID
-- [ ] Wallet Integration ID
-- [ ] Installment Integration ID (optional)
-- [ ] Iframe ID
-- [ ] HMAC Secret (masked)
-- [ ] Environment toggle: Sandbox / Production
-- [ ] "Test Connection" button — verifies credentials, shows success/error
-- [ ] Status indicator: "Connected" (green) / "Not configured" (gray) / "Error" (red)
-
-#### Tab 7: Shipping Settings
+#### Tab 6: Shipping Settings
 
 **File:** `src/components/settings/ShippingSettings.tsx`
 
@@ -1533,14 +1612,13 @@ export const sidebarCollapse = {
 
 **API Integration:**
 
-- [ ] `GET /api/cms/settings/:group` — group: general, contact, email, seo, brands, paymob, shipping
+- [ ] `GET /api/cms/settings/:group` — group: general, contact, email, seo, brands, shipping
 - [ ] `PUT /api/cms/settings/:group` — updates settings for that group
 - [ ] `POST /api/cms/settings/email/test` — sends test email
-- [ ] `POST /api/cms/settings/paymob/test` — tests Paymob connection
 
 ---
 
-## **PHASE 12: RESPONSIVE DESIGN & POLISH** (Day 32–33)
+## **PHASE 13: RESPONSIVE DESIGN & POLISH** (Day 32–33)
 
 ### Task 12.1: Responsive Layout
 
@@ -1620,7 +1698,7 @@ export const sidebarCollapse = {
 
 ---
 
-## **PHASE 13: TESTING & DEPLOYMENT** (Day 34–35)
+## **PHASE 14: TESTING & DEPLOYMENT** (Day 34–35)
 
 ### Task 13.1: End-to-End Testing
 
@@ -1636,9 +1714,9 @@ export const sidebarCollapse = {
   9. Edit home content → edit about content → verify on public site
   10. Manage testimonials (create, approve, reject, feature, delete)
   11. Manage FAQs (create, edit, reorder, delete)
-  12. Update all 7 settings tabs → verify settings saved
+  12. Update all 6 settings tabs → verify settings saved
   13. Process a refund on a delivered order
-  14. Test Paymob connection from settings
+  14. Manage shipping zones/methods and verify checkout-facing options
   15. Test email from settings
 - [ ] Test with realistic data (10+ products, 20+ orders, 50+ customers)
 
@@ -1795,7 +1873,7 @@ export const sidebarCollapse = {
 
 - ❌ Don't forget to clear forms after successful create operations
 - ❌ Don't allow deleting brands/categories that have associated products (show error)
-- ❌ Don't expose Paymob keys in client-side code — display masked values
+- ❌ Don't expose Paymob keys or Paymob configuration forms in the CMS frontend
 - ❌ Don't skip confirmation modals for destructive actions
 - ❌ Don't hardcode API URLs — use `VITE_API_URL` environment variable
 - ❌ Don't use `react-icons` — use `lucide-react` per Tech Specs

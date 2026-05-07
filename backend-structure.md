@@ -61,7 +61,8 @@ lord-backend/
 │   │   │   ├── testimonials.routes.ts # GET /api/testimonials
 │   │   │   ├── faqs.routes.ts         # GET /api/faqs
 │   │   │   ├── promotions.routes.ts   # GET /api/promotions
-│   │   │   ├── settings.routes.ts     # GET /api/settings/contact, /api/settings/site, /api/settings/shipping
+│   │   │   ├── settings.routes.ts     # GET /api/settings/contact, /api/settings/site
+│   │   │   ├── shipping.routes.ts     # GET /api/shipping/options
 │   │   │   ├── inquiries.routes.ts    # POST /api/inquiries
 │   │   │   └── service-requests.routes.ts  # POST /api/service-requests
 │   │   │
@@ -94,14 +95,15 @@ lord-backend/
 │   │       ├── service-types.routes.ts # CRUD /api/cms/service-types
 │   │       ├── inquiries.routes.ts    # GET|PUT /api/cms/inquiries, notes, export
 │   │       ├── service-requests.routes.ts # GET|PUT /api/cms/service-requests, notes, export
-│   │       ├── orders.routes.ts       # GET|PUT /api/cms/orders, status, refund, notes, export, stats
-│   │       ├── customers.routes.ts    # GET|PUT /api/cms/customers
+│   │       ├── orders.routes.ts       # CRUD /api/cms/orders, status, refund, notes, export, stats
+│   │       ├── customers.routes.ts    # CRUD /api/cms/customers, status, addresses, order history
+│   │       ├── shipping.routes.ts     # CRUD /api/cms/shipping/zones, /methods, rates, delivery rules
 │   │       ├── coupons.routes.ts      # CRUD /api/cms/coupons
 │   │       ├── content.routes.ts      # CRUD /api/cms/content (ContentPages)
 │   │       ├── testimonials.routes.ts # CRUD /api/cms/testimonials
 │   │       ├── promotions.routes.ts   # CRUD /api/cms/promotions
 │   │       ├── faqs.routes.ts         # CRUD /api/cms/faqs
-│   │       ├── settings.routes.ts     # GET|PUT /api/cms/settings (all settings tabs)
+│   │       ├── settings.routes.ts     # GET|PUT /api/cms/settings (general, contact, email, SEO, shipping, social)
 │   │       └── cms-users.routes.ts    # CRUD /api/cms/users (admin only — manage CMS staff)
 │   │
 │   ├── controllers/
@@ -114,7 +116,8 @@ lord-backend/
 │   │   │   ├── testimonials.controller.ts  # Approved & featured testimonials
 │   │   │   ├── faqs.controller.ts          # Active FAQs grouped by category
 │   │   │   ├── promotions.controller.ts    # Active promotions (within date range)
-│   │   │   ├── settings.controller.ts      # Public site settings (contact, site info, shipping)
+│   │   │   ├── settings.controller.ts      # Public site settings (contact, site info)
+│   │   │   ├── shipping.controller.ts      # Public shipping options by governorate/city/subtotal
 │   │   │   ├── inquiries.controller.ts     # Submit product inquiry
 │   │   │   └── service-requests.controller.ts # Submit service request
 │   │   │
@@ -147,14 +150,15 @@ lord-backend/
 │   │       ├── service-types.controller.ts # CRUD service types
 │   │       ├── inquiries.controller.ts     # List, view, update status, add notes, export CSV
 │   │       ├── service-requests.controller.ts # List, view, update status, add notes, export CSV
-│   │       ├── orders.controller.ts        # List, view, update status, process refund, add notes, export, stats
-│   │       ├── customers.controller.ts     # List, view, update status (activate/deactivate)
+│   │       ├── orders.controller.ts        # CRUD orders, update status, process refund, add notes, export, stats
+│   │       ├── customers.controller.ts     # CRUD customers, addresses, status (activate/deactivate), order history
+│   │       ├── shipping.controller.ts      # CRUD shipping zones, methods, rates, delivery windows, easier checkout options
 │   │       ├── coupons.controller.ts       # CRUD coupons
 │   │       ├── content.controller.ts       # CRUD content pages (home, about, contact page content)
 │   │       ├── testimonials.controller.ts  # CRUD testimonials, approve/reject, feature/unfeature
 │   │       ├── promotions.controller.ts    # CRUD promotions
 │   │       ├── faqs.controller.ts          # CRUD FAQs, reorder
-│   │       ├── settings.controller.ts      # Get/update all settings tabs (general, contact, email, SEO, Paymob, shipping, social)
+│   │       ├── settings.controller.ts      # Get/update settings tabs (general, contact, email, SEO, shipping, social)
 │   │       └── cms-users.controller.ts     # CRUD CMS users (admin only)
 │   │
 │   ├── services/
@@ -168,6 +172,7 @@ lord-backend/
 │   │   ├── payment.service.ts         # Payment record management, status updates
 │   │   ├── paymob.service.ts          # Paymob API integration — auth token, order registration, payment key, refund, HMAC verification
 │   │   ├── customer.service.ts        # Customer CRUD, profile management
+│   │   ├── shipping.service.ts        # Shipping zones, delivery methods, rates, delivery windows, simplified shipping choices
 │   │   ├── customer-auth.service.ts   # Customer auth logic — register, login, email verification, password reset, token management
 │   │   ├── cms-auth.service.ts        # CMS auth logic — login, OTP, password reset, token management
 │   │   ├── coupon.service.ts          # Coupon validation, usage tracking
