@@ -50,6 +50,42 @@ function decimalNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+const autoSlugConfig: Record<string, { field: string; source: string }> = {
+  brands: { field: "slug", source: "name" },
+  productCategories: { field: "slug", source: "name" },
+  products: { field: "slug", source: "name" },
+  serviceTypes: { field: "slug", source: "name" },
+  services: { field: "slug", source: "name" },
+  promotions: { field: "slug", source: "title" },
+  contentPages: { field: "pageKey", source: "title" },
+};
+
+async function getUniqueSlug(model: string, field: string, source: string) {
+  const base = slugify(source) || "item";
+  let candidate = base;
+  let suffix = 2;
+
+  while (await db[model].findUnique({ where: { [field]: candidate } })) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+}
+
+async function prepareCmsCreateData(model: string, body: Record<string, unknown>) {
+  const data = { ...body };
+  const config = autoSlugConfig[model];
+  const hasSlug = config && typeof data[config.field] === "string" && String(data[config.field]).trim();
+  const source = config && typeof data[config.source] === "string" ? String(data[config.source]) : "";
+
+  if (config && !hasSlug && source.trim()) {
+    data[config.field] = await getUniqueSlug(model, config.field, source);
+  }
+
+  return data;
+}
+
 function publicList(model: string, defaultWhere: Record<string, unknown> = {}) {
   return asyncHandler(async (req, res) => {
     const { page, limit, skip, take } = getPagination(req.query);
@@ -99,7 +135,9 @@ function cmsCrud(model: string, options: { searchFields?: string[]; softDelete?:
   crud.post(
     "/",
     asyncHandler(async (req, res) => {
-      const item = await db[model].create({ data: req.body });
+      const item = await db[model].create({
+        data: await prepareCmsCreateData(model, req.body),
+      });
       return created(res, item);
     }),
   );

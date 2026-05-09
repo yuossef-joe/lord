@@ -92,7 +92,6 @@ const MOCK_CONTENT_PAGES: ContentPageType[] = [
 
 const contentSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required"),
   body: z.string().min(1, "Content is required"),
   isPublished: z.boolean(),
   seoTitle: z.string().optional(),
@@ -103,6 +102,16 @@ type ContentFormValues = z.infer<typeof contentSchema>;
 
 const inputStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white";
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 /* ------------------------------------------------------------------ */
 /*  Page component                                                    */
@@ -131,7 +140,6 @@ export default function ContentPage() {
     setEditingPage(null);
     reset({
       title: "",
-      slug: "",
       body: "",
       isPublished: true,
       seoTitle: "",
@@ -146,9 +154,6 @@ export default function ContentPage() {
       title:
         ((page.content as Record<string, unknown>).title as string) ??
         page.pageKey,
-      slug:
-        ((page.content as Record<string, unknown>).slug as string) ??
-        page.pageKey,
       body: ((page.content as Record<string, unknown>).body as string) ?? "",
       isPublished:
         ((page.content as Record<string, unknown>).isPublished as boolean) ??
@@ -160,16 +165,18 @@ export default function ContentPage() {
   };
 
   const onSubmit = (data: ContentFormValues) => {
+    const generatedSlug = editingPage?.pageKey ?? slugify(data.title);
+
     if (editingPage) {
       setPages((prev) =>
         prev.map((p) =>
           p.id === editingPage.id
             ? {
                 ...p,
-                pageKey: data.slug,
+                pageKey: generatedSlug,
                 content: {
                   title: data.title,
-                  slug: data.slug,
+                  slug: generatedSlug,
                   body: data.body,
                   isPublished: data.isPublished,
                   seoTitle: data.seoTitle,
@@ -187,10 +194,10 @@ export default function ContentPage() {
     } else {
       const newPage: ContentPageType = {
         id: `cp${Date.now()}`,
-        pageKey: data.slug,
+        pageKey: generatedSlug,
         content: {
           title: data.title,
-          slug: data.slug,
+          slug: generatedSlug,
           body: data.body,
           isPublished: data.isPublished,
           seoTitle: data.seoTitle,
@@ -304,14 +311,6 @@ export default function ContentPage() {
               {...register("title")}
               className={inputStyles}
               placeholder="Page title"
-            />
-          </FormField>
-
-          <FormField label="Slug" required error={errors.slug?.message}>
-            <input
-              {...register("slug")}
-              className={inputStyles}
-              placeholder="page-slug"
             />
           </FormField>
 

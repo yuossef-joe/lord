@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
 import { useDropzone } from "react-dropzone";
-import { Plus, X, CloudUpload, Wand2 } from "lucide-react";
+import { Plus, X, CloudUpload } from "lucide-react";
 import { MOCK_BRANDS, MOCK_CATEGORIES } from "@/lib/mock-data";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
@@ -14,7 +14,6 @@ import FormField from "@/components/common/FormField";
 
 const productSchema = z.object({
   name: z.string().min(1, "Required"),
-  slug: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
   brandId: z.string().min(1, "Required"),
   categoryId: z.string().min(1, "Required"),
@@ -49,15 +48,6 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
-}
-
 export default function ProductCreatePage() {
   const navigate = useNavigate();
 
@@ -65,14 +55,11 @@ export default function ProductCreatePage() {
     register,
     handleSubmit,
     control,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
       brandId: "",
       categoryId: "",
@@ -99,8 +86,6 @@ export default function ProductCreatePage() {
     append: appendSpec,
     remove: removeSpec,
   } = useFieldArray({ control, name: "specifications" });
-
-  const nameValue = watch("name");
 
   const onDrop = useCallback(() => {
     // Mock: In a real app, upload images here
@@ -165,25 +150,6 @@ export default function ProductCreatePage() {
                     className={inputStyles}
                     placeholder="Product name"
                   />
-                </FormField>
-
-                <FormField label="Slug" required error={errors.slug?.message}>
-                  <div className="flex gap-2">
-                    <input
-                      {...register("slug")}
-                      className={inputStyles}
-                      placeholder="product-slug"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="md"
-                      onClick={() => setValue("slug", slugify(nameValue))}
-                      leftIcon={<Wand2 size={16} />}
-                    >
-                      Generate
-                    </Button>
-                  </div>
                 </FormField>
 
                 <FormField

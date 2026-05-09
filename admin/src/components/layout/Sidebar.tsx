@@ -12,6 +12,7 @@ import {
   Star,
   HelpCircle,
   Settings,
+  Truck,
 } from "lucide-react";
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { label: "Brands & Categories", icon: Layers, path: "/brands" },
   { label: "Services", icon: Wrench, path: "/services" },
   { label: "Inquiries & Requests", icon: MessageSquare, path: "/inquiries" },
+  { label: "Shipping", icon: Truck, path: "/shipping" },
   { label: "Coupons & Promos", icon: Tag, path: "/coupons" },
   { label: "Content Pages", icon: FileText, path: "/content" },
   { label: "Testimonials", icon: Star, path: "/testimonials" },

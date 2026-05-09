@@ -11,8 +11,16 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const OrdersPage = lazy(() => import("@/pages/orders/OrdersPage"));
+const OrderCreatePage = lazy(() => import("@/pages/orders/OrderCreatePage"));
+const OrderEditPage = lazy(() => import("@/pages/orders/OrderEditPage"));
 const OrderDetailPage = lazy(() => import("@/pages/orders/OrderDetailPage"));
 const CustomersPage = lazy(() => import("@/pages/customers/CustomersPage"));
+const CustomerCreatePage = lazy(
+  () => import("@/pages/customers/CustomerCreatePage"),
+);
+const CustomerEditPage = lazy(
+  () => import("@/pages/customers/CustomerEditPage"),
+);
 const CustomerDetailPage = lazy(
   () => import("@/pages/customers/CustomerDetailPage"),
 );
@@ -28,6 +36,7 @@ const ServiceCreatePage = lazy(
 );
 const ServiceEditPage = lazy(() => import("@/pages/services/ServiceEditPage"));
 const InquiriesPage = lazy(() => import("@/pages/inquiries/InquiriesPage"));
+const ShippingPage = lazy(() => import("@/pages/shipping/ShippingPage"));
 const CouponsPage = lazy(() => import("@/pages/coupons/CouponsPage"));
 const CouponCreatePage = lazy(() => import("@/pages/coupons/CouponCreatePage"));
 const CouponEditPage = lazy(() => import("@/pages/coupons/CouponEditPage"));
@@ -72,10 +81,26 @@ const protectedRoutes: RouteObject[] = [
     ),
   },
   {
+    path: "orders/create",
+    element: (
+      <SuspenseWrapper>
+        <OrderCreatePage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
     path: "orders/:id",
     element: (
       <SuspenseWrapper>
         <OrderDetailPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: "orders/:id/edit",
+    element: (
+      <SuspenseWrapper>
+        <OrderEditPage />
       </SuspenseWrapper>
     ),
   },
@@ -88,10 +113,26 @@ const protectedRoutes: RouteObject[] = [
     ),
   },
   {
+    path: "customers/create",
+    element: (
+      <SuspenseWrapper>
+        <CustomerCreatePage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
     path: "customers/:id",
     element: (
       <SuspenseWrapper>
         <CustomerDetailPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: "customers/:id/edit",
+    element: (
+      <SuspenseWrapper>
+        <CustomerEditPage />
       </SuspenseWrapper>
     ),
   },
@@ -156,6 +197,14 @@ const protectedRoutes: RouteObject[] = [
     element: (
       <SuspenseWrapper>
         <InquiriesPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: "shipping",
+    element: (
+      <SuspenseWrapper>
+        <ShippingPage />
       </SuspenseWrapper>
     ),
   },

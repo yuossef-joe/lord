@@ -47,6 +47,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     product.brand?.name?.toLowerCase() === "carrier"
       ? "bg-lord-navy"
       : "bg-lord-teal";
+  const hpLabel = product.horsepower
+    ? `${product.horsepower} HP`
+    : product.capacity;
 
   return (
     <motion.div
@@ -136,7 +139,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           <p className="text-xs text-medium-gray mb-2">
-            {product.capacity} · {product.type}
+            {hpLabel} · {product.type}
           </p>
 
           <div className="mt-auto">

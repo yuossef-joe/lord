@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, Pencil, Trash2, Wand2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Brand, ProductCategory } from "@/types";
 import { MOCK_BRANDS, MOCK_CATEGORIES } from "@/lib/mock-data";
 import Breadcrumb from "@/components/common/Breadcrumb";
@@ -26,7 +26,6 @@ type BrandFormValues = z.infer<typeof brandSchema>;
 
 const categorySchema = z.object({
   name: z.string().min(1, "Category name is required"),
-  slug: z.string().min(1, "Slug is required"),
   description: z.string().optional(),
   parentId: z.string().optional(),
   isActive: z.boolean(),
@@ -55,15 +54,6 @@ const inputStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white";
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 /* ── Component ───────────────────────────────────────── */
 
@@ -125,7 +115,6 @@ export default function BrandsPage() {
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
       parentId: "",
       isActive: true,
@@ -137,7 +126,6 @@ export default function BrandsPage() {
       setEditingCategory(category);
       categoryForm.reset({
         name: category.name,
-        slug: category.slug,
         description: category.description ?? "",
         parentId: "",
         isActive: category.isActive,
@@ -146,7 +134,6 @@ export default function BrandsPage() {
       setEditingCategory(null);
       categoryForm.reset({
         name: "",
-        slug: "",
         description: "",
         parentId: "",
         isActive: true,
@@ -169,8 +156,6 @@ export default function BrandsPage() {
     // Mock: delete category
     setDeletingCategory(null);
   };
-
-  const categoryNameValue = categoryForm.watch("name");
 
   /* ── Available parent categories (exclude self when editing) ── */
   const parentCategoryOptions = useMemo(
@@ -401,31 +386,6 @@ export default function BrandsPage() {
               className={inputStyles}
               placeholder="Category name"
             />
-          </FormField>
-
-          <FormField
-            label="Slug"
-            required
-            error={categoryForm.formState.errors.slug?.message}
-          >
-            <div className="flex gap-2">
-              <input
-                {...categoryForm.register("slug")}
-                className={inputStyles}
-                placeholder="category-slug"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={() =>
-                  categoryForm.setValue("slug", slugify(categoryNameValue))
-                }
-                leftIcon={<Wand2 size={16} />}
-              >
-                Generate
-              </Button>
-            </div>
           </FormField>
 
           <FormField

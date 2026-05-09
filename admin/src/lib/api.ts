@@ -60,14 +60,26 @@ async function cmsApiRequest<T>(
 }
 
 // ─── Auth ────────────────────────────────────────────
-export const cmsLogin = (username: string, password: string) =>
-  cmsApiRequest<{
-    token: string;
-    admin: { id: string; username: string; role: string };
-  }>("/auth/login", {
+export const cmsLogin = async (email: string, password: string) => {
+  const response = await cmsApiRequest<
+    ApiResponse<{
+      accessToken: string;
+      refreshToken: string;
+      user: { id: string; name: string; email: string; role: string };
+    }>
+  >("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
+  return {
+    token: response.data.accessToken,
+    refreshToken: response.data.refreshToken,
+    admin: {
+      ...response.data.user,
+      username: response.data.user.email,
+    },
+  };
+};
 
 export const cmsLogout = () =>
   cmsApiRequest("/auth/logout", { method: "POST" });
@@ -98,6 +110,18 @@ export const fetchOrders = (params: string) =>
 export const fetchOrder = (id: string) =>
   cmsApiRequest<ApiResponse<Order>>(`/orders/${id}`);
 
+export const createOrder = (data: Record<string, unknown>) =>
+  cmsApiRequest<ApiResponse<Order>>("/orders", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateOrder = (id: string, data: Record<string, unknown>) =>
+  cmsApiRequest<ApiResponse<Order>>(`/orders/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
 export const updateOrderStatus = (id: string, status: string, note?: string) =>
   cmsApiRequest(`/orders/${id}/status`, {
     method: "PATCH",
@@ -120,6 +144,9 @@ export const processRefund = (id: string, amount: number, reason: string) =>
     body: JSON.stringify({ amount, reason }),
   });
 
+export const archiveOrder = (id: string) =>
+  cmsApiRequest(`/orders/${id}`, { method: "DELETE" });
+
 // ─── Customers ───────────────────────────────────────
 export const fetchCustomers = (params: string) =>
   cmsApiRequest<PaginatedResponse<Customer>>(`/customers?${params}`);
@@ -127,11 +154,69 @@ export const fetchCustomers = (params: string) =>
 export const fetchCustomer = (id: string) =>
   cmsApiRequest<ApiResponse<Customer>>(`/customers/${id}`);
 
+export const createCustomer = (data: Record<string, unknown>) =>
+  cmsApiRequest<ApiResponse<Customer>>("/customers", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateCustomer = (id: string, data: Record<string, unknown>) =>
+  cmsApiRequest<ApiResponse<Customer>>(`/customers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
 export const toggleCustomerStatus = (id: string, isActive: boolean) =>
   cmsApiRequest(`/customers/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ isActive }),
   });
+
+export const deactivateCustomer = (id: string) =>
+  cmsApiRequest(`/customers/${id}`, { method: "DELETE" });
+
+// ─── Shipping ─────────────────────────────────────────
+export const fetchShippingZones = () =>
+  cmsApiRequest<ApiResponse<unknown[]>>("/shipping/zones");
+
+export const createShippingZone = (data: Record<string, unknown>) =>
+  cmsApiRequest("/shipping/zones", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateShippingZone = (
+  id: string,
+  data: Record<string, unknown>,
+) =>
+  cmsApiRequest(`/shipping/zones/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const deleteShippingZone = (id: string) =>
+  cmsApiRequest(`/shipping/zones/${id}`, { method: "DELETE" });
+
+export const fetchShippingMethods = () =>
+  cmsApiRequest<ApiResponse<unknown[]>>("/shipping/methods");
+
+export const createShippingMethod = (data: Record<string, unknown>) =>
+  cmsApiRequest("/shipping/methods", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateShippingMethod = (
+  id: string,
+  data: Record<string, unknown>,
+) =>
+  cmsApiRequest(`/shipping/methods/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const deleteShippingMethod = (id: string) =>
+  cmsApiRequest(`/shipping/methods/${id}`, { method: "DELETE" });
 
 // ─── Products ────────────────────────────────────────
 export const fetchProducts = (params: string) =>

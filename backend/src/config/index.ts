@@ -8,7 +8,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   API_BASE_URL: z.string().url().default("http://localhost:5000"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  CORS_ORIGINS: z.string().default("http://localhost:3000,http://localhost:5173"),
+  CORS_ORIGINS: z.string().default("http://localhost:3000,http://localhost:5173,http://localhost:5174"),
   JWT_CUSTOMER_SECRET: z.string().min(16).default("development-customer-secret-change-me"),
   JWT_CUSTOMER_REFRESH_SECRET: z.string().min(16).default("development-customer-refresh-secret-change-me"),
   JWT_CMS_SECRET: z.string().min(16).default("development-cms-secret-change-me"),

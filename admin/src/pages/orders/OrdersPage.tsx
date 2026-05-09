@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Eye, Pencil, Plus, Archive } from "lucide-react";
 import type { Order, OrderStatus } from "@/types";
 import { MOCK_ORDERS } from "@/lib/mock-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -37,6 +37,10 @@ const columns = [
       );
     },
   }),
+  columnHelper.accessor("customer.nationalId", {
+    header: "National ID",
+    cell: (info) => info.getValue() || "—",
+  }),
   columnHelper.accessor("items", {
     header: "Items",
     cell: (info) => `${info.getValue().length} items`,
@@ -65,12 +69,28 @@ const columns = [
     id: "actions",
     header: "",
     cell: (info) => (
-      <Link
-        to={`/orders/${info.row.original.id}`}
-        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
-      >
-        <Eye size={16} />
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link
+          to={`/orders/${info.row.original.id}`}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
+          aria-label="View order"
+        >
+          <Eye size={16} />
+        </Link>
+        <Link
+          to={`/orders/${info.row.original.id}/edit`}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
+          aria-label="Edit order"
+        >
+          <Pencil size={16} />
+        </Link>
+        <button
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+          aria-label="Archive order"
+        >
+          <Archive size={16} />
+        </button>
+      </div>
     ),
   }),
 ];
@@ -136,11 +156,20 @@ export default function OrdersPage() {
         className="flex justify-between items-center mb-6 mt-4"
       >
         <h1 className="text-2xl font-bold text-navy">Orders</h1>
-        <SearchInput
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search orders…"
-        />
+        <div className="flex items-center gap-3">
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search orders…"
+          />
+          <Link
+            to="/orders/create"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-teal px-4 text-sm font-medium text-white transition hover:bg-teal/90"
+          >
+            <Plus size={16} />
+            Create Order
+          </Link>
+        </div>
       </motion.div>
 
       <motion.div variants={itemVariants} className="flex gap-2 mb-6">

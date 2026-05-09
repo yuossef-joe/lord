@@ -8,7 +8,6 @@ import {
   MOCK_CONTACT_SETTINGS,
   MOCK_ABOUT_CONTENT,
   MOCK_SITE_SETTINGS,
-  MOCK_SHIPPING_SETTINGS,
   MOCK_HOME_CONTENT,
   MOCK_CUSTOMER,
   MOCK_ADDRESSES,
@@ -75,6 +74,12 @@ async function withMock<T>(
   }
 }
 
+const parseHorsepower = (value?: string | number) => {
+  if (typeof value === "number") return value;
+  const match = value?.match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : undefined;
+};
+
 // ─── Public endpoints ────────────────────────────────────
 export const fetchHomeContent = () =>
   withMock(
@@ -93,6 +98,10 @@ export const fetchProducts = (params: string) =>
       const search = url.get("search");
       const featured = url.get("featured");
       const sort = url.get("sort");
+      const type = url.get("type");
+      const hp = parseHorsepower(url.get("hp") || undefined);
+      const hpMin = parseHorsepower(url.get("hpMin") || undefined);
+      const hpMax = parseHorsepower(url.get("hpMax") || undefined);
       const page = parseInt(url.get("page") || "1");
       const limit = parseInt(url.get("limit") || "12");
 
@@ -104,6 +113,22 @@ export const fetchProducts = (params: string) =>
       if (category)
         items = items.filter(
           (p) => p.category._id === category || p.category.slug === category,
+        );
+      if (type)
+        items = items.filter(
+          (p) => p.type.toLowerCase() === type.toLowerCase(),
+        );
+      if (hp)
+        items = items.filter(
+          (p) => parseHorsepower(p.horsepower ?? p.capacity) === hp,
+        );
+      if (hpMin !== undefined)
+        items = items.filter(
+          (p) => (parseHorsepower(p.horsepower ?? p.capacity) ?? 0) >= hpMin,
+        );
+      if (hpMax !== undefined)
+        items = items.filter(
+          (p) => (parseHorsepower(p.horsepower ?? p.capacity) ?? 0) <= hpMax,
         );
       if (search) {
         const q = search.toLowerCase();
@@ -239,7 +264,40 @@ export const fetchSiteSettings = () =>
 export const fetchShippingSettings = () =>
   withMock(
     () => apiRequest("/settings/shipping"),
-    () => ({ data: MOCK_SHIPPING_SETTINGS }) as never,
+    () => ({ data: { enabled: true, defaultFee: 150 } }) as never,
+  );
+
+export const fetchShippingOptions = (params: string) =>
+  withMock(
+    () => apiRequest(`/shipping/options?${params}`),
+    () => {
+      const url = new URLSearchParams(params);
+      const governorate = url.get("governorate") || "Egypt";
+      const subtotal = Number(url.get("subtotal") || 0);
+      const baseFee =
+        subtotal >= 50000 ? 0 : governorate === "Cairo" ? 120 : 180;
+
+      return {
+        data: [
+          {
+            _id: "standard-delivery",
+            name: "Standard delivery",
+            description:
+              "Delivery to your door with a scheduled call before arrival.",
+            fee: baseFee,
+            estimatedDays: "2-4 business days",
+          },
+          {
+            _id: "delivery-installation",
+            name: "Delivery with installation",
+            description:
+              "Delivery plus technician setup for eligible air conditioners.",
+            fee: baseFee + 350,
+            estimatedDays: "3-5 business days",
+          },
+        ],
+      } as never;
+    },
   );
 
 // ─── Inquiry & service request endpoints ─────────────────

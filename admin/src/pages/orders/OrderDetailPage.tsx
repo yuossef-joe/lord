@@ -262,6 +262,12 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="text-gray-600">{order.customer.email}</div>
                 <div className="text-gray-600">{order.customer.phone}</div>
+                {order.customer.nationalId && (
+                  <div className="text-gray-600">
+                    National ID:{" "}
+                    <span className="font-mono">{order.customer.nationalId}</span>
+                  </div>
+                )}
               </div>
             </Card>
           </motion.div>

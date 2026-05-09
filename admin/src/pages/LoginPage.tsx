@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  username: z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -87,14 +87,14 @@ export default function LoginPage() {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700 mb-1.5"
               >
-                Username
+                Email
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   id="username"
-                  type="text"
-                  placeholder="Enter your username"
+                  type="email"
+                  placeholder="admin@lord.local"
                   {...register("username")}
                   className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition"
                 />

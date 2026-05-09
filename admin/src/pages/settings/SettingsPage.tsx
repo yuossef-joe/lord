@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "motion/react";
-import { Globe, Phone, Mail, Search, CreditCard, Truck } from "lucide-react";
+import { Globe, Phone, Mail, Search, Truck } from "lucide-react";
 import type {
   SiteSettings,
   ContactSettings,
   EmailSettings,
   SeoSettings,
-  // PaymobSettings,
   ShippingSettings,
 } from "@/types";
 import { cn } from "@/lib/utils";
@@ -46,7 +45,6 @@ type SettingsTab =
   | "contact"
   | "email"
   | "seo"
-  | "payment"
   | "shipping";
 
 const TABS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
@@ -54,7 +52,6 @@ const TABS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { key: "contact", label: "Contact", icon: <Phone size={16} /> },
   { key: "email", label: "Email", icon: <Mail size={16} /> },
   { key: "seo", label: "SEO", icon: <Search size={16} /> },
-  { key: "payment", label: "Payment", icon: <CreditCard size={16} /> },
   { key: "shipping", label: "Shipping", icon: <Truck size={16} /> },
 ];
 
@@ -97,17 +94,6 @@ const defaultSeoSettings: SeoSettings = {
     "Shop the best Carrier and Midea air conditioners in Egypt. Professional installation, maintenance, and repair services.",
   googleAnalyticsId: "",
 };
-
-// const defaultPaymobSettings: PaymobSettings = {
-//   apiKey: "",
-//   secretKey: "",
-//   merchantId: "",
-//   cardIntegrationId: "",
-//   walletIntegrationId: "",
-//   iframeId: "",
-//   hmacSecret: "",
-//   environment: "sandbox",
-// };
 
 const defaultShippingSettings: ShippingSettings = {
   freeShippingThreshold: 15000,
@@ -375,89 +361,6 @@ function SeoSettingsForm() {
   );
 }
 
-// function PaymentSettingsForm() {
-//   const { register, handleSubmit } = useForm<PaymobSettings>({
-//     defaultValues: defaultPaymobSettings,
-//   });
-
-//   const onSubmit = () => {
-//     alert("Settings saved successfully");
-//   };
-
-//   return (
-//     <Card>
-//       <h2 className="text-lg font-semibold text-navy mb-5">Paymob Settings</h2>
-//       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <FormField label="API Key">
-//             <input
-//               type="password"
-//               {...register("apiKey")}
-//               className={inputStyles}
-//             />
-//           </FormField>
-
-//           <FormField label="Secret Key">
-//             <input
-//               type="password"
-//               {...register("secretKey")}
-//               className={inputStyles}
-//             />
-//           </FormField>
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <FormField label="Merchant ID">
-//             <input {...register("merchantId")} className={inputStyles} />
-//           </FormField>
-
-//           <FormField label="Card Integration ID">
-//             <input {...register("cardIntegrationId")} className={inputStyles} />
-//           </FormField>
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <FormField label="Wallet Integration ID">
-//             <input
-//               {...register("walletIntegrationId")}
-//               className={inputStyles}
-//             />
-//           </FormField>
-
-//           <FormField label="iFrame ID">
-//             <input {...register("iframeId")} className={inputStyles} />
-//           </FormField>
-//         </div>
-
-//         <FormField label="HMAC Secret">
-//           <input
-//             type="password"
-//             {...register("hmacSecret")}
-//             className={inputStyles}
-//           />
-//         </FormField>
-
-//         <FormField label="Environment">
-//           <label className="flex items-center gap-2 cursor-pointer">
-//             <input
-//               type="checkbox"
-//               {...register("environment")}
-//               className="h-4 w-4 rounded border-gray-300 text-teal focus:ring-teal"
-//             />
-//             <span className="text-sm text-gray-700">
-//               Live mode (uncheck for sandbox)
-//             </span>
-//           </label>
-//         </FormField>
-
-//         <div className="flex justify-end pt-2">
-//           <Button type="submit">Save Changes</Button>
-//         </div>
-//       </form>
-//     </Card>
-//   );
-// }
-
 function ShippingSettingsForm() {
   const { register, handleSubmit } = useForm<ShippingSettings>({
     defaultValues: defaultShippingSettings,
@@ -602,7 +505,6 @@ export default function SettingsPage() {
         {activeTab === "contact" && <ContactSettingsForm />}
         {activeTab === "email" && <EmailSettingsForm />}
         {activeTab === "seo" && <SeoSettingsForm />}
-        {/* {activeTab === "payment" && <PaymentSettingsForm />} */}
         {activeTab === "shipping" && <ShippingSettingsForm />}
       </motion.div>
     </motion.div>

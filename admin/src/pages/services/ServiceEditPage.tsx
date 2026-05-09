@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, X, Wand2, Wrench } from "lucide-react";
+import { Plus, X, Wrench } from "lucide-react";
 import { MOCK_SERVICES } from "@/lib/mock-data";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
@@ -15,7 +15,6 @@ import EmptyState from "@/components/common/EmptyState";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Required"),
-  slug: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
   type: z.enum(["installation", "maintenance", "repair", "consultation"], {
     error: "Required",
@@ -51,15 +50,6 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
-}
-
 const SERVICE_TYPES = [
   { label: "Installation", value: "installation" },
   { label: "Maintenance", value: "maintenance" },
@@ -79,15 +69,12 @@ export default function ServiceEditPage() {
     register,
     handleSubmit,
     control,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
     defaultValues: service
       ? {
           name: service.name,
-          slug: service.slug,
           description: service.description ?? "",
           type: service.type.name.toLowerCase() as ServiceFormValues["type"],
           price: service.price ?? 0,
@@ -100,7 +87,6 @@ export default function ServiceEditPage() {
         }
       : {
           name: "",
-          slug: "",
           description: "",
           type: undefined,
           price: 0,
@@ -116,8 +102,6 @@ export default function ServiceEditPage() {
     append: appendUnitType,
     remove: removeUnitType,
   } = useFieldArray({ control, name: "applicableUnitTypes" });
-
-  const nameValue = watch("name");
 
   const onSubmit = (_data: ServiceFormValues) => {
     // Mock: update service
@@ -189,25 +173,6 @@ export default function ServiceEditPage() {
                     className={inputStyles}
                     placeholder="Service name"
                   />
-                </FormField>
-
-                <FormField label="Slug" required error={errors.slug?.message}>
-                  <div className="flex gap-2">
-                    <input
-                      {...register("slug")}
-                      className={inputStyles}
-                      placeholder="service-slug"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="md"
-                      onClick={() => setValue("slug", slugify(nameValue))}
-                      leftIcon={<Wand2 size={16} />}
-                    >
-                      Generate
-                    </Button>
-                  </div>
                 </FormField>
 
                 <FormField

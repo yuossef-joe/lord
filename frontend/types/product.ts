@@ -41,6 +41,7 @@ export interface Product {
   price: number;
   salePrice?: number;
   stockQuantity: number;
+  horsepower?: number;
   capacity: string;
   type: string;
   specifications: ProductSpecification[];
@@ -61,6 +62,9 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   capacity?: string;
+  hp?: string;
+  hpMin?: number;
+  hpMax?: number;
   search?: string;
   sort?: string;
   page?: number;
