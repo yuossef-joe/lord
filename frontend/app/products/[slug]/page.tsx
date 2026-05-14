@@ -18,7 +18,7 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -57,24 +57,38 @@ export default function ProductDetailPage() {
     );
   }
 
+  const productName = localize(product.name, product.nameAr);
+  const productDescription = localize(product.description, product.descriptionAr);
+  const productShortDescription = localize(
+    product.shortDescription,
+    product.shortDescriptionAr,
+  );
+  const localizedFeatures =
+    product.features
+      ?.map((feature, index) => localize(feature, product.featuresAr?.[index]))
+      .filter(Boolean) ?? [];
+
   const breadcrumbItems = [
     { label: t("nav.home"), href: "/" },
     { label: t("nav.products"), href: "/products" },
-    { label: product.name },
+    { label: productName },
   ];
 
   return (
     <PageTransition>
       <SeoHead
-        title={`${product.name} | Lord`}
-        description={product.shortDescription || product.name}
+        title={`${productName} | Lord`}
+        description={productShortDescription || productName}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Product",
-          name: product.name,
-          description: product.shortDescription,
+          name: productName,
+          description: productShortDescription,
           image: product.images?.[0]?.url,
-          brand: { "@type": "Brand", name: product.brand?.name },
+          brand: {
+            "@type": "Brand",
+            name: localize(product.brand?.name, product.brand?.nameAr),
+          },
           offers: {
             "@type": "Offer",
             price: product.salePrice || product.price,
@@ -94,7 +108,7 @@ export default function ProductDetailPage() {
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
           <ImageGallery
             images={product.images || []}
-            productName={product.name}
+            productName={productName}
           />
 
           <div className="space-y-6">
@@ -104,15 +118,33 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Description */}
-        {product.description && (
+        {productDescription && (
           <div className="mt-12">
             <h2 className="mb-4 text-xl font-bold text-lord-navy">
               {t("products.description")}
             </h2>
             <div
               className="prose prose-sm max-w-none text-dark-charcoal"
-              dangerouslySetInnerHTML={{ __html: product.description }}
+              dangerouslySetInnerHTML={{ __html: productDescription }}
             />
+          </div>
+        )}
+
+        {localizedFeatures.length > 0 && (
+          <div className="mt-12">
+            <h2 className="mb-4 text-xl font-bold text-lord-navy">
+              {t("products.features")}
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {localizedFeatures.map((feature) => (
+                <li
+                  key={feature}
+                  className="rounded-card border border-[#E8EAED] bg-white px-4 py-3 text-sm text-dark-charcoal"
+                >
+                  {feature}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

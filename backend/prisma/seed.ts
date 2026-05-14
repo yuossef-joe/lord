@@ -20,6 +20,7 @@ type SeedProduct = {
   brandSlug: string;
   categorySlug: string;
   name: string;
+  nameAr: string;
   modelNumber: string;
   type: string;
   capacity: number;
@@ -44,27 +45,35 @@ async function seedBrands() {
   const brands = [
     {
       name: "Carrier",
+      nameAr: "كاريير",
       slug: "carrier",
       logoUrl: "https://placehold.co/240x100/172041/ffffff?text=Carrier",
       description: "Premium residential and commercial cooling systems.",
+      descriptionAr: "أنظمة تبريد مميزة للمنازل والمشروعات التجارية.",
     },
     {
       name: "Midea",
+      nameAr: "ميديا",
       slug: "midea",
       logoUrl: "https://placehold.co/240x100/0DBACA/ffffff?text=Midea",
       description: "Efficient AC units with strong value for homes and offices.",
+      descriptionAr: "وحدات تكييف موفرة بقيمة ممتازة للمنازل والمكاتب.",
     },
     {
       name: "Sharp",
+      nameAr: "شارب",
       slug: "sharp",
       logoUrl: "https://placehold.co/240x100/1A1A2E/ffffff?text=Sharp",
       description: "Reliable cooling products for Egyptian weather.",
+      descriptionAr: "منتجات تبريد موثوقة تناسب الطقس المصري.",
     },
     {
       name: "Tornado",
+      nameAr: "تورنيدو",
       slug: "tornado",
       logoUrl: "https://placehold.co/240x100/4DB8D4/172041?text=Tornado",
       description: "Affordable air conditioning for everyday use.",
+      descriptionAr: "تكييف اقتصادي للاستخدام اليومي.",
     },
   ];
 
@@ -81,37 +90,47 @@ async function seedCategories() {
   const categories = [
     {
       name: "Split Unit",
+      nameAr: "تكييف سبليت",
       slug: "split",
       icon: "Wind",
       description: "Wall-mounted split air conditioners.",
+      descriptionAr: "تكييفات سبليت مثبتة على الحائط.",
       sortOrder: 1,
     },
     {
       name: "Cassette",
+      nameAr: "كاسيت",
       slug: "cassette",
       icon: "Square",
       description: "Ceiling cassette units for offices and shops.",
+      descriptionAr: "وحدات كاسيت سقفية للمكاتب والمتاجر.",
       sortOrder: 2,
     },
     {
       name: "Duct",
+      nameAr: "دكت",
       slug: "duct",
       icon: "Layers",
       description: "Concealed ducted cooling systems.",
+      descriptionAr: "أنظمة تبريد دكت مخفية.",
       sortOrder: 3,
     },
     {
       name: "Central",
+      nameAr: "مركزي",
       slug: "central",
       icon: "Building",
       description: "Central cooling systems for large spaces.",
+      descriptionAr: "أنظمة تبريد مركزية للمساحات الكبيرة.",
       sortOrder: 4,
     },
     {
       name: "Portable",
+      nameAr: "متنقل",
       slug: "portable",
       icon: "Package",
       description: "Portable air conditioners for flexible cooling.",
+      descriptionAr: "تكييفات متنقلة لتبريد مرن.",
       sortOrder: 5,
     },
   ];
@@ -136,6 +155,7 @@ async function seedProducts() {
       brandSlug: "carrier",
       categorySlug: "split",
       name: "Carrier Optimax Pro 24K",
+      nameAr: "كاريير أوبتيماكس برو 24 ألف",
       modelNumber: "42QHF024",
       type: "Split",
       capacity: 24000,
@@ -150,6 +170,7 @@ async function seedProducts() {
       brandSlug: "carrier",
       categorySlug: "cassette",
       name: "Carrier Ceiling Cassette 36K",
+      nameAr: "كاريير كاسيت سقفي 36 ألف",
       modelNumber: "40MBCQ36",
       type: "Cassette",
       capacity: 36000,
@@ -162,6 +183,7 @@ async function seedProducts() {
       brandSlug: "midea",
       categorySlug: "split",
       name: "Midea Mission Inverter 18K",
+      nameAr: "ميديا ميشن انفرتر 18 ألف",
       modelNumber: "MSAGBU-18HRFN",
       type: "Split",
       capacity: 18000,
@@ -176,6 +198,7 @@ async function seedProducts() {
       brandSlug: "midea",
       categorySlug: "duct",
       name: "Midea Ducted Inverter 48K",
+      nameAr: "ميديا دكت انفرتر 48 ألف",
       modelNumber: "MTI-48HR",
       type: "Duct",
       capacity: 48000,
@@ -187,6 +210,7 @@ async function seedProducts() {
       brandSlug: "sharp",
       categorySlug: "split",
       name: "Sharp Plasmacluster Cool 12K",
+      nameAr: "شارب بلازما كلاستر 12 ألف",
       modelNumber: "AY-XP12YHE",
       type: "Split",
       capacity: 12000,
@@ -199,6 +223,7 @@ async function seedProducts() {
       brandSlug: "sharp",
       categorySlug: "central",
       name: "Sharp Central Cooling 60K",
+      nameAr: "شارب تبريد مركزي 60 ألف",
       modelNumber: "SCC-60HR",
       type: "Central",
       capacity: 60000,
@@ -210,6 +235,7 @@ async function seedProducts() {
       brandSlug: "tornado",
       categorySlug: "split",
       name: "Tornado Digital 12K",
+      nameAr: "تورنيدو ديجيتال 12 ألف",
       modelNumber: "TH-C12YEE",
       type: "Split",
       capacity: 12000,
@@ -222,6 +248,7 @@ async function seedProducts() {
       brandSlug: "tornado",
       categorySlug: "portable",
       name: "Tornado Portable 10K",
+      nameAr: "تورنيدو متنقل 10 آلاف",
       modelNumber: "TPH-C10",
       type: "Portable",
       capacity: 10000,
@@ -245,6 +272,7 @@ async function seedProducts() {
         brandId: brand.id,
         categoryId: category.id,
         name: product.name,
+        nameAr: product.nameAr,
         modelNumber: product.modelNumber,
         type: product.type,
         capacity: product.capacity,
@@ -257,11 +285,18 @@ async function seedProducts() {
         weight: { indoor: "14 kg", outdoor: "46 kg" },
         color: "White",
         description: `${product.name} with efficient cooling, quiet operation, and Lord AC installation support.`,
+        descriptionAr: `${product.nameAr} بتبريد فعال وتشغيل هادئ ودعم تركيب من لورد للتكييف.`,
         features: [
           "Fast cooling",
           "Low noise operation",
           "Energy saving mode",
           "Auto restart",
+        ],
+        featuresAr: [
+          "تبريد سريع",
+          "تشغيل منخفض الضوضاء",
+          "وضع توفير الطاقة",
+          "إعادة تشغيل تلقائية",
         ],
         specs: {
           capacity: `${product.capacity.toLocaleString()} BTU`,
@@ -285,6 +320,7 @@ async function seedProducts() {
         brandId: brand.id,
         categoryId: category.id,
         name: product.name,
+        nameAr: product.nameAr,
         slug,
         modelNumber: product.modelNumber,
         type: product.type,
@@ -298,11 +334,18 @@ async function seedProducts() {
         weight: { indoor: "14 kg", outdoor: "46 kg" },
         color: "White",
         description: `${product.name} with efficient cooling, quiet operation, and Lord AC installation support.`,
+        descriptionAr: `${product.nameAr} بتبريد فعال وتشغيل هادئ ودعم تركيب من لورد للتكييف.`,
         features: [
           "Fast cooling",
           "Low noise operation",
           "Energy saving mode",
           "Auto restart",
+        ],
+        featuresAr: [
+          "تبريد سريع",
+          "تشغيل منخفض الضوضاء",
+          "وضع توفير الطاقة",
+          "إعادة تشغيل تلقائية",
         ],
         specs: {
           capacity: `${product.capacity.toLocaleString()} BTU`,
@@ -880,18 +923,24 @@ async function seedServices() {
   const serviceTypes = [
     {
       name: "Installation",
+      nameAr: "التركيب",
       slug: "installation",
       description: "Professional AC installation by trained technicians.",
+      descriptionAr: "تركيب تكييف احترافي بواسطة فنيين مدربين.",
     },
     {
       name: "Maintenance",
+      nameAr: "الصيانة",
       slug: "maintenance",
       description: "Preventive maintenance and seasonal cleaning.",
+      descriptionAr: "صيانة وقائية وتنظيف موسمي للحفاظ على كفاءة التكييف.",
     },
     {
       name: "Repair",
+      nameAr: "الإصلاح",
       slug: "repair",
       description: "Diagnostics and repairs for cooling issues.",
+      descriptionAr: "تشخيص وإصلاح مشكلات التبريد والتسريب والكهرباء.",
     },
   ];
 
@@ -909,23 +958,29 @@ async function seedServices() {
     {
       typeSlug: "installation",
       name: "Split AC Installation",
+      nameAr: "تركيب تكييف سبليت",
       slug: "split-ac-installation",
       sortOrder: 1,
       description: "Mounting, copper piping, drainage, vacuum, and startup testing.",
+      descriptionAr: "تركيب الوحدة وتمديد مواسير النحاس والصرف والتفريغ واختبار التشغيل.",
     },
     {
       typeSlug: "maintenance",
       name: "Seasonal AC Maintenance",
+      nameAr: "صيانة تكييف موسمية",
       slug: "seasonal-ac-maintenance",
       sortOrder: 2,
       description: "Filter cleaning, coil check, gas pressure check, and performance test.",
+      descriptionAr: "تنظيف الفلاتر وفحص الملفات وضغط الغاز واختبار الأداء.",
     },
     {
       typeSlug: "repair",
       name: "Emergency AC Repair",
+      nameAr: "إصلاح تكييف طارئ",
       slug: "emergency-ac-repair",
       sortOrder: 3,
       description: "Fast diagnosis for no-cooling, water leakage, electrical, and noise issues.",
+      descriptionAr: "تشخيص سريع لمشكلات ضعف التبريد وتسريب المياه والكهرباء والضوضاء.",
     },
   ];
 
@@ -936,10 +991,14 @@ async function seedServices() {
       update: {
         serviceTypeId: serviceType?.id,
         name: service.name,
+        nameAr: service.nameAr,
         description: service.description,
+        descriptionAr: service.descriptionAr,
         content: {
           bullets: ["Certified technicians", "Clear pricing", "Warranty-backed work"],
+          bulletsAr: ["فنيون معتمدون", "أسعار واضحة", "أعمال مدعومة بالضمان"],
           estimatedTime: "1-3 hours",
+          estimatedTimeAr: "من ساعة إلى 3 ساعات",
         },
         sortOrder: service.sortOrder,
         isActive: true,
@@ -947,11 +1006,15 @@ async function seedServices() {
       create: {
         serviceTypeId: serviceType?.id,
         name: service.name,
+        nameAr: service.nameAr,
         slug: service.slug,
         description: service.description,
+        descriptionAr: service.descriptionAr,
         content: {
           bullets: ["Certified technicians", "Clear pricing", "Warranty-backed work"],
+          bulletsAr: ["فنيون معتمدون", "أسعار واضحة", "أعمال مدعومة بالضمان"],
           estimatedTime: "1-3 hours",
+          estimatedTimeAr: "من ساعة إلى 3 ساعات",
         },
         sortOrder: service.sortOrder,
         isActive: true,
@@ -1079,35 +1142,88 @@ async function seedInquiries() {
 async function seedContent() {
   const pages = [
     {
+      pageKey: "home",
+      title: "Home Page",
+      titleAr: "الصفحة الرئيسية",
+      content: {
+        title: "Home Page",
+        titleAr: "الصفحة الرئيسية",
+        heroHeadline: "Authorized Carrier & Midea Dealer",
+        heroHeadlineAr: "وكيل معتمد لكاريير وميديا",
+        heroTagline: "Air Conditioning — Since 1986",
+        heroTaglineAr: "تكييف الهواء — منذ ١٩٨٦",
+        featuredTitle: "Featured Products",
+        featuredTitleAr: "منتجات مميزة",
+        servicesTitle: "Our Services",
+        servicesTitleAr: "خدماتنا",
+        whyTitle: "Why Choose Lord",
+        whyTitleAr: "لماذا تختار لورد",
+        testimonialsTitle: "What Our Customers Say",
+        testimonialsTitleAr: "ماذا يقول عملاؤنا",
+        ctaHeadline: "Need help choosing? Request a free consultation",
+        ctaHeadlineAr: "تحتاج مساعدة في الاختيار؟ اطلب استشارة مجانية",
+        isPublished: true,
+      },
+      seo: {
+        metaTitle: "Lord AC — Authorized Carrier & Midea Dealer",
+        metaTitleAr: "لورد للتكييف — وكيل معتمد لكاريير وميديا",
+        metaDescription:
+          "Lord Air Conditioning — Authorized Carrier & Midea dealer in Egypt since 1986.",
+        metaDescriptionAr:
+          "لورد لتكييف الهواء — وكيل معتمد لكاريير وميديا في مصر منذ ١٩٨٦.",
+      },
+    },
+    {
       pageKey: "about",
       title: "About Lord AC",
+      titleAr: "عن لورد للتكييف",
       content: {
+        title: "About Lord AC",
+        titleAr: "عن لورد للتكييف",
         hero: "Cooling Egypt since 1986",
+        heroAr: "نبرد مصر منذ 1986",
         body: "Lord AC supplies, installs, and services residential and commercial air conditioning systems.",
+        bodyAr: "لورد للتكييف توفر وتثبت وتصون أنظمة التكييف السكنية والتجارية.",
       },
       seo: {
         title: "About Lord AC",
+        titleAr: "عن لورد للتكييف",
         description: "Learn about Lord AC services and AC products in Egypt.",
+        descriptionAr: "تعرف على خدمات ومنتجات لورد للتكييف في مصر.",
       },
     },
     {
       pageKey: "privacy-policy",
       title: "Privacy Policy",
+      titleAr: "سياسة الخصوصية",
       content: {
+        title: "Privacy Policy",
+        titleAr: "سياسة الخصوصية",
         body: "We use customer information to process orders, provide services, and improve support.",
+        bodyAr: "نستخدم بيانات العملاء لمعالجة الطلبات وتقديم الخدمات وتحسين الدعم.",
       },
       seo: {
         title: "Privacy Policy",
+        titleAr: "سياسة الخصوصية",
+        description: "How Lord AC handles customer and order information.",
+        descriptionAr: "كيف تتعامل لورد للتكييف مع بيانات العملاء والطلبات.",
       },
     },
     {
       pageKey: "terms",
       title: "Terms and Conditions",
+      titleAr: "الشروط والأحكام",
       content: {
+        title: "Terms and Conditions",
+        titleAr: "الشروط والأحكام",
         body: "Orders, installation visits, warranties, and returns follow Lord AC published policies.",
+        bodyAr: "تخضع الطلبات وزيارات التركيب والضمانات والإرجاع لسياسات لورد للتكييف المنشورة.",
       },
       seo: {
         title: "Terms and Conditions",
+        titleAr: "الشروط والأحكام",
+        description: "Lord AC order, installation, warranty, and return terms.",
+        descriptionAr: "شروط الطلبات والتركيب والضمان والإرجاع لدى لورد للتكييف.",
       },
     },
   ];
@@ -1124,28 +1240,36 @@ async function seedContent() {
     {
       id: "faq-installation-time",
       question: "How long does AC installation take?",
+      questionAr: "كم يستغرق تركيب التكييف؟",
       answer: "Most split AC installations are completed in 2 to 4 hours after site inspection.",
+      answerAr: "يتم تركيب أغلب تكييفات السبليت خلال ساعتين إلى أربع ساعات بعد معاينة الموقع.",
       category: "Installation",
       displayOrder: 1,
     },
     {
       id: "faq-warranty",
       question: "Do products include warranty?",
+      questionAr: "هل المنتجات تشمل ضمان؟",
       answer: "Warranty depends on the brand and model. Compressor warranty is usually up to 5 years.",
+      answerAr: "يعتمد الضمان على العلامة والموديل، وغالبا يصل ضمان الضاغط إلى 5 سنوات.",
       category: "Products",
       displayOrder: 2,
     },
     {
       id: "faq-payment",
       question: "Which payment methods are available?",
+      questionAr: "ما طرق الدفع المتاحة؟",
       answer: "Customers can pay by card, mobile wallet, installment where available, or cash on delivery.",
+      answerAr: "يمكن الدفع بالبطاقة أو المحفظة الإلكترونية أو التقسيط عند توفره أو الدفع عند الاستلام.",
       category: "Orders",
       displayOrder: 3,
     },
     {
       id: "faq-maintenance",
       question: "How often should I service my AC?",
+      questionAr: "كم مرة يجب صيانة التكييف؟",
       answer: "For best performance, schedule preventive maintenance at least twice a year.",
+      answerAr: "لأفضل أداء، يفضل جدولة الصيانة الوقائية مرتين على الأقل سنويا.",
       category: "Maintenance",
       displayOrder: 4,
     },
@@ -1164,8 +1288,10 @@ async function seedContent() {
       id: "testimonial-ahmed",
       customerName: "Ahmed Hassan",
       location: "Giza",
+      locationAr: "الجيزة",
       rating: 5,
       quote: "The team helped me choose the right capacity and installed everything neatly.",
+      quoteAr: "ساعدني الفريق في اختيار القدرة المناسبة وتم التركيب بشكل منظم.",
       isApproved: true,
       isFeatured: true,
     },
@@ -1173,8 +1299,10 @@ async function seedContent() {
       id: "testimonial-sara",
       customerName: "Sara Mohamed",
       location: "Maadi",
+      locationAr: "المعادي",
       rating: 5,
       quote: "Fast delivery, clear pricing, and professional maintenance follow-up.",
+      quoteAr: "توصيل سريع وأسعار واضحة ومتابعة صيانة احترافية.",
       isApproved: true,
       isFeatured: true,
     },
@@ -1182,8 +1310,10 @@ async function seedContent() {
       id: "testimonial-omar",
       customerName: "Omar Ali",
       location: "Mohandessin",
+      locationAr: "المهندسين",
       rating: 4,
       quote: "Support was helpful and explained the available options clearly.",
+      quoteAr: "الدعم كان متعاونا وشرح الخيارات المتاحة بوضوح.",
       isApproved: true,
       isFeatured: false,
     },
@@ -1264,13 +1394,20 @@ async function seedSettingsAndUsers() {
   });
 
   await upsertSiteSetting("site_name", "general", "Lord AC");
+  await upsertSiteSetting("site_name_ar", "general", "لورد للتكييف");
   await upsertSiteSetting("site_tagline", "general", "Cooling Egypt since 1986");
+  await upsertSiteSetting("site_tagline_ar", "general", "نبرّد مصر منذ 1986");
   await upsertSiteSetting("contact_phone", "contact", "+201000000000");
   await upsertSiteSetting("contact_email", "contact", "info@lordac.com");
   await upsertSiteSetting("contact_address", "contact", {
     line1: "Lord AC Showroom",
     city: "Cairo",
     country: "Egypt",
+  });
+  await upsertSiteSetting("contact_address_ar", "contact", {
+    line1: "معرض لورد للتكييف",
+    city: "القاهرة",
+    country: "مصر",
   });
   await upsertSiteSetting("social_links", "contact", {
     facebook: "https://facebook.com/lordac",

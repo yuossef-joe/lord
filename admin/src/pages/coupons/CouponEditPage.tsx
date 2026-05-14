@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,8 @@ import { z } from "zod";
 import { motion } from "motion/react";
 import { toast } from "react-toastify";
 import { Sparkles, Tag, Calendar, Eye, PackageOpen } from "lucide-react";
-import { MOCK_COUPONS } from "@/lib/mock-data";
+import type { Coupon } from "@/types";
+import { fetchCoupon, updateCoupon } from "@/lib/api";
 import { generateCouponCode, formatCurrency, formatDate } from "@/lib/utils";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
@@ -72,34 +73,45 @@ export default function CouponEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const coupon = MOCK_COUPONS.find((c) => c.id === id);
+  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
-    defaultValues: coupon
-      ? {
-          code: coupon.code,
-          description: "",
-          type: coupon.type,
-          value: coupon.value,
-          minOrderAmount: coupon.minOrderAmount ?? undefined,
-          maxDiscount: coupon.maxDiscountAmount ?? undefined,
-          usageLimit: coupon.usageLimit ?? undefined,
-          isActive: coupon.isActive,
-          startDate: toInputDate(coupon.startDate),
-          endDate: toInputDate(coupon.endDate),
-        }
-      : undefined,
   });
 
+  useEffect(() => {
+    if (!id) return;
+    void fetchCoupon(id)
+      .then((response) => {
+        const nextCoupon = response.data;
+        setCoupon(nextCoupon);
+        reset({
+          code: nextCoupon.code,
+          description: "",
+          type: nextCoupon.type,
+          value: nextCoupon.value,
+          minOrderAmount: nextCoupon.minOrderAmount ?? undefined,
+          maxDiscount: nextCoupon.maxDiscountAmount ?? undefined,
+          usageLimit: nextCoupon.usageLimit ?? undefined,
+          isActive: nextCoupon.isActive,
+          startDate: toInputDate(nextCoupon.startDate),
+          endDate: toInputDate(nextCoupon.endDate),
+        });
+      })
+      .finally(() => setIsLoading(false));
+  }, [id, reset]);
+
   /* ---------- Not found ---------- */
+  if (isLoading) return null;
+
   if (!coupon) {
     return (
       <motion.div
@@ -139,13 +151,27 @@ export default function CouponEditPage() {
   const endDate = watch("endDate");
   const isActive = watch("isActive");
 
-  const onSubmit = (_data: CouponFormValues) => {
+  const onSubmit = async (data: CouponFormValues) => {
+    if (!id) return;
     setIsSubmitting(true);
-    // Mock: update coupon
-    setTimeout(() => {
+    try {
+      await updateCoupon(id, {
+        code: data.code,
+        description: data.description,
+        type: data.type,
+        value: data.value,
+        minOrderAmount: data.minOrderAmount,
+        maxDiscountAmount: data.maxDiscount,
+        usageLimit: data.usageLimit,
+        isActive: data.isActive,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
       toast.success("Coupon updated successfully!");
       navigate("/coupons");
-    }, 500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 export interface ServiceType {
   id: string;
   name: string;
+  nameAr?: string;
   icon?: string;
 }
 

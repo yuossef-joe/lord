@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
 import { Plus, X, Wrench } from "lucide-react";
-import { MOCK_SERVICES } from "@/lib/mock-data";
+import type { Service } from "@/types";
+import { fetchService, updateService } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -15,7 +17,9 @@ import EmptyState from "@/components/common/EmptyState";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Required"),
+  nameAr: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
+  descriptionAr: z.string().min(1, "Required"),
   type: z.enum(["installation", "maintenance", "repair", "consultation"], {
     error: "Required",
   }),
@@ -62,39 +66,29 @@ const SERVICE_TYPES = [
 export default function ServiceEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const service = MOCK_SERVICES.find((s) => s.id === id);
+  const [service, setService] = useState<Service | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
-    defaultValues: service
-      ? {
-          name: service.name,
-          description: service.description ?? "",
-          type: service.type.name.toLowerCase() as ServiceFormValues["type"],
-          price: service.price ?? 0,
-          isActive: service.isActive,
-          scopeOfWork: service.scopeOfWork?.join("\n") ?? "",
-          applicableUnitTypes: (service.applicableUnitTypes ?? []).map((v) => ({
-            value: v,
-          })),
-          imageUrl: "",
-        }
-      : {
-          name: "",
-          description: "",
-          type: undefined,
-          price: 0,
-          isActive: true,
-          scopeOfWork: "",
-          applicableUnitTypes: [],
-          imageUrl: "",
-        },
+    defaultValues: {
+      name: "",
+      nameAr: "",
+      description: "",
+      descriptionAr: "",
+      type: undefined,
+      price: 0,
+      isActive: true,
+      scopeOfWork: "",
+      applicableUnitTypes: [],
+      imageUrl: "",
+    },
   });
 
   const {
@@ -103,10 +97,51 @@ export default function ServiceEditPage() {
     remove: removeUnitType,
   } = useFieldArray({ control, name: "applicableUnitTypes" });
 
-  const onSubmit = (_data: ServiceFormValues) => {
-    // Mock: update service
+  useEffect(() => {
+    if (!id) return;
+    void fetchService(id)
+      .then((response) => {
+        const nextService = response.data;
+        setService(nextService);
+        reset({
+          name: nextService.name,
+          nameAr: nextService.nameAr ?? "",
+          description: nextService.description ?? "",
+          descriptionAr: nextService.descriptionAr ?? "",
+          type: nextService.type.name.toLowerCase() as ServiceFormValues["type"],
+          price: nextService.price ?? 0,
+          isActive: nextService.isActive,
+          scopeOfWork: nextService.scopeOfWork?.join("\n") ?? "",
+          applicableUnitTypes: (nextService.applicableUnitTypes ?? []).map(
+            (value) => ({ value }),
+          ),
+          imageUrl: "",
+        });
+      })
+      .finally(() => setIsLoading(false));
+  }, [id, reset]);
+
+  const onSubmit = async (data: ServiceFormValues) => {
+    if (!id) return;
+    await updateService(id, {
+      name: data.name,
+      nameAr: data.nameAr,
+      description: data.description,
+      descriptionAr: data.descriptionAr,
+      type: data.type,
+      price: data.price,
+      isActive: data.isActive,
+      scopeOfWork: data.scopeOfWork
+        ?.split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      applicableUnitTypes: data.applicableUnitTypes?.map((item) => item.value),
+      imageUrl: data.imageUrl,
+    });
     navigate("/services");
   };
+
+  if (isLoading) return null;
 
   if (!service) {
     return (
@@ -167,25 +202,61 @@ export default function ServiceEditPage() {
                 Basic Info
               </h2>
               <div className="space-y-4">
-                <FormField label="Name" required error={errors.name?.message}>
-                  <input
-                    {...register("name")}
-                    className={inputStyles}
-                    placeholder="Service name"
-                  />
-                </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Name (English)"
+                    required
+                    error={errors.name?.message}
+                  >
+                    <input
+                      {...register("name")}
+                      className={inputStyles}
+                      placeholder="Service name"
+                      dir="ltr"
+                    />
+                  </FormField>
 
-                <FormField
-                  label="Description"
-                  required
-                  error={errors.description?.message}
-                >
-                  <textarea
-                    {...register("description")}
-                    className={`${inputStyles} h-32 resize-none py-2`}
-                    placeholder="Service description…"
-                  />
-                </FormField>
+                  <FormField
+                    label="Name (Arabic)"
+                    required
+                    error={errors.nameAr?.message}
+                  >
+                    <input
+                      {...register("nameAr")}
+                      className={`${inputStyles} text-right`}
+                      placeholder="اسم الخدمة"
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Description (English)"
+                    required
+                    error={errors.description?.message}
+                  >
+                    <textarea
+                      {...register("description")}
+                      className={`${inputStyles} h-32 resize-none py-2`}
+                      placeholder="Service description..."
+                      dir="ltr"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Description (Arabic)"
+                    required
+                    error={errors.descriptionAr?.message}
+                  >
+                    <textarea
+                      {...register("descriptionAr")}
+                      className={`${inputStyles} h-32 resize-none py-2 text-right`}
+                      placeholder="وصف الخدمة..."
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
 
                 <FormField label="Type" required error={errors.type?.message}>
                   <select {...register("type")} className={selectStyles}>

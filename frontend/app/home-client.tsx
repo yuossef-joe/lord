@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PageTransition from "@/components/common/PageTransition";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
@@ -10,8 +10,33 @@ import TestimonialsCarousel from "@/components/home/TestimonialsCarousel";
 import CtaBand from "@/components/home/CtaBand";
 import ContactStrip from "@/components/home/ContactStrip";
 import SeoHead from "@/components/common/SeoHead";
+import { useLanguage } from "@/context/LanguageContext";
+import { fetchHomeContent } from "@/lib/api";
+
+type HomeContent = {
+  content?: Record<string, unknown>;
+  seo?: Record<string, unknown>;
+};
 
 export default function HomePageClient() {
+  const { t, localize } = useLanguage();
+  const [homeContent, setHomeContent] = useState<HomeContent | null>(null);
+
+  useEffect(() => {
+    fetchHomeContent()
+      .then((response) => {
+        const data = response as { data?: HomeContent };
+        setHomeContent(data.data ?? null);
+      })
+      .catch(() => setHomeContent(null));
+  }, []);
+
+  const content = homeContent?.content ?? {};
+  const seo = homeContent?.seo ?? {};
+  const fromContent = (englishKey: string, arabicKey: string) =>
+    localize(content[englishKey] as string | undefined, content[arabicKey] as string | undefined);
+  const fromSeo = (englishKey: string, arabicKey: string) =>
+    localize(seo[englishKey] as string | undefined, seo[arabicKey] as string | undefined);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -30,16 +55,26 @@ export default function HomePageClient() {
   return (
     <PageTransition>
       <SeoHead
-        title="Lord AC — Authorized Carrier & Midea Dealer"
-        description="Lord Air Conditioning — Authorized Carrier & Midea dealer in Egypt since 1986."
+        title={fromSeo("metaTitle", "metaTitleAr") || t("home.seoTitle")}
+        description={
+          fromSeo("metaDescription", "metaDescriptionAr") ||
+          t("home.seoDescription")
+        }
         jsonLd={jsonLd}
       />
-      <HeroSection />
-      <FeaturedProducts />
-      <ServicesOverview />
-      <WhyChooseLord />
-      <TestimonialsCarousel />
-      <CtaBand />
+      <HeroSection
+        headline={fromContent("heroHeadline", "heroHeadlineAr")}
+        tagline={fromContent("heroTagline", "heroTaglineAr")}
+      />
+      <FeaturedProducts
+        title={fromContent("featuredTitle", "featuredTitleAr")}
+      />
+      <ServicesOverview title={fromContent("servicesTitle", "servicesTitleAr")} />
+      <WhyChooseLord title={fromContent("whyTitle", "whyTitleAr")} />
+      <TestimonialsCarousel
+        title={fromContent("testimonialsTitle", "testimonialsTitleAr")}
+      />
+      <CtaBand headline={fromContent("ctaHeadline", "ctaHeadlineAr")} />
       <ContactStrip />
     </PageTransition>
   );

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { motion } from "motion/react";
 import { toast } from "react-toastify";
 import { Sparkles, Tag, Calendar, Eye } from "lucide-react";
+import { createCoupon } from "@/lib/api";
 import { generateCouponCode, formatCurrency, formatDate } from "@/lib/utils";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
@@ -91,13 +92,26 @@ export default function CouponCreatePage() {
   const endDate = watch("endDate");
   const isActive = watch("isActive");
 
-  const onSubmit = (_data: CouponFormValues) => {
+  const onSubmit = async (data: CouponFormValues) => {
     setIsSubmitting(true);
-    // Mock: save coupon
-    setTimeout(() => {
+    try {
+      await createCoupon({
+        code: data.code,
+        description: data.description,
+        type: data.type,
+        value: data.value,
+        minOrderAmount: data.minOrderAmount,
+        maxDiscountAmount: data.maxDiscount,
+        usageLimit: data.usageLimit,
+        isActive: data.isActive,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
       toast.success("Coupon created successfully!");
       navigate("/coupons");
-    }, 500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

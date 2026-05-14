@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
+import { createFaq } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -28,7 +29,9 @@ const itemVariants = {
 
 const faqSchema = z.object({
   question: z.string().min(1, "Question is required"),
+  questionAr: z.string().min(1, "Arabic question is required"),
   answer: z.string().min(1, "Answer is required"),
+  answerAr: z.string().min(1, "Arabic answer is required"),
   category: z.string().min(1, "Category is required"),
   displayOrder: z.number().min(0),
   isActive: z.boolean(),
@@ -58,15 +61,17 @@ export default function FaqCreatePage() {
     resolver: zodResolver(faqSchema),
     defaultValues: {
       question: "",
+      questionAr: "",
       answer: "",
+      answerAr: "",
       category: "",
       displayOrder: 1,
       isActive: true,
     },
   });
 
-  const onSubmit = (_data: FaqFormValues) => {
-    // Mock: save FAQ
+  const onSubmit = async (data: FaqFormValues) => {
+    await createFaq(data);
     navigate("/faqs");
   };
 
@@ -95,25 +100,61 @@ export default function FaqCreatePage() {
       <motion.div variants={itemVariants}>
         <Card>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <FormField
-              label="Question"
-              required
-              error={errors.question?.message}
-            >
-              <input
-                {...register("question")}
-                className={inputStyles}
-                placeholder="Enter the question"
-              />
-            </FormField>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Question (English)"
+                required
+                error={errors.question?.message}
+              >
+                <input
+                  {...register("question")}
+                  className={inputStyles}
+                  placeholder="Enter the question"
+                  dir="ltr"
+                />
+              </FormField>
 
-            <FormField label="Answer" required error={errors.answer?.message}>
-              <textarea
-                {...register("answer")}
-                className={`${inputStyles} h-32 resize-none py-2`}
-                placeholder="Enter the answer…"
-              />
-            </FormField>
+              <FormField
+                label="Question (Arabic)"
+                required
+                error={errors.questionAr?.message}
+              >
+                <input
+                  {...register("questionAr")}
+                  className={`${inputStyles} text-right`}
+                  placeholder="اكتب السؤال"
+                  dir="rtl"
+                />
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Answer (English)"
+                required
+                error={errors.answer?.message}
+              >
+                <textarea
+                  {...register("answer")}
+                  className={`${inputStyles} h-32 resize-none py-2`}
+                  placeholder="Enter the answer..."
+                  dir="ltr"
+                />
+              </FormField>
+
+              <FormField
+                label="Answer (Arabic)"
+                required
+                error={errors.answerAr?.message}
+              >
+                <textarea
+                  {...register("answerAr")}
+                  className={`${inputStyles} h-32 resize-none py-2 text-right`}
+                  placeholder="اكتب الإجابة..."
+                  dir="rtl"
+                />
+              </FormField>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField

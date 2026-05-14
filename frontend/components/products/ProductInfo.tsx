@@ -13,8 +13,15 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product }: ProductInfoProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const isOutOfStock = product.stockQuantity !== undefined && product.stockQuantity <= 0;
+  const productName = localize(product.name, product.nameAr);
+  const brandName = localize(product.brand?.name, product.brand?.nameAr);
+  const categoryName = localize(product.category?.name, product.category?.nameAr);
+  const shortDescription = localize(
+    product.shortDescription,
+    product.shortDescriptionAr,
+  );
 
   return (
     <motion.div
@@ -31,25 +38,25 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               product.brand.name === "Carrier" ? "bg-lord-navy" : "bg-lord-teal"
             }`}
           >
-            {product.brand.name}
+            {brandName}
           </span>
         )}
         {product.category && (
           <span className="text-sm text-medium-gray">
-            {product.category.name}
+            {categoryName}
           </span>
         )}
       </div>
 
       {/* Name */}
       <h1 className="text-2xl font-bold text-lord-navy md:text-3xl">
-        {product.name}
+        {productName}
       </h1>
 
       {/* Model */}
       {product.modelNumber && (
         <p className="text-sm text-medium-gray">
-          Model:{" "}
+          {t("products.model")}:{" "}
           <span className="font-medium text-dark-charcoal">
             {product.modelNumber}
           </span>
@@ -65,9 +72,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       />
 
       {/* Short Description */}
-      {product.shortDescription && (
+      {shortDescription && (
         <p className="text-dark-charcoal leading-relaxed">
-          {product.shortDescription}
+          {shortDescription}
         </p>
       )}
 

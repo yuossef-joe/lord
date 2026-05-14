@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Coupon } from "@/types";
-import { MOCK_COUPONS } from "@/lib/mock-data";
+import { deleteCoupon, fetchCoupons } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import DataTable from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
@@ -12,6 +12,7 @@ import SearchInput from "@/components/common/SearchInput";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                */
@@ -31,17 +32,17 @@ const itemVariants = {
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-function getCouponStatusBadge(coupon: Coupon) {
+function getCouponStatusBadge(coupon: Coupon, t: (key: string) => string) {
   const now = new Date();
   const end = new Date(coupon.endDate);
 
   if (!coupon.isActive) {
-    return <Badge variant="default">Inactive</Badge>;
+    return <Badge variant="default">{t("common.inactive")}</Badge>;
   }
   if (end < now) {
-    return <Badge variant="error">Expired</Badge>;
+    return <Badge variant="error">{t("common.expired")}</Badge>;
   }
-  return <Badge variant="success">Active</Badge>;
+  return <Badge variant="success">{t("common.active")}</Badge>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -50,23 +51,28 @@ function getCouponStatusBadge(coupon: Coupon) {
 
 const columnHelper = createColumnHelper<Coupon>();
 
-const buildColumns = (onDelete: (coupon: Coupon) => void) => [
+const buildColumns = (
+  onDelete: (coupon: Coupon) => void,
+  t: (key: string) => string,
+) => [
   columnHelper.accessor("code", {
-    header: "Code",
+    header: t("common.code"),
     cell: (info) => (
       <span className="font-mono font-medium text-teal">{info.getValue()}</span>
     ),
   }),
   columnHelper.accessor("type", {
-    header: "Type",
+    header: t("common.type"),
     cell: (info) => (
       <Badge variant={info.getValue() === "percentage" ? "teal" : "info"}>
-        {info.getValue() === "percentage" ? "Percentage" : "Fixed Amount"}
+        {info.getValue() === "percentage"
+          ? t("common.percentage")
+          : t("common.fixedAmount")}
       </Badge>
     ),
   }),
   columnHelper.accessor("value", {
-    header: "Value",
+    header: t("common.value"),
     cell: (info) =>
       info.row.original.type === "percentage"
         ? `${info.getValue()}%`
@@ -74,7 +80,7 @@ const buildColumns = (onDelete: (coupon: Coupon) => void) => [
   }),
   columnHelper.display({
     id: "usage",
-    header: "Usage",
+    header: t("common.usage"),
     cell: (info) => {
       const c = info.row.original;
       return (
@@ -86,7 +92,7 @@ const buildColumns = (onDelete: (coupon: Coupon) => void) => [
   }),
   columnHelper.display({
     id: "validPeriod",
-    header: "Valid Period",
+    header: t("common.validPeriod"),
     cell: (info) => {
       const c = info.row.original;
       return (
@@ -98,8 +104,8 @@ const buildColumns = (onDelete: (coupon: Coupon) => void) => [
   }),
   columnHelper.display({
     id: "status",
-    header: "Status",
-    cell: (info) => getCouponStatusBadge(info.row.original),
+    header: t("common.status"),
+    cell: (info) => getCouponStatusBadge(info.row.original, t),
   }),
   columnHelper.display({
     id: "actions",
@@ -128,17 +134,27 @@ const buildColumns = (onDelete: (coupon: Coupon) => void) => [
 /* ------------------------------------------------------------------ */
 
 export default function CouponsPage() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+
+  useEffect(() => {
+    void fetchCoupons().then((response) => setCoupons(response.data));
+  }, []);
 
   const filteredCoupons = useMemo(() => {
-    if (!searchTerm.trim()) return MOCK_COUPONS;
+    if (!searchTerm.trim()) return coupons;
     const term = searchTerm.toLowerCase();
-    return MOCK_COUPONS.filter((c) => c.code.toLowerCase().includes(term));
-  }, [searchTerm]);
+    return coupons.filter((c) => c.code.toLowerCase().includes(term));
+  }, [coupons, searchTerm]);
 
-  const handleDelete = () => {
-    // Mock: In a real app, call API to delete coupon
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteCoupon(deleteTarget.id);
+    setCoupons((current) =>
+      current.filter((coupon) => coupon.id !== deleteTarget.id),
+    );
     setDeleteTarget(null);
   };
 
@@ -148,8 +164,8 @@ export default function CouponsPage() {
       <motion.div variants={itemVariants}>
         <Breadcrumb
           items={[
-            { label: "Dashboard", href: "/" },
-            { label: "Coupons & Promos" },
+            { label: t("common.dashboard"), href: "/" },
+            { label: t("common.couponsPromos") },
           ]}
         />
       </motion.div>
@@ -159,15 +175,19 @@ export default function CouponsPage() {
         variants={itemVariants}
         className="flex justify-between items-center mb-6 mt-4"
       >
-        <h1 className="text-2xl font-bold text-navy">Coupons &amp; Promos</h1>
+        <h1 className="text-2xl font-bold text-navy">
+          {t("common.couponsPromos")}
+        </h1>
         <div className="flex items-center gap-3">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search by code…"
+            placeholder={t("common.searchByCode")}
           />
           <Link to="/coupons/create">
-            <Button leftIcon={<Plus size={18} />}>Create Coupon</Button>
+            <Button leftIcon={<Plus size={18} />}>
+              {t("common.createCoupon")}
+            </Button>
           </Link>
         </div>
       </motion.div>
@@ -175,9 +195,9 @@ export default function CouponsPage() {
       {/* Table */}
       <motion.div variants={itemVariants}>
         <DataTable
-          columns={buildColumns(setDeleteTarget)}
+          columns={buildColumns(setDeleteTarget, t)}
           data={filteredCoupons}
-          emptyMessage="No coupons found"
+          emptyMessage={t("common.noCoupons")}
         />
       </motion.div>
 
@@ -186,9 +206,9 @@ export default function CouponsPage() {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete Coupon"
-        message={`Are you sure you want to delete the coupon "${deleteTarget?.code}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title={t("common.deleteCoupon")}
+        message={t("common.deleteCouponConfirm")}
+        confirmLabel={t("common.delete")}
         variant="danger"
       />
     </motion.div>

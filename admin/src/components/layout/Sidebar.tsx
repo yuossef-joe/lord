@@ -14,25 +14,32 @@ import {
   Settings,
   Truck,
 } from "lucide-react";
+import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/", end: true },
-  { label: "Orders", icon: ShoppingBag, path: "/orders" },
-  { label: "Customers", icon: Users, path: "/customers" },
-  { label: "Products", icon: Package, path: "/products" },
-  { label: "Brands & Categories", icon: Layers, path: "/brands" },
-  { label: "Services", icon: Wrench, path: "/services" },
-  { label: "Inquiries & Requests", icon: MessageSquare, path: "/inquiries" },
-  { label: "Shipping", icon: Truck, path: "/shipping" },
-  { label: "Coupons & Promos", icon: Tag, path: "/coupons" },
-  { label: "Content Pages", icon: FileText, path: "/content" },
-  { label: "Testimonials", icon: Star, path: "/testimonials" },
-  { label: "FAQs", icon: HelpCircle, path: "/faqs" },
+  { labelKey: "nav.dashboard", icon: LayoutDashboard, path: "/", end: true },
+  { labelKey: "nav.orders", icon: ShoppingBag, path: "/orders" },
+  { labelKey: "nav.customers", icon: Users, path: "/customers" },
+  { labelKey: "nav.products", icon: Package, path: "/products" },
+  { labelKey: "nav.brands", icon: Layers, path: "/brands" },
+  { labelKey: "nav.services", icon: Wrench, path: "/services" },
+  { labelKey: "nav.inquiries", icon: MessageSquare, path: "/inquiries" },
+  { labelKey: "nav.shipping", icon: Truck, path: "/shipping" },
+  { labelKey: "nav.coupons", icon: Tag, path: "/coupons" },
+  { labelKey: "nav.content", icon: FileText, path: "/content" },
+  { labelKey: "nav.testimonials", icon: Star, path: "/testimonials" },
+  { labelKey: "nav.faqs", icon: HelpCircle, path: "/faqs" },
 ];
 
-const settingsItem = { label: "Settings", icon: Settings, path: "/settings" };
+const settingsItem = {
+  labelKey: "nav.settings" as TranslationKey,
+  icon: Settings,
+  path: "/settings",
+};
 
 export default function Sidebar() {
+  const { t } = useLanguage();
+
   return (
     <aside className="flex h-full w-[260px] flex-shrink-0 flex-col bg-sidebar-bg text-white/70">
       {/* Logo */}
@@ -59,7 +66,7 @@ export default function Sidebar() {
             }
           >
             <item.icon className="h-4 w-4 flex-shrink-0" />
-            <span>{item.label}</span>
+            <span>{t(item.labelKey as TranslationKey)}</span>
           </NavLink>
         ))}
 
@@ -77,7 +84,7 @@ export default function Sidebar() {
           }
         >
           <settingsItem.icon className="h-4 w-4 flex-shrink-0" />
-          <span>{settingsItem.label}</span>
+          <span>{t(settingsItem.labelKey)}</span>
         </NavLink>
       </nav>
 

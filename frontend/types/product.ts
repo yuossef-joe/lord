@@ -1,9 +1,11 @@
 export interface Brand {
   _id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   logoUrl: string;
   description?: string;
+  descriptionAr?: string;
   isAuthorizedDealer: boolean;
   isActive: boolean;
 }
@@ -11,8 +13,10 @@ export interface Brand {
 export interface ProductCategory {
   _id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   description?: string;
+  descriptionAr?: string;
   isActive: boolean;
 }
 
@@ -25,18 +29,23 @@ export interface ProductImage {
 
 export interface ProductSpecification {
   key: string;
+  keyAr?: string;
   value: string;
+  valueAr?: string;
 }
 
 export interface Product {
   _id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   brand: Brand;
   category: ProductCategory;
   modelNumber: string;
   description: string;
+  descriptionAr?: string;
   shortDescription?: string;
+  shortDescriptionAr?: string;
   images: ProductImage[];
   price: number;
   salePrice?: number;
@@ -46,6 +55,7 @@ export interface Product {
   type: string;
   specifications: ProductSpecification[];
   features: string[];
+  featuresAr?: string[];
   warranty: string;
   isFeatured: boolean;
   isNewArrival: boolean;

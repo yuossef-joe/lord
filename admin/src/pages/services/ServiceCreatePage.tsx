@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
 import { Plus, X } from "lucide-react";
+import { createService } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -13,7 +14,9 @@ import FormField from "@/components/common/FormField";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Required"),
+  nameAr: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
+  descriptionAr: z.string().min(1, "Required"),
   type: z.enum(["installation", "maintenance", "repair", "consultation"], {
     error: "Required",
   }),
@@ -69,7 +72,9 @@ export default function ServiceCreatePage() {
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       name: "",
+      nameAr: "",
       description: "",
+      descriptionAr: "",
       type: undefined,
       price: 0,
       isActive: true,
@@ -85,8 +90,22 @@ export default function ServiceCreatePage() {
     remove: removeUnitType,
   } = useFieldArray({ control, name: "applicableUnitTypes" });
 
-  const onSubmit = (_data: ServiceFormValues) => {
-    // Mock: save service
+  const onSubmit = async (data: ServiceFormValues) => {
+    await createService({
+      name: data.name,
+      nameAr: data.nameAr,
+      description: data.description,
+      descriptionAr: data.descriptionAr,
+      type: data.type,
+      price: data.price,
+      isActive: data.isActive,
+      scopeOfWork: data.scopeOfWork
+        ?.split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      applicableUnitTypes: data.applicableUnitTypes?.map((item) => item.value),
+      imageUrl: data.imageUrl,
+    });
     navigate("/services");
   };
 
@@ -132,25 +151,61 @@ export default function ServiceCreatePage() {
                 Basic Info
               </h2>
               <div className="space-y-4">
-                <FormField label="Name" required error={errors.name?.message}>
-                  <input
-                    {...register("name")}
-                    className={inputStyles}
-                    placeholder="Service name"
-                  />
-                </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Name (English)"
+                    required
+                    error={errors.name?.message}
+                  >
+                    <input
+                      {...register("name")}
+                      className={inputStyles}
+                      placeholder="Service name"
+                      dir="ltr"
+                    />
+                  </FormField>
 
-                <FormField
-                  label="Description"
-                  required
-                  error={errors.description?.message}
-                >
-                  <textarea
-                    {...register("description")}
-                    className={`${inputStyles} h-32 resize-none py-2`}
-                    placeholder="Service description…"
-                  />
-                </FormField>
+                  <FormField
+                    label="Name (Arabic)"
+                    required
+                    error={errors.nameAr?.message}
+                  >
+                    <input
+                      {...register("nameAr")}
+                      className={`${inputStyles} text-right`}
+                      placeholder="اسم الخدمة"
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Description (English)"
+                    required
+                    error={errors.description?.message}
+                  >
+                    <textarea
+                      {...register("description")}
+                      className={`${inputStyles} h-32 resize-none py-2`}
+                      placeholder="Service description..."
+                      dir="ltr"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Description (Arabic)"
+                    required
+                    error={errors.descriptionAr?.message}
+                  >
+                    <textarea
+                      {...register("descriptionAr")}
+                      className={`${inputStyles} h-32 resize-none py-2 text-right`}
+                      placeholder="وصف الخدمة..."
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
 
                 <FormField label="Type" required error={errors.type?.message}>
                   <select {...register("type")} className={selectStyles}>

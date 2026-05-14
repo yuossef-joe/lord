@@ -31,7 +31,7 @@ export default function FilterSidebar({
   onHpChange,
   onClearAll,
 }: FilterSidebarProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const hasActiveFilters = selectedBrand || selectedCategory || selectedHp;
 
   return (
@@ -58,8 +58,10 @@ export default function FilterSidebar({
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="inline-flex items-center gap-1 rounded-full bg-lord-teal/10 px-3 py-1 text-xs text-lord-teal"
               >
-                {brands.find((b) => b._id === selectedBrand)?.name ||
-                  selectedBrand}
+                {localize(
+                  brands.find((b) => b._id === selectedBrand)?.name,
+                  brands.find((b) => b._id === selectedBrand)?.nameAr,
+                ) || selectedBrand}
                 <button onClick={() => onBrandChange("")}>
                   <X className="h-3 w-3" />
                 </button>
@@ -72,8 +74,10 @@ export default function FilterSidebar({
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="inline-flex items-center gap-1 rounded-full bg-lord-teal/10 px-3 py-1 text-xs text-lord-teal"
               >
-                {categories.find((c) => c._id === selectedCategory)?.name ||
-                  selectedCategory}
+                {localize(
+                  categories.find((c) => c._id === selectedCategory)?.name,
+                  categories.find((c) => c._id === selectedCategory)?.nameAr,
+                ) || selectedCategory}
                 <button onClick={() => onCategoryChange("")}>
                   <X className="h-3 w-3" />
                 </button>
@@ -122,7 +126,7 @@ export default function FilterSidebar({
                   : "text-dark-charcoal hover:bg-off-white"
               }`}
             >
-              {brand.name}
+              {localize(brand.name, brand.nameAr)}
             </button>
           ))}
         </div>
@@ -176,7 +180,7 @@ export default function FilterSidebar({
                   : "text-dark-charcoal hover:bg-off-white"
               }`}
             >
-              {cat.name}
+              {localize(cat.name, cat.nameAr)}
             </button>
           ))}
         </div>

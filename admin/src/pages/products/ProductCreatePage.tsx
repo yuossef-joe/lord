@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,8 @@ import { z } from "zod";
 import { motion } from "motion/react";
 import { useDropzone } from "react-dropzone";
 import { Plus, X, CloudUpload } from "lucide-react";
-import { MOCK_BRANDS, MOCK_CATEGORIES } from "@/lib/mock-data";
+import type { Brand, ProductCategory } from "@/types";
+import { createProduct, fetchBrands, fetchProductCategories } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -14,7 +15,11 @@ import FormField from "@/components/common/FormField";
 
 const productSchema = z.object({
   name: z.string().min(1, "Required"),
+  nameAr: z.string().min(1, "Required"),
+  modelNumber: z.string().optional(),
+  type: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
+  descriptionAr: z.string().min(1, "Required"),
   brandId: z.string().min(1, "Required"),
   categoryId: z.string().min(1, "Required"),
   price: z.number().min(0),
@@ -24,8 +29,20 @@ const productSchema = z.object({
   isFeatured: z.boolean(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
-  features: z.array(z.string()),
-  specifications: z.array(z.object({ key: z.string(), value: z.string() })),
+  features: z.array(
+    z.object({
+      value: z.string(),
+      valueAr: z.string().optional(),
+    }),
+  ),
+  specifications: z.array(
+    z.object({
+      key: z.string(),
+      keyAr: z.string().optional(),
+      value: z.string(),
+      valueAr: z.string().optional(),
+    }),
+  ),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -50,6 +67,8 @@ const selectStyles =
 
 export default function ProductCreatePage() {
   const navigate = useNavigate();
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
 
   const {
     register,
@@ -60,7 +79,11 @@ export default function ProductCreatePage() {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
+      nameAr: "",
+      modelNumber: "",
+      type: "",
       description: "",
+      descriptionAr: "",
       brandId: "",
       categoryId: "",
       price: 0,
@@ -79,7 +102,7 @@ export default function ProductCreatePage() {
     fields: featureFields,
     append: appendFeature,
     remove: removeFeature,
-  } = useFieldArray({ control, name: "features" as never });
+  } = useFieldArray({ control, name: "features" });
 
   const {
     fields: specFields,
@@ -87,9 +110,7 @@ export default function ProductCreatePage() {
     remove: removeSpec,
   } = useFieldArray({ control, name: "specifications" });
 
-  const onDrop = useCallback(() => {
-    // Mock: In a real app, upload images here
-  }, []);
+  const onDrop = useCallback(() => {}, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -97,8 +118,38 @@ export default function ProductCreatePage() {
     multiple: true,
   });
 
-  const onSubmit = (_data: ProductFormValues) => {
-    // Mock: save product
+  useEffect(() => {
+    void Promise.all([fetchBrands(), fetchProductCategories()]).then(
+      ([brandsResponse, categoriesResponse]) => {
+        setBrands(brandsResponse.data);
+        setCategories(categoriesResponse.data);
+      },
+    );
+  }, []);
+
+  const onSubmit = async (data: ProductFormValues) => {
+    await createProduct({
+      name: data.name,
+      nameAr: data.nameAr,
+      modelNumber: data.modelNumber,
+      type: data.type,
+      description: data.description,
+      descriptionAr: data.descriptionAr,
+      brandId: data.brandId,
+      categoryId: data.categoryId,
+      price: data.price,
+      originalPrice: data.salePrice ?? null,
+      stockQuantity: data.stock,
+      isActive: data.isActive,
+      isFeatured: data.isFeatured,
+      features: data.features.map((feature) => feature.value).filter(Boolean),
+      featuresAr: data.features.map((feature) => feature.valueAr?.trim() ?? ""),
+      specs: data.specifications.filter((spec) => spec.key || spec.value),
+      seo: {
+        metaTitle: data.seoTitle,
+        metaDescription: data.seoDescription,
+      },
+    });
     navigate("/products");
   };
 
@@ -144,25 +195,79 @@ export default function ProductCreatePage() {
                 Basic Info
               </h2>
               <div className="space-y-4">
-                <FormField label="Name" required error={errors.name?.message}>
-                  <input
-                    {...register("name")}
-                    className={inputStyles}
-                    placeholder="Product name"
-                  />
-                </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Name (English)"
+                    required
+                    error={errors.name?.message}
+                  >
+                    <input
+                      {...register("name")}
+                      className={inputStyles}
+                      placeholder="Product name"
+                      dir="ltr"
+                    />
+                  </FormField>
 
-                <FormField
-                  label="Description"
-                  required
-                  error={errors.description?.message}
-                >
-                  <textarea
-                    {...register("description")}
-                    className={`${inputStyles} h-32 resize-none py-2`}
-                    placeholder="Product description…"
-                  />
-                </FormField>
+                  <FormField
+                    label="Name (Arabic)"
+                    required
+                    error={errors.nameAr?.message}
+                  >
+                    <input
+                      {...register("nameAr")}
+                      className={`${inputStyles} text-right`}
+                      placeholder="اسم المنتج"
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Model Number">
+                    <input
+                      {...register("modelNumber")}
+                      className={inputStyles}
+                      placeholder="Model number"
+                    />
+                  </FormField>
+
+                  <FormField label="Product Type" required>
+                    <input
+                      {...register("type")}
+                      className={inputStyles}
+                      placeholder="split"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Description (English)"
+                    required
+                    error={errors.description?.message}
+                  >
+                    <textarea
+                      {...register("description")}
+                      className={`${inputStyles} h-32 resize-none py-2`}
+                      placeholder="Product description..."
+                      dir="ltr"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Description (Arabic)"
+                    required
+                    error={errors.descriptionAr?.message}
+                  >
+                    <textarea
+                      {...register("descriptionAr")}
+                      className={`${inputStyles} h-32 resize-none py-2 text-right`}
+                      placeholder="وصف المنتج..."
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
               </div>
             </Card>
 
@@ -209,7 +314,7 @@ export default function ProductCreatePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendFeature("" as never)}
+                  onClick={() => appendFeature({ value: "", valueAr: "" })}
                   leftIcon={<Plus size={16} />}
                 >
                   Add Feature
@@ -222,11 +327,21 @@ export default function ProductCreatePage() {
                   </p>
                 )}
                 {featureFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]"
+                  >
                     <input
-                      {...register(`features.${index}` as const)}
-                      className={`${inputStyles} flex-1`}
-                      placeholder="e.g. Energy efficient"
+                      {...register(`features.${index}.value`)}
+                      className={inputStyles}
+                      placeholder="Feature in English"
+                      dir="ltr"
+                    />
+                    <input
+                      {...register(`features.${index}.valueAr`)}
+                      className={`${inputStyles} text-right`}
+                      placeholder="الميزة بالعربية"
+                      dir="rtl"
                     />
                     <button
                       type="button"
@@ -250,7 +365,9 @@ export default function ProductCreatePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendSpec({ key: "", value: "" })}
+                  onClick={() =>
+                    appendSpec({ key: "", keyAr: "", value: "", valueAr: "" })
+                  }
                   leftIcon={<Plus size={16} />}
                 >
                   Add Spec
@@ -263,16 +380,33 @@ export default function ProductCreatePage() {
                   </p>
                 )}
                 {specFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]"
+                  >
                     <input
                       {...register(`specifications.${index}.key`)}
-                      className={`${inputStyles} flex-1`}
-                      placeholder="Key"
+                      className={inputStyles}
+                      placeholder="Key (English)"
+                      dir="ltr"
+                    />
+                    <input
+                      {...register(`specifications.${index}.keyAr`)}
+                      className={`${inputStyles} text-right`}
+                      placeholder="المفتاح بالعربية"
+                      dir="rtl"
                     />
                     <input
                       {...register(`specifications.${index}.value`)}
-                      className={`${inputStyles} flex-1`}
-                      placeholder="Value"
+                      className={inputStyles}
+                      placeholder="Value (English)"
+                      dir="ltr"
+                    />
+                    <input
+                      {...register(`specifications.${index}.valueAr`)}
+                      className={`${inputStyles} text-right`}
+                      placeholder="القيمة بالعربية"
+                      dir="rtl"
                     />
                     <button
                       type="button"
@@ -363,7 +497,7 @@ export default function ProductCreatePage() {
                 >
                   <select {...register("brandId")} className={selectStyles}>
                     <option value="">Select brand</option>
-                    {MOCK_BRANDS.map((brand) => (
+                    {brands.map((brand) => (
                       <option key={brand.id} value={brand.id}>
                         {brand.name}
                       </option>
@@ -378,7 +512,7 @@ export default function ProductCreatePage() {
                 >
                   <select {...register("categoryId")} className={selectStyles}>
                     <option value="">Select category</option>
-                    {MOCK_CATEGORIES.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>

@@ -14,12 +14,12 @@ import { fetchOrderDetail } from "@/lib/api";
 import { Order, OrderStatus } from "@/types/order";
 import { formatPrice } from "@/lib/utils";
 
-const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
-  { status: "pending_payment", label: "Order Placed" },
-  { status: "confirmed", label: "Confirmed" },
-  { status: "processing", label: "Processing" },
-  { status: "shipped", label: "Shipped" },
-  { status: "delivered", label: "Delivered" },
+const TIMELINE_STEPS: { status: OrderStatus; labelKey: string }[] = [
+  { status: "pending_payment", labelKey: "order.orderPlaced" },
+  { status: "confirmed", labelKey: "order.confirmed" },
+  { status: "processing", labelKey: "order.processing" },
+  { status: "shipped", labelKey: "order.shipped" },
+  { status: "delivered", labelKey: "order.delivered" },
 ];
 
 export default function OrderDetailPage() {
@@ -51,12 +51,12 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="text-center py-12">
-        <p className="text-medium-gray">Order not found</p>
+        <p className="text-medium-gray">{t("order.notFound")}</p>
         <Link
           href="/account/orders"
           className="mt-2 text-sm text-lord-teal hover:underline"
         >
-          Back to orders
+          {t("account.backToOrders")}
         </Link>
       </div>
     );
@@ -123,7 +123,7 @@ export default function OrderDetailPage() {
                         : "text-medium-gray"
                     }`}
                   >
-                    {step.label}
+                    {t(step.labelKey)}
                   </span>
                 </div>
                 {i < TIMELINE_STEPS.length - 1 && (
@@ -234,7 +234,12 @@ export default function OrderDetailPage() {
             {order.payment?.method || "Paymob Accept"}
           </p>
           <p className="text-xs text-medium-gray mt-1">
-            {order.payment?.paidAt ? `Paid on ${new Date(order.payment.paidAt).toLocaleDateString()}` : "Pending"}
+            {order.payment?.paidAt
+              ? t("account.paidOn").replace(
+                  "{date}",
+                  new Date(order.payment.paidAt).toLocaleDateString(),
+                )
+              : t("general.pending")}
           </p>
         </div>
       </div>
@@ -244,7 +249,9 @@ export default function OrderDetailPage() {
         <div className="rounded-card border border-[#E8EAED] bg-white p-6">
           <div className="mb-4 flex items-center gap-2">
             <Clock className="h-4 w-4 text-lord-teal" />
-            <h2 className="font-semibold text-lord-navy">Status History</h2>
+            <h2 className="font-semibold text-lord-navy">
+              {t("account.statusHistory")}
+            </h2>
           </div>
           <div className="space-y-3">
             {order.statusHistory.map((entry, i) => (

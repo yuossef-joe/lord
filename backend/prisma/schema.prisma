@@ -53,10 +53,12 @@ enum CartStatus {
 model Brands {
   id             String     @id @default(uuid())
   name           String
+  nameAr         String?
   slug           String     @unique
   logoUrl        String?
   certificateUrl String?
   description    String?
+  descriptionAr  String?
   isActive       Boolean    @default(true)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
@@ -64,16 +66,18 @@ model Brands {
 }
 
 model ProductCategories {
-  id          String     @id @default(uuid())
-  name        String
-  slug        String     @unique
-  icon        String?
-  description String?
-  sortOrder   Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  products    Products[]
+  id            String     @id @default(uuid())
+  name          String
+  nameAr        String?
+  slug          String     @unique
+  icon          String?
+  description   String?
+  descriptionAr String?
+  sortOrder     Int        @default(0)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  products      Products[]
 }
 
 model Products {
@@ -81,6 +85,7 @@ model Products {
   brandId       String
   categoryId    String
   name          String
+  nameAr        String?
   slug          String            @unique
   modelNumber   String?
   type          String
@@ -94,7 +99,9 @@ model Products {
   weight        Json?
   color         String?
   description   String?           @db.Text
+  descriptionAr String?           @db.Text
   features      String[]          @default([])
+  featuresAr    String[]          @default([])
   specs         Json?
   price         Decimal           @db.Decimal(10, 2)
   originalPrice Decimal?          @db.Decimal(10, 2)
@@ -173,15 +180,15 @@ model CustomerAddresses {
 }
 
 model Carts {
-  id           String      @id @default(uuid())
-  customerId   String?
-  sessionId    String?
-  status       CartStatus  @default(ACTIVE)
-  couponCode   String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  customer     Customers?  @relation(fields: [customerId], references: [id])
-  items        CartItems[]
+  id         String      @id @default(uuid())
+  customerId String?
+  sessionId  String?
+  status     CartStatus  @default(ACTIVE)
+  couponCode String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  customer   Customers?  @relation(fields: [customerId], references: [id])
+  items      CartItems[]
 
   @@index([customerId])
   @@index([sessionId])
@@ -200,35 +207,35 @@ model CartItems {
 }
 
 model Orders {
-  id              String               @id @default(uuid())
-  orderNumber     String               @unique
-  customerId      String?
-  guestName       String?
-  guestEmail      String?
-  guestPhone      String?
-  guestNationalId String?
+  id               String               @id @default(uuid())
+  orderNumber      String               @unique
+  customerId       String?
+  guestName        String?
+  guestEmail       String?
+  guestPhone       String?
+  guestNationalId  String?
   customerSnapshot Json?
-  shippingAddress Json
+  shippingAddress  Json
   shippingMethodId String?
-  trackingNumber  String?
-  shippingCarrier String?
-  subtotal        Decimal              @db.Decimal(10, 2)
-  shippingFee     Decimal              @db.Decimal(10, 2) @default(0)
-  discountAmount  Decimal              @db.Decimal(10, 2) @default(0)
-  total           Decimal              @db.Decimal(10, 2)
-  couponCode      String?
-  notes           String?
-  paymentStatus   PaymentStatus        @default(PENDING)
-  orderStatus     OrderStatus          @default(PENDING_PAYMENT)
-  archivedAt      DateTime?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  customer        Customers?           @relation(fields: [customerId], references: [id])
-  shippingMethod  ShippingMethods?     @relation(fields: [shippingMethodId], references: [id])
-  items           OrderItems[]
-  statusHistory   OrderStatusHistory[]
-  payments        Payments[]
-  refunds         Refunds[]
+  trackingNumber   String?
+  shippingCarrier  String?
+  subtotal         Decimal              @db.Decimal(10, 2)
+  shippingFee      Decimal              @default(0) @db.Decimal(10, 2)
+  discountAmount   Decimal              @default(0) @db.Decimal(10, 2)
+  total            Decimal              @db.Decimal(10, 2)
+  couponCode       String?
+  notes            String?
+  paymentStatus    PaymentStatus        @default(PENDING)
+  orderStatus      OrderStatus          @default(PENDING_PAYMENT)
+  archivedAt       DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  customer         Customers?           @relation(fields: [customerId], references: [id])
+  shippingMethod   ShippingMethods?     @relation(fields: [shippingMethodId], references: [id])
+  items            OrderItems[]
+  statusHistory    OrderStatusHistory[]
+  payments         Payments[]
+  refunds          Refunds[]
 
   @@index([orderNumber])
   @@index([customerId])
@@ -237,7 +244,7 @@ model Orders {
 }
 
 model OrderItems {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   orderId     String
   productId   String?
   productName String
@@ -245,9 +252,9 @@ model OrderItems {
   modelNumber String?
   imageUrl    String?
   quantity    Int
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  lineTotal   Decimal  @db.Decimal(10, 2)
-  order       Orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  lineTotal   Decimal   @db.Decimal(10, 2)
+  order       Orders    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Products? @relation(fields: [productId], references: [id])
 }
 
@@ -263,37 +270,37 @@ model OrderStatusHistory {
 }
 
 model Payments {
-  id                    String         @id @default(uuid())
-  orderId               String
-  paymobOrderId         String?
-  paymobTransactionId   String?
-  amount                Decimal        @db.Decimal(10, 2)
-  amountPiasters        Int
-  currency              String         @default("EGP")
-  paymentMethod         PaymentMethod?
-  cardBrand             String?
-  cardLastFour          String?
-  walletNumber          String?
-  status                PaymentStatus  @default(PENDING)
-  gatewayResponse       Json?
-  paidAt                DateTime?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  order                 Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  refunds               Refunds[]
+  id                  String         @id @default(uuid())
+  orderId             String
+  paymobOrderId       String?
+  paymobTransactionId String?
+  amount              Decimal        @db.Decimal(10, 2)
+  amountPiasters      Int
+  currency            String         @default("EGP")
+  paymentMethod       PaymentMethod?
+  cardBrand           String?
+  cardLastFour        String?
+  walletNumber        String?
+  status              PaymentStatus  @default(PENDING)
+  gatewayResponse     Json?
+  paidAt              DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  order               Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds             Refunds[]
 }
 
 model Refunds {
   id             String    @id @default(uuid())
-  orderId         String
-  paymentId       String?
-  paymobRefundId  String?
-  amount          Decimal   @db.Decimal(10, 2)
-  reason          String
-  initiatedBy     String?
-  createdAt       DateTime  @default(now())
-  order           Orders    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  payment         Payments? @relation(fields: [paymentId], references: [id])
+  orderId        String
+  paymentId      String?
+  paymobRefundId String?
+  amount         Decimal   @db.Decimal(10, 2)
+  reason         String
+  initiatedBy    String?
+  createdAt      DateTime  @default(now())
+  order          Orders    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment        Payments? @relation(fields: [paymentId], references: [id])
 }
 
 model Coupons {
@@ -326,6 +333,7 @@ model ContentPages {
   id        String   @id @default(uuid())
   pageKey   String   @unique
   title     String
+  titleAr   String?
   content   Json
   seo       Json?
   isActive  Boolean  @default(true)
@@ -334,20 +342,24 @@ model ContentPages {
 }
 
 model ServiceTypes {
-  id          String     @id @default(uuid())
-  name        String
-  slug        String     @unique
-  description String?
-  isActive    Boolean    @default(true)
-  services    Services[]
+  id            String     @id @default(uuid())
+  name          String
+  nameAr        String?
+  slug          String     @unique
+  description   String?
+  descriptionAr String?
+  isActive      Boolean    @default(true)
+  services      Services[]
 }
 
 model Services {
   id            String        @id @default(uuid())
   serviceTypeId String?
   name          String
+  nameAr        String?
   slug          String        @unique
   description   String?
+  descriptionAr String?
   content       Json?
   isActive      Boolean       @default(true)
   sortOrder     Int           @default(0)
@@ -355,17 +367,17 @@ model Services {
 }
 
 model Inquiries {
-  id          String        @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   email       String
   phone       String?
   inquiryType String?
   message     String
   source      String?
-  status      InquiryStatus @default(NEW)
+  status      InquiryStatus  @default(NEW)
   notes       InquiryNotes[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model InquiryNotes {
@@ -378,16 +390,16 @@ model InquiryNotes {
 }
 
 model ServiceRequests {
-  id          String        @id @default(uuid())
+  id          String                @id @default(uuid())
   name        String
   email       String
   phone       String
   serviceType String?
   message     String
-  status      InquiryStatus @default(NEW)
+  status      InquiryStatus         @default(NEW)
   notes       ServiceRequestNotes[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 }
 
 model ServiceRequestNotes {
@@ -400,34 +412,38 @@ model ServiceRequestNotes {
 }
 
 model Testimonials {
-  id         String   @id @default(uuid())
+  id           String   @id @default(uuid())
   customerName String
-  location   String?
-  rating     Int      @default(5)
-  quote      String
-  isApproved Boolean  @default(false)
-  isFeatured Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  location     String?
+  locationAr   String?
+  rating       Int      @default(5)
+  quote        String
+  quoteAr      String?
+  isApproved   Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Promotions {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  slug        String   @unique
+  slug        String    @unique
   description String?
   imageUrl    String?
   startsAt    DateTime?
   endsAt      DateTime?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Faqs {
   id           String   @id @default(uuid())
   question     String
+  questionAr   String?
   answer       String
+  answerAr     String?
   category     String
   displayOrder Int      @default(0)
   isActive     Boolean  @default(true)
@@ -459,18 +475,18 @@ model ShippingZones {
 }
 
 model ShippingMethods {
-  id            String   @id @default(uuid())
-  name          String
-  code          String   @unique
-  description   String?
-  feeModifier   Decimal  @db.Decimal(10, 2) @default(0)
+  id             String   @id @default(uuid())
+  name           String
+  code           String   @unique
+  description    String?
+  feeModifier    Decimal  @default(0) @db.Decimal(10, 2)
   estimatedLabel String?
-  cutoffTime    String?
-  isRecommended Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  orders        Orders[]
+  cutoffTime     String?
+  isRecommended  Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Orders[]
 }
 
 model CmsUsers {

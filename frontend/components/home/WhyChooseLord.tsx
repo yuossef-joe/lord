@@ -12,32 +12,35 @@ const stats = [
   {
     icon: <Calendar className="h-7 w-7" />,
     value: 1986,
-    label: "Since",
-    prefix: "Since ",
+    labelKey: "home.why.since",
     noCount: true,
   },
   {
     icon: <Wind className="h-7 w-7" />,
     value: 50000,
-    label: "Units Installed",
+    labelKey: "home.why.unitsInstalled",
     suffix: "+",
   },
   {
     icon: <ShieldCheck className="h-7 w-7" />,
     value: 2,
-    label: "Authorized Dealer",
+    labelKey: "home.why.authorizedDealer",
     prefix: "",
-    suffix: " Brands",
+    suffixKey: "home.why.brandsSuffix",
   },
   {
     icon: <HeadphonesIcon className="h-7 w-7" />,
     value: 100,
-    label: "After-Sales Support",
+    labelKey: "home.why.afterSalesSupport",
     suffix: "%",
   },
 ];
 
-export default function WhyChooseLord() {
+interface WhyChooseLordProps {
+  title?: string;
+}
+
+export default function WhyChooseLord({ title }: WhyChooseLordProps) {
   const { t } = useLanguage();
 
   return (
@@ -45,7 +48,7 @@ export default function WhyChooseLord() {
       <div className="mx-auto max-w-container px-4 md:px-6">
         <ScrollReveal>
           <h2 className="mb-10 text-center text-3xl font-bold text-lord-navy md:text-4xl">
-            {t("home.why.title")}
+            {title || t("home.why.title")}
           </h2>
         </ScrollReveal>
 
@@ -83,11 +86,13 @@ export default function WhyChooseLord() {
                     scrollSpyOnce
                     separator=","
                     prefix={stat.prefix || ""}
-                    suffix={stat.suffix || ""}
+                    suffix={stat.suffixKey ? t(stat.suffixKey) : stat.suffix || ""}
                   />
                 )}
               </div>
-              <p className="mt-1.5 text-sm text-medium-gray">{stat.label}</p>
+              <p className="mt-1.5 text-sm text-medium-gray">
+                {t(stat.labelKey)}
+              </p>
             </motion.div>
           ))}
         </motion.div>

@@ -1,13 +1,13 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Printer, ArrowLeft, Package } from "lucide-react";
 import type { Order } from "@/types";
-import { MOCK_ORDERS } from "@/lib/mock-data";
+import { fetchOrder } from "@/lib/api";
 import {
   formatCurrency,
   formatDate,
   formatDateTime,
-  getOrderStatusLabel,
   getOrderStatusVariant,
 } from "@/lib/utils";
 import Card from "@/components/common/Card";
@@ -15,6 +15,7 @@ import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import EmptyState from "@/components/common/EmptyState";
+import { useLanguage } from "@/context/LanguageContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -40,20 +41,31 @@ const STATUS_DOT_COLORS: Record<string, string> = {
 };
 
 export default function OrderDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
-  const order: Order | undefined = MOCK_ORDERS.find((o) => o.id === id);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    void fetchOrder(id)
+      .then((response) => setOrder(response.data))
+      .finally(() => setIsLoading(false));
+  }, [id]);
+
+  if (isLoading) return null;
 
   if (!order) {
     return (
       <div className="py-20">
         <EmptyState
           icon={<Package size={32} />}
-          title="Order not found"
-          description="The order you're looking for doesn't exist or has been removed."
+          title={t("common.orderNotFound")}
+          description={t("common.orderNotFoundDescription")}
           action={
             <Link to="/orders">
               <Button variant="primary" leftIcon={<ArrowLeft size={16} />}>
-                Back to Orders
+                {t("common.backToOrders")}
               </Button>
             </Link>
           }
@@ -63,15 +75,32 @@ export default function OrderDetailPage() {
   }
 
   const reversedHistory = [...order.statusHistory].reverse();
+  const orderStatusLabel = (status: string) =>
+    ({
+      pending_payment: t("common.pendingPayment"),
+      confirmed: t("common.confirmed"),
+      processing: t("common.processing"),
+      shipped: t("common.shipped"),
+      delivered: t("common.delivered"),
+      cancelled: t("common.cancelled"),
+      refunded: t("common.refunded"),
+    })[status] ?? status;
+  const paymentMethodLabel = (method: string) =>
+    ({
+      cash_on_delivery: t("common.cashOnDelivery"),
+      credit_card: t("common.creditCard"),
+      mobile_wallet: t("common.mobileWallet"),
+      installment: t("common.installment"),
+    })[method] ?? method.replace(/_/g, " ");
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
       <motion.div variants={itemVariants}>
         <Breadcrumb
           items={[
-            { label: "Dashboard", href: "/" },
-            { label: "Orders", href: "/orders" },
-            { label: `Order #${order.orderNumber}` },
+            { label: t("common.dashboard"), href: "/" },
+            { label: t("common.orders"), href: "/orders" },
+            { label: `${t("common.orderNumber")}${order.orderNumber}` },
           ]}
         />
       </motion.div>
@@ -83,15 +112,15 @@ export default function OrderDetailPage() {
       >
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-navy">
-            Order #{order.orderNumber}
+            {t("common.orderNumber")}{order.orderNumber}
           </h1>
           <StatusBadge status={order.status} type="order" />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" leftIcon={<Printer size={16} />}>
-            Print
+            {t("common.print")}
           </Button>
-          <Button variant="primary">Update Status</Button>
+          <Button variant="primary">{t("common.updateStatus")}</Button>
         </div>
       </motion.div>
 
@@ -103,23 +132,25 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card padding="none">
               <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-navy">Order Items</h2>
+                <h2 className="text-lg font-semibold text-navy">
+                  {t("common.orderItems")}
+                </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Product
+                        {t("common.product")}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Price
+                        {t("common.price")}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Qty
+                        {t("common.quantity")}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total
+                        {t("common.total")}
                       </th>
                     </tr>
                   </thead>
@@ -165,21 +196,21 @@ export default function OrderDetailPage() {
               </div>
               <div className="border-t border-gray-200 p-6 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Subtotal</span>
+                  <span>{t("common.subtotal")}</span>
                   <span>{formatCurrency(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Shipping</span>
+                  <span>{t("common.shipping")}</span>
                   <span>
                     {order.shippingFee > 0
                       ? formatCurrency(order.shippingFee)
-                      : "Free"}
+                      : t("common.free")}
                   </span>
                 </div>
                 {order.discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>
-                      Discount
+                      {t("common.discount")}
                       {order.couponCode && (
                         <span className="ml-1 text-xs text-gray-400">
                           ({order.couponCode})
@@ -190,7 +221,7 @@ export default function OrderDetailPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-base font-semibold text-navy pt-2 border-t border-gray-100">
-                  <span>Total</span>
+                  <span>{t("common.total")}</span>
                   <span>{formatCurrency(order.grandTotal)}</span>
                 </div>
               </div>
@@ -201,7 +232,7 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-4">
-                Status Timeline
+                {t("common.statusTimeline")}
               </h2>
               <div className="relative">
                 {reversedHistory.map((entry, index) => {
@@ -224,7 +255,7 @@ export default function OrderDetailPage() {
                       {/* Content */}
                       <div className="pb-6">
                         <div className="font-medium text-gray-900">
-                          {getOrderStatusLabel(entry.status)}
+                          {orderStatusLabel(entry.status)}
                         </div>
                         {entry.note && (
                           <p className="text-sm text-gray-500 mt-0.5">
@@ -249,7 +280,7 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-3">
-                Customer Info
+                {t("common.customerInfo")}
               </h2>
               <div className="space-y-2 text-sm">
                 <div>
@@ -264,7 +295,7 @@ export default function OrderDetailPage() {
                 <div className="text-gray-600">{order.customer.phone}</div>
                 {order.customer.nationalId && (
                   <div className="text-gray-600">
-                    National ID:{" "}
+                    {t("common.nationalId")}:{" "}
                     <span className="font-mono">{order.customer.nationalId}</span>
                   </div>
                 )}
@@ -276,7 +307,7 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-3">
-                Shipping Address
+                {t("common.shippingAddress")}
               </h2>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="font-medium text-gray-900">
@@ -302,28 +333,28 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-3">
-                Payment Info
+                {t("common.paymentInfo")}
               </h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Method</span>
+                  <span className="text-gray-500">{t("common.method")}</span>
                   <span className="font-medium text-gray-900 capitalize">
-                    {order.payment.method.replace(/_/g, " ")}
+                    {paymentMethodLabel(order.payment.method)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Status</span>
+                  <span className="text-gray-500">{t("common.status")}</span>
                   <StatusBadge status={order.payment.status} type="payment" />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Amount</span>
+                  <span className="text-gray-500">{t("common.amount")}</span>
                   <span className="font-semibold text-gray-900">
                     {formatCurrency(order.payment.amount)}
                   </span>
                 </div>
                 {order.payment.transactionId && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Reference</span>
+                    <span className="text-gray-500">{t("common.reference")}</span>
                     <span className="text-gray-700 font-mono text-xs">
                       {order.payment.transactionId}
                     </span>
@@ -331,7 +362,7 @@ export default function OrderDetailPage() {
                 )}
                 {order.payment.paidAt && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Paid At</span>
+                    <span className="text-gray-500">{t("common.paidAt")}</span>
                     <span className="text-gray-700">
                       {formatDate(order.payment.paidAt)}
                     </span>
@@ -339,7 +370,7 @@ export default function OrderDetailPage() {
                 )}
                 {order.payment.cardBrand && order.payment.cardLast4 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Card</span>
+                    <span className="text-gray-500">{t("common.card")}</span>
                     <span className="text-gray-700">
                       {order.payment.cardBrand} ···· {order.payment.cardLast4}
                     </span>
@@ -351,7 +382,7 @@ export default function OrderDetailPage() {
               {order.refunds.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <h3 className="text-sm font-medium text-gray-900 mb-2">
-                    Refunds
+                    {t("common.refunds")}
                   </h3>
                   <div className="space-y-2">
                     {order.refunds.map((refund) => (
@@ -377,7 +408,7 @@ export default function OrderDetailPage() {
           <motion.div variants={itemVariants}>
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-3">
-                Order Notes
+                {t("common.orderNotes")}
               </h2>
               {order.notes.length > 0 ? (
                 <ul className="space-y-2">
@@ -391,7 +422,7 @@ export default function OrderDetailPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-400">No notes</p>
+                <p className="text-sm text-gray-400">{t("common.noNotes")}</p>
               )}
             </Card>
           </motion.div>

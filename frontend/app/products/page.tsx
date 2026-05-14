@@ -108,7 +108,9 @@ function ProductsContent() {
               {t("products.title")}
             </h1>
             <p className="text-sm text-medium-gray mt-1">
-              Showing {products.length} of {totalProducts} products
+              {t("products.showing")
+                .replace("{count}", String(products.length))
+                .replace("{total}", String(totalProducts))}
             </p>
           </div>
           <div className="flex items-center gap-3">

@@ -399,7 +399,7 @@ export default function CheckoutPage() {
                                   {...form.register("governorate")}
                                   className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
                                 >
-                                  <option value="">Select</option>
+                                  <option value="">{t("general.select")}</option>
                                   {EGYPTIAN_GOVERNORATES.map((g: string) => (
                                     <option key={g} value={g}>
                                       {g}

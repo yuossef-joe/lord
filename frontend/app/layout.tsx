@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Cairo } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "@/components/common/Navbar";
@@ -7,18 +6,6 @@ import Footer from "@/components/common/Footer";
 import FloatingWhatsApp from "@/components/common/FloatingWhatsApp";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const inter = Inter({
-  variable: "--font-inter-var",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const cairo = Cairo({
-  variable: "--font-cairo-var",
-  subsets: ["arabic", "latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -52,7 +39,7 @@ export default function RootLayout({
     <html
       lang="en"
       dir="ltr"
-      className={`${inter.variable} ${cairo.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col bg-off-white text-dark-charcoal">
         <Providers>

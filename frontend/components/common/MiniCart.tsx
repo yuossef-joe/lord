@@ -16,7 +16,7 @@ interface MiniCartProps {
 
 export default function MiniCart({ onClose }: MiniCartProps) {
   const { items, subtotal, removeItem } = useCart();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   const displayItems = items.slice(0, 4);
 
@@ -30,7 +30,7 @@ export default function MiniCart({ onClose }: MiniCartProps) {
         <button
           onClick={onClose}
           className="p-1 text-medium-gray hover:text-lord-navy transition-colors"
-          aria-label="Close cart"
+          aria-label={t("general.closeCart")}
         >
           <X className="h-4 w-4" />
         </button>
@@ -72,7 +72,7 @@ export default function MiniCart({ onClose }: MiniCartProps) {
                       {imgUrl ? (
                         <Image
                           src={imgUrl}
-                          alt={product?.name || ""}
+                          alt={localize(product?.name, product?.nameAr)}
                           width={48}
                           height={48}
                           className="h-full w-full object-cover"
@@ -83,10 +83,12 @@ export default function MiniCart({ onClose }: MiniCartProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-lord-navy truncate">
-                        {product?.name || "Product"}
+                        {localize(product?.name, product?.nameAr) ||
+                          t("general.product")}
                       </p>
                       <p className="text-xs text-medium-gray">
-                        Qty: {item.quantity} × {formatPrice(item.unitPrice)}
+                        {t("general.quantityShort")}: {item.quantity} ×{" "}
+                        {formatPrice(item.unitPrice)}
                       </p>
                     </div>
                     <button
@@ -100,7 +102,7 @@ export default function MiniCart({ onClose }: MiniCartProps) {
                         )
                       }
                       className="p-1 text-medium-gray hover:text-error transition-colors"
-                      aria-label="Remove item"
+                      aria-label={t("general.removeItem")}
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>

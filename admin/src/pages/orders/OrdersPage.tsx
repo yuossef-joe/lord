@@ -1,110 +1,29 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Eye, Pencil, Plus, Archive } from "lucide-react";
 import type { Order, OrderStatus } from "@/types";
-import { MOCK_ORDERS } from "@/lib/mock-data";
+import { archiveOrder, fetchOrders } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge";
 import SearchInput from "@/components/common/SearchInput";
 import Breadcrumb from "@/components/common/Breadcrumb";
+import { useLanguage } from "@/context/LanguageContext";
 
 const columnHelper = createColumnHelper<Order>();
 
-const columns = [
-  columnHelper.accessor("orderNumber", {
-    header: "Order #",
-    cell: (info) => (
-      <Link
-        to={`/orders/${info.row.original.id}`}
-        className="text-teal font-medium hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor("customer", {
-    header: "Customer",
-    cell: (info) => {
-      const customer = info.getValue();
-      return (
-        <div>
-          <div className="font-medium text-gray-900">{customer.name}</div>
-          <div className="text-xs text-gray-500">{customer.email}</div>
-        </div>
-      );
-    },
-  }),
-  columnHelper.accessor("customer.nationalId", {
-    header: "National ID",
-    cell: (info) => info.getValue() || "—",
-  }),
-  columnHelper.accessor("items", {
-    header: "Items",
-    cell: (info) => `${info.getValue().length} items`,
-  }),
-  columnHelper.accessor("grandTotal", {
-    header: "Total",
-    cell: (info) => (
-      <span className="font-semibold">{formatCurrency(info.getValue())}</span>
-    ),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: (info) => <StatusBadge status={info.getValue()} type="order" />,
-  }),
-  columnHelper.accessor("payment", {
-    header: "Payment",
-    cell: (info) => (
-      <StatusBadge status={info.getValue().status} type="payment" />
-    ),
-  }),
-  columnHelper.accessor("createdAt", {
-    header: "Date",
-    cell: (info) => formatDate(info.getValue()),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "",
-    cell: (info) => (
-      <div className="flex items-center gap-1">
-        <Link
-          to={`/orders/${info.row.original.id}`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
-          aria-label="View order"
-        >
-          <Eye size={16} />
-        </Link>
-        <Link
-          to={`/orders/${info.row.original.id}/edit`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
-          aria-label="Edit order"
-        >
-          <Pencil size={16} />
-        </Link>
-        <button
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
-          aria-label="Archive order"
-        >
-          <Archive size={16} />
-        </button>
-      </div>
-    ),
-  }),
-];
-
 type FilterTab = "all" | OrderStatus;
 
-const FILTER_TABS: { label: string; value: FilterTab }[] = [
-  { label: "All", value: "all" },
-  { label: "Pending", value: "pending_payment" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "Processing", value: "processing" },
-  { label: "Shipped", value: "shipped" },
-  { label: "Delivered", value: "delivered" },
-  { label: "Cancelled", value: "cancelled" },
+const FILTER_TABS: { labelKey: string; value: FilterTab }[] = [
+  { labelKey: "common.all", value: "all" },
+  { labelKey: "common.pending", value: "pending_payment" },
+  { labelKey: "common.confirmed", value: "confirmed" },
+  { labelKey: "common.processing", value: "processing" },
+  { labelKey: "common.shipped", value: "shipped" },
+  { labelKey: "common.delivered", value: "delivered" },
+  { labelKey: "common.cancelled", value: "cancelled" },
 ];
 
 const containerVariants = {
@@ -121,33 +40,144 @@ const itemVariants = {
 };
 
 export default function OrdersPage() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    void fetchOrders("").then((response) => setOrders(response.data));
+  }, []);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("orderNumber", {
+        header: t("common.orderNumber"),
+        cell: (info) => (
+          <Link
+            to={`/orders/${info.row.original.id}`}
+            className="text-teal font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("customer", {
+        header: t("common.customer"),
+        cell: (info) => {
+          const customer = info.getValue();
+          return (
+            <div>
+              <div className="font-medium text-gray-900">
+                {customer?.name || "—"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {customer?.email || "—"}
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("customer.nationalId", {
+        header: t("common.nationalId"),
+        cell: (info) => info.getValue() || "-",
+      }),
+      columnHelper.accessor("items", {
+        header: t("common.items"),
+        cell: (info) => info.getValue().length,
+      }),
+      columnHelper.accessor("grandTotal", {
+        header: t("common.total"),
+        cell: (info) => (
+          <span className="font-semibold">
+            {formatCurrency(info.getValue())}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("status", {
+        header: t("common.status"),
+        cell: (info) => <StatusBadge status={info.getValue()} type="order" />,
+      }),
+      columnHelper.accessor("payment", {
+        header: t("common.payment"),
+        cell: (info) => (
+          <StatusBadge status={info.getValue()?.status ?? "pending"} type="payment" />
+        ),
+      }),
+      columnHelper.accessor("createdAt", {
+        header: t("common.date"),
+        cell: (info) => formatDate(info.getValue()),
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: (info) => (
+          <div className="flex items-center gap-1">
+            <Link
+              to={`/orders/${info.row.original.id}`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
+              aria-label={t("common.viewOrder")}
+            >
+              <Eye size={16} />
+            </Link>
+            <Link
+              to={`/orders/${info.row.original.id}/edit`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
+              aria-label={t("common.editOrder")}
+            >
+              <Pencil size={16} />
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                void archiveOrder(info.row.original.id).then(() =>
+                  setOrders((current) =>
+                    current.filter(
+                      (order) => order.id !== info.row.original.id,
+                    ),
+                  ),
+                );
+              }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+              aria-label={t("common.archiveOrder")}
+            >
+              <Archive size={16} />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [t],
+  );
 
   const filteredOrders = useMemo(() => {
-    let orders: Order[] = MOCK_ORDERS;
+    let result: Order[] = orders;
 
     if (activeFilter !== "all") {
-      orders = orders.filter((o) => o.status === activeFilter);
+      result = result.filter((o) => o.status === activeFilter);
     }
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      orders = orders.filter(
+      result = result.filter(
         (o) =>
           o.orderNumber.toLowerCase().includes(term) ||
-          o.customer.name.toLowerCase().includes(term),
+          o.customer?.name?.toLowerCase().includes(term) ||
+          o.customer?.email?.toLowerCase().includes(term),
       );
     }
 
-    return orders;
-  }, [activeFilter, searchTerm]);
+    return result;
+  }, [activeFilter, orders, searchTerm]);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
       <motion.div variants={itemVariants}>
         <Breadcrumb
-          items={[{ label: "Dashboard", href: "/" }, { label: "Orders" }]}
+          items={[
+            { label: t("common.dashboard"), href: "/" },
+            { label: t("common.orders") },
+          ]}
         />
       </motion.div>
 
@@ -155,19 +185,19 @@ export default function OrdersPage() {
         variants={itemVariants}
         className="flex justify-between items-center mb-6 mt-4"
       >
-        <h1 className="text-2xl font-bold text-navy">Orders</h1>
+        <h1 className="text-2xl font-bold text-navy">{t("common.orders")}</h1>
         <div className="flex items-center gap-3">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search orders…"
+            placeholder={t("common.searchOrders")}
           />
           <Link
             to="/orders/create"
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-teal px-4 text-sm font-medium text-white transition hover:bg-teal/90"
           >
             <Plus size={16} />
-            Create Order
+            {t("common.createOrder")}
           </Link>
         </div>
       </motion.div>
@@ -183,7 +213,7 @@ export default function OrdersPage() {
                 : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
             }`}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </motion.div>
@@ -192,7 +222,7 @@ export default function OrdersPage() {
         <DataTable
           columns={columns}
           data={filteredOrders}
-          emptyMessage="No orders found"
+          emptyMessage={t("common.noOrders")}
         />
       </motion.div>
     </motion.div>
