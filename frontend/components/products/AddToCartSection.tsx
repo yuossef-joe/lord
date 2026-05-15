@@ -16,7 +16,7 @@ interface AddToCartSectionProps {
 
 export default function AddToCartSection({ product }: AddToCartSectionProps) {
   const { addItem } = useCart();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [state, setState] = useState<"idle" | "loading" | "success">("idle");
 
@@ -35,8 +35,9 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
   };
 
   const handleWhatsApp = () => {
+    const productName = localize(product.name, product.nameAr);
     const message = encodeURIComponent(
-      `Hi, I'm interested in ${product.name} (Model: ${product.modelNumber || "N/A"}).`,
+      `Hi, I'm interested in ${productName} (Model: ${product.modelNumber || "N/A"}).`,
     );
     window.open(`https://wa.me/201234567890?text=${message}`, "_blank");
   };

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Eye, MessageSquare, Wrench, Send } from "lucide-react";
 import type { Inquiry, ServiceRequest } from "@/types";
-import { MOCK_INQUIRIES, MOCK_SERVICE_REQUESTS } from "@/lib/mock-data";
+import { fetchInquiries, fetchServiceRequests } from "@/lib/api";
 import { formatDate, formatDateTime, cn } from "@/lib/utils";
 import DataTable from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
@@ -58,13 +58,14 @@ const inquiryColumns = (onView: (inquiry: Inquiry) => void) => [
   }),
   inquiryHelper.accessor("message", {
     header: "Message",
-    cell: (info) => (
-      <span className="max-w-[200px] truncate block" title={info.getValue()}>
-        {info.getValue().length > 50
-          ? info.getValue().slice(0, 50) + "…"
-          : info.getValue()}
-      </span>
-    ),
+    cell: (info) => {
+      const message = info.getValue() ?? "";
+      return (
+        <span className="max-w-[200px] truncate block" title={message}>
+          {message.length > 50 ? message.slice(0, 50) + "…" : message}
+        </span>
+      );
+    },
   }),
   inquiryHelper.accessor("status", {
     header: "Status",
@@ -176,6 +177,8 @@ export default function InquiriesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("inquiries");
   const [searchTerm, setSearchTerm] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
 
   // Inquiry detail modal
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
@@ -184,29 +187,38 @@ export default function InquiriesPage() {
     null,
   );
 
+  useEffect(() => {
+    void Promise.all([fetchInquiries(""), fetchServiceRequests("")]).then(
+      ([inquiriesResponse, requestsResponse]) => {
+        setInquiries(inquiriesResponse.data);
+        setServiceRequests(requestsResponse.data);
+      },
+    );
+  }, []);
+
   /* ---------- filtered data ---------- */
 
   const filteredInquiries = useMemo(() => {
-    if (!searchTerm.trim()) return MOCK_INQUIRIES;
+    if (!searchTerm.trim()) return inquiries;
     const term = searchTerm.toLowerCase();
-    return MOCK_INQUIRIES.filter(
+    return inquiries.filter(
       (i) =>
         i.name.toLowerCase().includes(term) ||
         i.email.toLowerCase().includes(term) ||
         i.message.toLowerCase().includes(term),
     );
-  }, [searchTerm]);
+  }, [inquiries, searchTerm]);
 
   const filteredRequests = useMemo(() => {
-    if (!searchTerm.trim()) return MOCK_SERVICE_REQUESTS;
+    if (!searchTerm.trim()) return serviceRequests;
     const term = searchTerm.toLowerCase();
-    return MOCK_SERVICE_REQUESTS.filter(
+    return serviceRequests.filter(
       (r) =>
         r.name.toLowerCase().includes(term) ||
         r.serviceTypeName.toLowerCase().includes(term) ||
         (r.email ?? "").toLowerCase().includes(term),
     );
-  }, [searchTerm]);
+  }, [searchTerm, serviceRequests]);
 
   /* ---------- render ---------- */
 

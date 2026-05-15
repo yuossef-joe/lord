@@ -30,6 +30,7 @@ import {
   createOrder,
   initiatePayment,
   fetchCustomerAddresses,
+  fetchShippingOptions,
 } from "@/lib/api";
 import { CustomerAddress } from "@/types/customer";
 import Image from "next/image";
@@ -37,6 +38,13 @@ import type { z } from "zod";
 
 type AddressFormData = z.infer<typeof addressSchema>;
 type GuestFormData = z.infer<typeof guestCheckoutSchema>;
+type ShippingOption = {
+  _id: string;
+  name: string;
+  description?: string;
+  fee: number;
+  estimatedDays?: string;
+};
 
 const STEPS = [
   { key: "shipping", icon: MapPin, label: "Shipping" },
@@ -46,7 +54,7 @@ const STEPS = [
 
 export default function CheckoutPage() {
   const { isAuthenticated, customer } = useAuth();
-  const { items, subtotal, shipping, discount, total, couponCode, clearCart } =
+  const { items, subtotal, shipping, discount, couponCode, clearCart } =
     useCart();
   const { t, isRTL } = useLanguage();
   const router = useRouter();
@@ -61,6 +69,14 @@ export default function CheckoutPage() {
   const [shippingData, setShippingData] = useState<
     AddressFormData | GuestFormData | null
   >(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShippingOptionId, setSelectedShippingOptionId] =
+    useState<string>("");
+  const selectedShippingOption =
+    shippingOptions.find((option) => option._id === selectedShippingOptionId) ||
+    null;
+  const selectedShippingFee = selectedShippingOption?.fee ?? shipping;
+  const checkoutTotal = Math.max(0, subtotal + selectedShippingFee - discount);
 
   // Form for authenticated users (address only)
   const addressForm = useForm<AddressFormData>({
@@ -95,25 +111,44 @@ export default function CheckoutPage() {
     }
   }, [isAuthenticated]);
 
+  const loadShippingOptions = async (address: AddressFormData | GuestFormData) => {
+    const params = new URLSearchParams();
+    if ("governorate" in address && address.governorate) {
+      params.set("governorate", address.governorate);
+    }
+    if ("city" in address && address.city) params.set("city", address.city);
+    params.set("subtotal", String(subtotal));
+
+    const result = (await fetchShippingOptions(params.toString())) as {
+      data: ShippingOption[];
+    };
+    const options = result.data || [];
+    setShippingOptions(options);
+    setSelectedShippingOptionId(options[0]?._id || "");
+  };
+
+  const continueToReview = async (address: AddressFormData | GuestFormData) => {
+    setShippingData(address);
+    await loadShippingOptions(address);
+    setCurrentStep(1);
+  };
+
   const handleShippingSubmit = () => {
     if (isAuthenticated && !useNewAddress && selectedAddressId) {
       const addr = savedAddresses.find((a) => a._id === selectedAddressId);
       if (addr) {
-        setShippingData(addr as unknown as AddressFormData);
-        setCurrentStep(1);
+        void continueToReview(addr as unknown as AddressFormData);
       }
       return;
     }
 
     if (isAuthenticated) {
       addressForm.handleSubmit((data) => {
-        setShippingData(data);
-        setCurrentStep(1);
+        void continueToReview(data);
       })();
     } else {
       guestForm.handleSubmit((data) => {
-        setShippingData(data);
-        setCurrentStep(1);
+        void continueToReview(data);
       })();
     }
   };
@@ -123,6 +158,8 @@ export default function CheckoutPage() {
     try {
       const orderData = {
         shippingAddress: shippingData,
+        shippingMethodId: selectedShippingOptionId || undefined,
+        shippingFee: selectedShippingFee,
         items: items.map((item) => ({
           product: item.product?._id || ("productId" in item ? item.productId : ""),
           quantity: item.quantity,
@@ -362,7 +399,7 @@ export default function CheckoutPage() {
                                   {...form.register("governorate")}
                                   className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
                                 >
-                                  <option value="">Select</option>
+                                  <option value="">{t("general.select")}</option>
                                   {EGYPTIAN_GOVERNORATES.map((g: string) => (
                                     <option key={g} value={g}>
                                       {g}
@@ -463,6 +500,56 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
+                  {shippingOptions.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="mb-3 text-sm font-semibold text-lord-navy">
+                        Delivery option
+                      </h3>
+                      <div className="space-y-3">
+                        {shippingOptions.map((option) => (
+                          <label
+                            key={option._id}
+                            className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-colors ${
+                              selectedShippingOptionId === option._id
+                                ? "border-lord-teal bg-lord-teal/5"
+                                : "border-[#E8EAED] hover:border-silver"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="shippingOption"
+                              checked={selectedShippingOptionId === option._id}
+                              onChange={() =>
+                                setSelectedShippingOptionId(option._id)
+                              }
+                              className="mt-1 accent-lord-teal"
+                            />
+                            <span className="flex-1">
+                              <span className="block text-sm font-medium text-lord-navy">
+                                {option.name}
+                              </span>
+                              {option.description && (
+                                <span className="mt-1 block text-xs text-medium-gray">
+                                  {option.description}
+                                </span>
+                              )}
+                              {option.estimatedDays && (
+                                <span className="mt-1 block text-xs text-lord-teal">
+                                  {option.estimatedDays}
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-sm font-semibold text-lord-navy">
+                              {option.fee === 0
+                                ? t("cart.freeShipping")
+                                : formatPrice(option.fee)}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-between">
                     <Button
                       variant="secondary"
@@ -539,9 +626,9 @@ export default function CheckoutPage() {
                     {t("cart.shipping")}
                   </span>
                   <span className="font-medium text-green-600">
-                    {shipping === 0
+                    {selectedShippingFee === 0
                       ? t("cart.freeShipping")
-                      : formatPrice(shipping)}
+                      : formatPrice(selectedShippingFee)}
                   </span>
                 </div>
                 {discount > 0 && (
@@ -553,7 +640,9 @@ export default function CheckoutPage() {
                 <hr className="border-[#E8EAED]" />
                 <div className="flex justify-between text-base font-bold">
                   <span className="text-lord-navy">{t("cart.total")}</span>
-                  <span className="text-lord-teal">{formatPrice(total)}</span>
+                  <span className="text-lord-teal">
+                    {formatPrice(checkoutTotal)}
+                  </span>
                 </div>
               </div>
 

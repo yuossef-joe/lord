@@ -34,6 +34,7 @@ function ProductsContent() {
   const brand = searchParams.get("brand") || "";
   const category = searchParams.get("category") || "";
   const search = searchParams.get("search") || "";
+  const hp = searchParams.get("hp") || "";
 
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
@@ -45,6 +46,7 @@ function ProductsContent() {
       if (brand) params.set("brand", brand);
       if (category) params.set("category", category);
       if (search) params.set("search", search);
+      if (hp) params.set("hp", hp);
 
       const data = (await fetchProducts(params.toString())) as {
         data: Product[];
@@ -58,7 +60,7 @@ function ProductsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, sort, brand, category, search]);
+  }, [currentPage, sort, brand, category, search, hp]);
 
   useEffect(() => {
     loadProducts();
@@ -106,7 +108,9 @@ function ProductsContent() {
               {t("products.title")}
             </h1>
             <p className="text-sm text-medium-gray mt-1">
-              Showing {products.length} of {totalProducts} products
+              {t("products.showing")
+                .replace("{count}", String(products.length))
+                .replace("{total}", String(totalProducts))}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -132,8 +136,10 @@ function ProductsContent() {
               categories={categories}
               selectedBrand={brand}
               selectedCategory={category}
+              selectedHp={hp}
               onBrandChange={(val) => updateFilters("brand", val)}
               onCategoryChange={(val) => updateFilters("category", val)}
+              onHpChange={(val) => updateFilters("hp", val)}
               onClearAll={clearAllFilters}
             />
           </aside>
@@ -227,12 +233,17 @@ function ProductsContent() {
               categories={categories}
               selectedBrand={brand}
               selectedCategory={category}
+              selectedHp={hp}
               onBrandChange={(val) => {
                 updateFilters("brand", val);
                 setIsMobileFilterOpen(false);
               }}
               onCategoryChange={(val) => {
                 updateFilters("category", val);
+                setIsMobileFilterOpen(false);
+              }}
+              onHpChange={(val) => {
+                updateFilters("hp", val);
                 setIsMobileFilterOpen(false);
               }}
               onClearAll={() => {

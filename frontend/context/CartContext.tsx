@@ -18,7 +18,6 @@ import {
   removeCartItem as removeCartItemApi,
   clearServerCart,
   applyCouponApi,
-  removeCouponApi,
 } from "@/lib/api";
 import {
   getGuestCart,
@@ -172,14 +171,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const applyCoupon = async (code: string) => {
     const data = (await applyCouponApi(code)) as {
-      data: { discount: number; code: string };
+      data: {
+        code: string;
+        discountType: "percentage" | "fixed";
+        discountValue: number | string;
+        minimumOrderAmount?: number | string | null;
+      };
     };
-    setCouponCode(data.data.code);
-    setDiscount(data.data.discount);
+    const coupon = data.data;
+    const minimumOrderAmount = Number(coupon.minimumOrderAmount ?? 0);
+
+    if (subtotal < minimumOrderAmount) {
+      throw new Error("Minimum order amount not met");
+    }
+
+    const discountValue = Number(coupon.discountValue);
+    const nextDiscount =
+      coupon.discountType === "percentage"
+        ? (subtotal * discountValue) / 100
+        : discountValue;
+
+    setCouponCode(coupon.code);
+    setDiscount(Math.min(subtotal, nextDiscount));
   };
 
   const removeCoupon = async () => {
-    await removeCouponApi();
     setCouponCode(null);
     setDiscount(0);
   };

@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Star, Trash2, Check, X } from "lucide-react";
 import type { Testimonial } from "@/types";
-import { MOCK_TESTIMONIALS } from "@/lib/mock-data";
+import {
+  approveTestimonial,
+  deleteTestimonial,
+  fetchTestimonials,
+  rejectTestimonial,
+} from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Card from "@/components/common/Card";
@@ -22,62 +27,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
-
-/* ------------------------------------------------------------------ */
-/*  Extended mock data                                                */
-/* ------------------------------------------------------------------ */
-
-const EXTENDED_TESTIMONIALS: Testimonial[] = [
-  ...MOCK_TESTIMONIALS,
-  {
-    id: "t3",
-    customerName: "Khaled Youssef",
-    location: "Alexandria",
-    rating: 5,
-    quote:
-      "Best AC dealer in Egypt. The Carrier unit they installed works perfectly even in the hottest summer days. Highly recommended!",
-    status: "approved",
-    isFeatured: false,
-    createdAt: "2024-08-01T00:00:00Z",
-    updatedAt: "2024-08-01T00:00:00Z",
-  },
-  {
-    id: "t4",
-    customerName: "Fatma Ali",
-    location: "Giza",
-    rating: 3,
-    quote:
-      "Good product but delivery took longer than expected. Customer support was helpful though.",
-    status: "pending",
-    isFeatured: false,
-    createdAt: "2024-08-18T00:00:00Z",
-    updatedAt: "2024-08-18T00:00:00Z",
-  },
-  {
-    id: "t5",
-    customerName: "Omar Reda",
-    location: "Mansoura",
-    rating: 5,
-    quote:
-      "Professional installation and great after-sales service. The maintenance team is very responsive.",
-    status: "approved",
-    isFeatured: true,
-    createdAt: "2024-08-05T00:00:00Z",
-    updatedAt: "2024-08-05T00:00:00Z",
-  },
-  {
-    id: "t6",
-    customerName: "Nadia Samir",
-    location: "Cairo",
-    rating: 4,
-    quote:
-      "Excellent pricing compared to competitors. The Midea unit is energy efficient and quiet.",
-    status: "pending",
-    isFeatured: false,
-    createdAt: "2024-08-20T00:00:00Z",
-    updatedAt: "2024-08-20T00:00:00Z",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Star rating component                                             */
@@ -104,12 +53,17 @@ function StarRating({ rating }: { rating: number }) {
 /* ------------------------------------------------------------------ */
 
 export default function TestimonialsPage() {
-  const [testimonials, setTestimonials] = useState(EXTENDED_TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Testimonial | null>(null);
+
+  useEffect(() => {
+    void fetchTestimonials().then((response) => setTestimonials(response.data));
+  }, []);
 
   /* ---------- handlers ---------- */
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
+    await approveTestimonial(id);
     setTestimonials((prev) =>
       prev.map((t) =>
         t.id === id
@@ -123,7 +77,8 @@ export default function TestimonialsPage() {
     );
   };
 
-  const handleReject = (id: string) => {
+  const handleReject = async (id: string) => {
+    await rejectTestimonial(id);
     setTestimonials((prev) =>
       prev.map((t) =>
         t.id === id
@@ -137,8 +92,9 @@ export default function TestimonialsPage() {
     );
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
+    await deleteTestimonial(deleteTarget.id);
     setTestimonials((prev) => prev.filter((t) => t.id !== deleteTarget.id));
     setDeleteTarget(null);
   };

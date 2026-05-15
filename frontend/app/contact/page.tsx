@@ -345,7 +345,7 @@ export default function ContactPage() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Lord Location"
+              title={t("contact.mapTitle")}
               className="w-full"
             />
           </div>

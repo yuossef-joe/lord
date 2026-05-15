@@ -11,15 +11,8 @@ import SeoHead from "@/components/common/SeoHead";
 import Button from "@/components/common/Button";
 import { useLanguage } from "@/context/LanguageContext";
 import { fetchServices } from "@/lib/api";
+import type { Service } from "@/types/service";
 import Link from "next/link";
-
-interface ServiceItem {
-  _id: string;
-  title: string;
-  description: string;
-  icon?: string;
-  features?: string[];
-}
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   installation: <Settings className="h-8 w-8" />,
@@ -29,85 +22,21 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   delivery: <Truck className="h-8 w-8" />,
 };
 
-const FALLBACK_SERVICES: ServiceItem[] = [
-  {
-    _id: "1",
-    title: "AC Installation",
-    description:
-      "Professional installation by certified technicians for all Carrier and Midea split, window, and central AC units. Includes site assessment and optimal placement.",
-    icon: "installation",
-    features: [
-      "Certified technicians",
-      "Site assessment",
-      "Warranty-backed installation",
-      "Same-day scheduling",
-    ],
-  },
-  {
-    _id: "2",
-    title: "Preventive Maintenance",
-    description:
-      "Regular maintenance packages to keep your AC running efficiently. Includes filter cleaning, refrigerant check, and full system inspection.",
-    icon: "maintenance",
-    features: [
-      "Annual maintenance plans",
-      "Filter cleaning & replacement",
-      "Refrigerant level check",
-      "Performance optimization",
-    ],
-  },
-  {
-    _id: "3",
-    title: "AC Repair",
-    description:
-      "Expert repair services for all AC brands and models. Fast diagnostics and genuine spare parts to get your AC back to peak performance.",
-    icon: "repair",
-    features: [
-      "24/7 emergency repair",
-      "Genuine spare parts",
-      "Diagnostic report",
-      "Repair warranty",
-    ],
-  },
-  {
-    _id: "4",
-    title: "Genuine Spare Parts",
-    description:
-      "Original Carrier and Midea spare parts available for all models. Ensuring durability and optimal performance.",
-    icon: "spare-parts",
-    features: [
-      "100% genuine parts",
-      "Wide model coverage",
-      "Competitive pricing",
-      "Fast availability",
-    ],
-  },
-  {
-    _id: "5",
-    title: "Free Delivery",
-    description:
-      "Fast and free delivery across Egypt for all AC units. Track your order and get notified in real time.",
-    icon: "delivery",
-    features: [
-      "Free nationwide delivery",
-      "Order tracking",
-      "Careful handling",
-      "Delivery scheduling",
-    ],
-  },
-];
-
 export default function ServicesPage() {
-  const { t } = useLanguage();
-  const [services, setServices] = useState<ServiceItem[]>(FALLBACK_SERVICES);
+  const { t, localize, language } = useLanguage();
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     fetchServices()
       .then((data) => {
-        const d = data as { data: ServiceItem[] };
-        if (d.data && d.data.length > 0) setServices(d.data);
+        const d = data as { data: Service[] };
+        setServices(d.data ?? []);
+        setHasError(false);
       })
-      .catch(() => {});
+      .catch(() => setHasError(true))
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -145,6 +74,16 @@ export default function ServicesPage() {
           viewport={{ once: true }}
           className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         >
+          {isLoading && (
+            <div className="col-span-full rounded-card border border-[#E8EAED] bg-white p-8 text-center text-sm text-medium-gray">
+              {t("general.loading")}
+            </div>
+          )}
+          {hasError && (
+            <div className="col-span-full rounded-card border border-[#E8EAED] bg-white p-8 text-center text-sm text-medium-gray">
+              {t("services.loadError")}
+            </div>
+          )}
           {services.map((service) => (
             <motion.div
               key={service._id}
@@ -152,21 +91,23 @@ export default function ServicesPage() {
               className="group rounded-card border border-[#E8EAED] bg-white p-6 transition-shadow hover:shadow-lg"
             >
               <div className="mb-4 inline-flex rounded-xl bg-lord-teal/10 p-3 text-lord-teal transition-colors group-hover:bg-lord-teal group-hover:text-white">
-                {ICON_MAP[service.icon || ""] || <Wrench className="h-8 w-8" />}
+                {ICON_MAP[service.serviceType?.slug || ""] || (
+                  <Wrench className="h-8 w-8" />
+                )}
               </div>
               <h3 className="mb-2 text-lg font-bold text-lord-navy">
-                {service.title}
+                {localize(service.name, service.nameAr)}
               </h3>
               <p className="mb-4 text-sm text-dark-charcoal leading-relaxed">
-                {service.description}
+                {localize(service.description, service.descriptionAr)}
               </p>
-              {service.features && (
+              {(language === "ar" ? service.inclusionsAr : service.inclusions) && (
                 <ul className="space-y-2">
-                  {service.features.map((feature, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-dark-charcoal"
-                    >
+                  {(language === "ar" && service.inclusionsAr?.length
+                    ? service.inclusionsAr
+                    : service.inclusions
+                  ).map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-dark-charcoal">
                       <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-lord-teal" />
                       {feature}
                     </li>

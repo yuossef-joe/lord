@@ -3,43 +3,44 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { OrderStatus } from "@/types/order";
+import { useLanguage } from "@/context/LanguageContext";
 
 const statusConfig: Record<
   OrderStatus,
-  { label: string; bg: string; text: string }
+  { labelKey: string; bg: string; text: string }
 > = {
   pending_payment: {
-    label: "Pending Payment",
+    labelKey: "order.pendingPayment",
     bg: "bg-warning/15",
     text: "text-amber-700",
   },
   confirmed: {
-    label: "Confirmed",
+    labelKey: "order.confirmed",
     bg: "bg-info/15",
     text: "text-info",
   },
   processing: {
-    label: "Processing",
+    labelKey: "order.processing",
     bg: "bg-amber-100",
     text: "text-amber-700",
   },
   shipped: {
-    label: "Shipped",
+    labelKey: "order.shipped",
     bg: "bg-lord-teal/15",
     text: "text-lord-teal",
   },
   delivered: {
-    label: "Delivered",
+    labelKey: "order.delivered",
     bg: "bg-success/15",
     text: "text-success",
   },
   cancelled: {
-    label: "Cancelled",
+    labelKey: "order.cancelled",
     bg: "bg-error/15",
     text: "text-error",
   },
   refunded: {
-    label: "Refunded",
+    labelKey: "order.refunded",
     bg: "bg-medium-gray/15",
     text: "text-medium-gray",
   },
@@ -52,6 +53,7 @@ export default function OrderStatusBadge({
   status: OrderStatus;
   className?: string;
 }) {
+  const { t } = useLanguage();
   const config = statusConfig[status];
   return (
     <span
@@ -62,7 +64,7 @@ export default function OrderStatusBadge({
         className,
       )}
     >
-      {config.label}
+      {t(config.labelKey)}
     </span>
   );
 }

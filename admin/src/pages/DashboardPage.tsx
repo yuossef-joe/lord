@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -19,16 +20,17 @@ import {
 } from "recharts";
 import type { DashboardStats, RevenueDataPoint, Order, Inquiry } from "@/types";
 import {
-  MOCK_DASHBOARD_STATS,
-  MOCK_REVENUE_DATA,
-  MOCK_ORDERS,
-  MOCK_INQUIRIES,
-} from "@/lib/mock-data";
+  fetchDashboardStats,
+  fetchLatestInquiries,
+  fetchRecentOrders,
+  fetchRevenueChart,
+} from "@/lib/api";
 import { formatCurrency, formatDate, truncate } from "@/lib/utils";
 import StatsCard from "@/components/common/StatsCard";
 import Card from "@/components/common/Card";
 import StatusBadge from "@/components/common/StatusBadge";
 import Badge from "@/components/common/Badge";
+import { useLanguage } from "@/context/LanguageContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -49,10 +51,36 @@ function formatChartDate(dateStr: string): string {
 }
 
 export default function DashboardPage() {
-  const stats: DashboardStats = MOCK_DASHBOARD_STATS;
-  const revenueData: RevenueDataPoint[] = MOCK_REVENUE_DATA;
-  const orders: Order[] = MOCK_ORDERS;
-  const inquiries: Inquiry[] = MOCK_INQUIRIES;
+  const { t } = useLanguage();
+  const [stats, setStats] = useState<DashboardStats>({
+    revenueToday: 0,
+    revenueYesterday: 0,
+    newOrdersToday: 0,
+    pendingOrders: 0,
+    totalProducts: 0,
+    totalCustomers: 0,
+    newInquiriesToday: 0,
+    outOfStockCount: 0,
+    carrierProducts: 0,
+    mideaProducts: 0,
+  });
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
+  useEffect(() => {
+    void Promise.all([
+      fetchDashboardStats(),
+      fetchRevenueChart("30d"),
+      fetchRecentOrders(5),
+      fetchLatestInquiries(5),
+    ]).then(([statsResponse, revenueResponse, ordersResponse, inquiriesResponse]) => {
+      setStats(statsResponse.data);
+      setRevenueData(revenueResponse.data);
+      setOrders(ordersResponse.data);
+      setInquiries(inquiriesResponse.data);
+    });
+  }, []);
 
   return (
     <motion.div
@@ -67,26 +95,26 @@ export default function DashboardPage() {
         variants={itemVariants}
       >
         <StatsCard
-          title="Revenue Today"
+          title={t("common.revenueToday")}
           value={stats.revenueToday}
           icon={<DollarSign size={20} />}
           format="currency"
           trend={{ value: 12.5, isPositive: true }}
         />
         <StatsCard
-          title="New Orders Today"
+          title={t("common.newOrdersToday")}
           value={stats.newOrdersToday}
           icon={<ShoppingBag size={20} />}
           trend={{ value: 8.2, isPositive: true }}
         />
         <StatsCard
-          title="Total Customers"
+          title={t("common.totalCustomers")}
           value={stats.totalCustomers}
           icon={<Users size={20} />}
           trend={{ value: 4.1, isPositive: true }}
         />
         <StatsCard
-          title="Total Products"
+          title={t("common.totalProducts")}
           value={stats.totalProducts}
           icon={<Package size={20} />}
         />
@@ -100,7 +128,7 @@ export default function DashboardPage() {
         {/* Revenue Chart */}
         <Card className="lg:col-span-2">
           <h3 className="text-lg font-semibold text-navy mb-4">
-            Revenue Overview
+            {t("common.revenueOverview")}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={revenueData}>
@@ -114,7 +142,7 @@ export default function DashboardPage() {
               <Tooltip
                 formatter={(value) => [
                   `EGP ${Number(value).toLocaleString()}`,
-                  "Revenue",
+                  t("common.revenue"),
                 ]}
                 labelFormatter={(label) => formatChartDate(String(label))}
               />
@@ -133,7 +161,7 @@ export default function DashboardPage() {
         {/* Quick Stats */}
         <Card>
           <h3 className="text-lg font-semibold text-navy mb-6">
-            Quick Overview
+            {t("common.quickOverview")}
           </h3>
 
           <div className="space-y-5">
@@ -146,7 +174,9 @@ export default function DashboardPage() {
                 <p className="text-2xl font-bold text-navy">
                   {stats.pendingOrders}
                 </p>
-                <p className="text-sm text-gray-500">Pending Orders</p>
+                <p className="text-sm text-gray-500">
+                  {t("common.pendingOrders")}
+                </p>
               </div>
             </div>
 
@@ -159,7 +189,9 @@ export default function DashboardPage() {
                 <p className="text-2xl font-bold text-navy">
                   {stats.newInquiriesToday}
                 </p>
-                <p className="text-sm text-gray-500">Pending Inquiries</p>
+                <p className="text-sm text-gray-500">
+                  {t("common.pendingInquiries")}
+                </p>
               </div>
             </div>
 
@@ -171,13 +203,13 @@ export default function DashboardPage() {
                 to="/orders"
                 className="flex items-center gap-1 text-teal hover:text-teal/80 text-sm font-medium transition-colors"
               >
-                Go to Orders <ArrowRight size={14} />
+                {t("common.goToOrders")} <ArrowRight size={14} />
               </Link>
               <Link
                 to="/inquiries"
                 className="flex items-center gap-1 text-teal hover:text-teal/80 text-sm font-medium transition-colors"
               >
-                Go to Inquiries <ArrowRight size={14} />
+                {t("common.goToInquiries")} <ArrowRight size={14} />
               </Link>
             </div>
           </div>
@@ -192,12 +224,14 @@ export default function DashboardPage() {
         {/* Recent Orders */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-navy">Recent Orders</h3>
+            <h3 className="text-lg font-semibold text-navy">
+              {t("common.recentOrders")}
+            </h3>
             <Link
               to="/orders"
               className="text-sm font-medium text-teal hover:text-teal/80 transition-colors"
             >
-              View All
+              {t("common.viewAll")}
             </Link>
           </div>
 
@@ -206,19 +240,19 @@ export default function DashboardPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
-                    Order ID
+                    {t("common.orderId")}
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
-                    Customer
+                    {t("common.customer")}
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
-                    Total
+                    {t("common.total")}
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
-                    Status
+                    {t("common.status")}
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
-                    Date
+                    {t("common.date")}
                   </th>
                 </tr>
               </thead>
@@ -232,7 +266,7 @@ export default function DashboardPage() {
                       {order.orderNumber}
                     </td>
                     <td className="py-3 text-sm text-gray-700">
-                      {order.customer.name}
+                      {order.customer?.name || "—"}
                     </td>
                     <td className="py-3 text-sm text-gray-700">
                       {formatCurrency(order.grandTotal)}
@@ -254,13 +288,13 @@ export default function DashboardPage() {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-navy">
-              Latest Inquiries
+              {t("common.latestInquiries")}
             </h3>
             <Link
               to="/inquiries"
               className="text-sm font-medium text-teal hover:text-teal/80 transition-colors"
             >
-              View All
+              {t("common.viewAll")}
             </Link>
           </div>
 

@@ -342,8 +342,8 @@
 **Validator:** `src/validators/product.validator.ts`
 
 - [ ] `GET /api/products` — Product listing with filters:
-  - **Query params:** `brand`, `type`, `capacityMin`, `capacityMax`, `priceMin`, `priceMax`, `search`, `sort`, `page`, `limit`, `featured`, `active`
-  - **Filters:** brand slug(s), category slug(s), capacity range (BTU), price range (EGP)
+  - **Query params:** `brand`, `type`, `capacityMin`, `capacityMax`, `hp`, `hpMin`, `hpMax`, `priceMin`, `priceMax`, `search`, `sort`, `page`, `limit`, `featured`, `active`
+  - **Filters:** brand slug(s), category slug(s), capacity range (BTU), horsepower (HP) exact/range for air conditioners, price range (EGP)
   - **Search:** Full-text search on `name`, `modelNumber`, `description`
   - **Sort options:** `price_asc`, `price_desc`, `name_asc`, `newest` (default: `newest`)
   - **Pagination:** Default `page=1`, `limit=12`
@@ -366,6 +366,7 @@
       "modelNumber": "42QHF024",
       "capacity": 24000,
       "capacityUnit": "BTU",
+      "horsepower": 3,
       "type": "Split",
       "price": 4500,
       "originalPrice": null,
@@ -403,6 +404,7 @@
       "type": "Split",
       "capacity": 24000,
       "capacityUnit": "BTU",
+      "horsepower": 3,
       "eerSeer": "12.5 EER",
       "voltage": "220-240V / 50Hz",
       "refrigerant": "R-410A",
@@ -489,7 +491,7 @@
 
 - [ ] `GET /api/settings/contact` — Contact info (address, phone, WhatsApp, email, working hours)
 - [ ] `GET /api/settings/site` — Site-wide settings (company name, logo, favicon, colors, social links, SEO defaults)
-- [ ] `GET /api/settings/shipping` — Shipping settings (flat-rate fee, free shipping threshold, delivery areas)
+- [ ] `GET /api/shipping/options?governorate=&city=&subtotal=` — Customer-friendly shipping choices with methods, fees, delivery estimates, and free-shipping eligibility
 
 ---
 
@@ -877,12 +879,12 @@
     8. Create OrderItems with product snapshots (name, image, modelNumber at time of order)
     9. Record in OrderStatusHistory: "Order placed"
     10. If coupon used: create CouponUsage record, increment `usageCount` on Coupon
-    11. Store shipping address as JSONB on order (snapshot — not a reference)
+    11. Store shipping address as JSONB on order (snapshot — not a reference), including customer national ID in the order customer snapshot for CMS order detail display
     12. Mark cart as `CONVERTED`
     13. Record coupon usage if applicable
     14. Return order summary with order ID for payment initiation
 
-### Task 5.2: Paymob Payment Integration
+### Task 5.2: Backend Paymob Payment Integration
 
 **Routes:** `src/routes/checkout/payments.routes.ts`  
 **Controller:** `src/controllers/checkout/payments.controller.ts`  
@@ -898,6 +900,8 @@
 6. **Callback received:** `POST /api/webhooks/paymob` with transaction result
 7. **Verify HMAC:** Compute HMAC-SHA512 and compare
 8. **Update records:** Update Payment status, Order status, send notifications
+
+> Paymob configuration and connection testing are backend/admin operations only. Do not expose a Paymob integration page or Paymob settings form in the CMS frontend; manage credentials through backend environment variables and deployment secrets.
 
 - [ ] `POST /api/orders/:id/pay` — Initiate Paymob payment:
   - **Request:** `{ "paymentMethod": "credit_card" | "mobile_wallet" | "installment" }`
@@ -1335,8 +1339,16 @@
   - **Filters:** `?status=`, `?paymentStatus=`, `?search=` (order number, customer name/email), `?dateFrom=`, `?dateTo=`, `?page=`, `?limit=`
   - Include: customer name/email, item count, total, status badges
 
+- [ ] `POST /api/cms/orders` — Create manual/admin order:
+  - **Request:** `{ "customerId" | "guestCustomer", "items", "shippingAddress", "shippingMethodId", "couponCode", "notes" }`
+  - Validate stock, totals, shipping fee, customer national ID, and create order in a transaction
+
 - [ ] `GET /api/cms/orders/:id` — Full order detail:
-  - Include: items, shipping address, payment info, status history, notes, customer info
+  - Include: items, shipping address, payment info, status history, notes, customer info with national ID
+
+- [ ] `PUT /api/cms/orders/:id` — Update editable order fields before fulfillment:
+  - Allow shipping address, customer contact snapshot, notes, shipping method, and line-item quantity changes while status is `PENDING_PAYMENT` or `CONFIRMED`
+  - Recalculate subtotal, shipping, discount, and total in a transaction
 
 - [ ] `PUT /api/cms/orders/:id/status` — Update order status:
   - **Request:** `{ "status": "processing", "note": "Started preparing order" }`
@@ -1361,6 +1373,9 @@
 - [ ] `POST /api/cms/orders/:id/notes` — Add internal note to order:
   - **Request:** `{ "content": "Customer called about delivery" }`
 
+- [ ] `DELETE /api/cms/orders/:id` — Soft delete / archive order:
+  - Only allow for cancelled/refunded test or duplicate orders; preserve audit trail and order number
+
 - [ ] `GET /api/cms/orders/export` — Export orders as CSV (filtered)
 
 - [ ] `GET /api/cms/orders/stats` — Order statistics:
@@ -1378,15 +1393,39 @@
   - **Filters:** `?search=` (name, email, phone), `?active=`, `?page=`, `?limit=`
   - Include: order count, total spent
 
+- [ ] `POST /api/cms/customers` — Create customer from CMS:
+  - **Request:** `{ "name", "nationalId", "email", "phone", "password?", "isActive" }`
+  - Validate national ID (14 digits) and unique email/national ID
+
 - [ ] `GET /api/cms/customers/:id` — Customer detail:
-  - Profile info (including masked nationalId)
+  - Profile info (including nationalId; mask only in list/search responses if needed)
   - Addresses
   - Order history summary
   - Inquiry history
 
-- [ ] `PUT /api/cms/customers/:id` — Update customer status:
-  - **Request:** `{ "isActive": false }`
-  - Activate or deactivate customer account
+- [ ] `PUT /api/cms/customers/:id` — Update customer:
+  - **Request:** `{ "name", "nationalId", "email", "phone", "isActive" }`
+  - Activate/deactivate customer account and update editable profile fields
+
+- [ ] `DELETE /api/cms/customers/:id` — Soft delete / deactivate customer:
+  - Do not hard delete customers with orders; set inactive and preserve order history
+
+### Task 8.7A: CMS Shipping Management
+
+**Routes:** `src/routes/cms/shipping.routes.ts`
+**Controller:** `src/controllers/cms/shipping.controller.ts`
+
+- [ ] `GET /api/cms/shipping/zones` — List delivery zones/governorates with rates and availability
+- [ ] `POST /api/cms/shipping/zones` — Create shipping zone
+- [ ] `GET /api/cms/shipping/zones/:id` — Shipping zone detail
+- [ ] `PUT /api/cms/shipping/zones/:id` — Update zone name, governorates, fee, free-shipping threshold, active status
+- [ ] `DELETE /api/cms/shipping/zones/:id` — Soft delete / deactivate shipping zone
+- [ ] `GET /api/cms/shipping/methods` — List shipping methods (delivery, pickup, installation-bundled delivery)
+- [ ] `POST /api/cms/shipping/methods` — Create method with estimated delivery range, cutoff time, and active status
+- [ ] `PUT /api/cms/shipping/methods/:id` — Update shipping method
+- [ ] `DELETE /api/cms/shipping/methods/:id` — Soft delete / deactivate shipping method
+- [ ] `GET /api/shipping/options?governorate=&city=&subtotal=` — Public checkout helper endpoint:
+  - Return available methods, fee, estimated delivery window, free-shipping eligibility, and user-friendly labels
 
 ### Task 8.8: CMS Coupon Management
 
@@ -1432,10 +1471,10 @@
 - [ ] `DELETE /api/cms/content/:id` — Unpublish or delete content page
 
 - [ ] `GET /api/cms/settings` — Get all settings (grouped by tab):
-  - Tabs: General, Contact, Email, SEO, Paymob, Shipping, Social
+  - Tabs: General, Contact, Email, SEO, Shipping, Social
 - [ ] `PUT /api/cms/settings` — Update settings:
   - **Request:** `{ "key": "contact_phone", "value": "01012345678" }` or batch update
-  - **Admin only** for Paymob settings tab
+  - Paymob credentials are not editable from the CMS dashboard; configure them only in backend environment variables/deployment secrets
   - Validate setting keys
 
 ### Task 8.10: CMS Testimonial, Promotion & FAQ Management
@@ -1667,7 +1706,7 @@
   - Generate unique S3 keys (UUID-based)
 - [ ] **Sensitive Data:**
   - Never return password hashes in API responses
-  - Mask National ID (show last 4 digits only)
+  - Mask National ID in public/customer-list responses (show last 4 digits only); CMS order detail and customer detail may display the full national ID for authorized staff
   - Don't expose internal error details in production
 
 ### Task 11.2: Error Handling & Logging
@@ -1863,6 +1902,7 @@ model Products {
   type            String    // "Split", "Cassette", "VRF", etc.
   capacity        Int?      // BTU
   capacityUnit    String?   @default("BTU")
+  horsepower      Decimal?  @db.Decimal(4, 2) // AC horsepower (HP), e.g. 1.5, 2.25, 3
   eerSeer         String?
   voltage         String?
   refrigerant     String?
@@ -2292,7 +2332,7 @@ model EmailQueue {
 | GET    | /api/promotions             | Active promotions            |
 | GET    | /api/settings/contact       | Contact info                 |
 | GET    | /api/settings/site          | Site settings                |
-| GET    | /api/settings/shipping      | Shipping settings            |
+| GET    | /api/shipping/options       | Shipping options by address  |
 | POST   | /api/inquiries              | Submit product inquiry       |
 | POST   | /api/service-requests       | Submit service request       |
 
@@ -2396,16 +2436,30 @@ model EmailQueue {
 | POST   | /api/cms/service-requests/:id/notes  | Add service request note         |
 | GET    | /api/cms/service-requests/export     | Export service requests CSV      |
 | GET    | /api/cms/orders                      | List orders                      |
+| POST   | /api/cms/orders                      | Create manual/admin order        |
 | GET    | /api/cms/orders/:id                  | Order detail                     |
+| PUT    | /api/cms/orders/:id                  | Update editable order fields     |
 | PUT    | /api/cms/orders/:id/status           | Update order status              |
 | PUT    | /api/cms/orders/:id/shipping         | Update shipping info             |
 | POST   | /api/cms/orders/:id/refund           | Process refund                   |
 | POST   | /api/cms/orders/:id/notes            | Add order note                   |
+| DELETE | /api/cms/orders/:id                  | Archive / soft delete order      |
 | GET    | /api/cms/orders/export               | Export orders CSV                |
 | GET    | /api/cms/orders/stats                | Order statistics                 |
 | GET    | /api/cms/customers                   | List customers                   |
+| POST   | /api/cms/customers                   | Create customer                  |
 | GET    | /api/cms/customers/:id               | Customer detail                  |
-| PUT    | /api/cms/customers/:id               | Update customer status           |
+| PUT    | /api/cms/customers/:id               | Update customer profile/status   |
+| DELETE | /api/cms/customers/:id               | Deactivate / soft delete customer |
+| GET    | /api/cms/shipping/zones              | List shipping zones              |
+| POST   | /api/cms/shipping/zones              | Create shipping zone             |
+| GET    | /api/cms/shipping/zones/:id          | Shipping zone detail             |
+| PUT    | /api/cms/shipping/zones/:id          | Update shipping zone             |
+| DELETE | /api/cms/shipping/zones/:id          | Deactivate shipping zone         |
+| GET    | /api/cms/shipping/methods            | List shipping methods            |
+| POST   | /api/cms/shipping/methods            | Create shipping method           |
+| PUT    | /api/cms/shipping/methods/:id        | Update shipping method           |
+| DELETE | /api/cms/shipping/methods/:id        | Deactivate shipping method       |
 | GET    | /api/cms/coupons                     | List coupons                     |
 | GET    | /api/cms/coupons/:id                 | Coupon detail                    |
 | POST   | /api/cms/coupons                     | Create coupon                    |
@@ -2622,7 +2676,7 @@ const PAYMOB_PAYMENT_KEY_ENDPOINT = "/acceptance/payment_keys";
 17. **Product data snapshotted in OrderItems** — name, image, modelNumber at time of order
 18. **Max 10 addresses per customer**
 19. **Token blacklist** — check on every CMS authenticated request
-20. **Mask National ID** in API responses (show last 4 digits only)
+20. **Mask National ID** in public/customer-list API responses (show last 4 digits only); authorized CMS order/customer detail must display the full national ID when required for fulfillment
 
 ### Technology Stack Summary
 

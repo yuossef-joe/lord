@@ -161,11 +161,13 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
+  const { t } = useLanguage();
+
   return (
     <PageTransition>
       <SeoHead
-        title="Verify Email | Lord"
-        description="Verify your email address"
+        title={`${t("auth.verifyEmail")} | Lord`}
+        description={t("auth.verifyEmailDescription")}
       />
       <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
         <motion.div
@@ -176,7 +178,9 @@ export default function VerifyEmailPage() {
         >
           <Suspense
             fallback={
-              <div className="text-center text-medium-gray">Loading...</div>
+              <div className="text-center text-medium-gray">
+                {t("general.loading")}
+              </div>
             }
           >
             <VerifyEmailContent />

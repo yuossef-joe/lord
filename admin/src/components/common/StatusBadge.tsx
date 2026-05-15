@@ -2,11 +2,11 @@ import Badge from "./Badge";
 import type { BadgeVariant } from "./Badge";
 import {
   getOrderStatusVariant,
-  getOrderStatusLabel,
   getPaymentStatusVariant,
   getInquiryStatusVariant,
   getServiceRequestStatusVariant,
 } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface StatusBadgeProps {
   status: string;
@@ -25,6 +25,7 @@ export default function StatusBadge({
   status,
   type = "order",
 }: StatusBadgeProps) {
+  const { t } = useLanguage();
   let variant: BadgeVariant = "default";
   let label = status;
 
@@ -33,15 +34,28 @@ export default function StatusBadge({
       variant = getOrderStatusVariant(
         status as Parameters<typeof getOrderStatusVariant>[0],
       ) as BadgeVariant;
-      label = getOrderStatusLabel(
-        status as Parameters<typeof getOrderStatusLabel>[0],
-      );
+      label =
+        {
+          pending_payment: t("common.pendingPayment"),
+          confirmed: t("common.confirmed"),
+          processing: t("common.processing"),
+          shipped: t("common.shipped"),
+          delivered: t("common.delivered"),
+          cancelled: t("common.cancelled"),
+          refunded: t("common.refunded"),
+        }[status] ?? toTitleCase(status);
       break;
     case "payment":
       variant = getPaymentStatusVariant(
         status as Parameters<typeof getPaymentStatusVariant>[0],
       ) as BadgeVariant;
-      label = capitalize(status);
+      label =
+        {
+          pending: t("common.pending"),
+          paid: t("common.paid"),
+          failed: t("common.failed"),
+          refunded: t("common.refunded"),
+        }[status] ?? capitalize(status);
       break;
     case "inquiry":
       variant = getInquiryStatusVariant(

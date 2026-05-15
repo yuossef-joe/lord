@@ -14,49 +14,19 @@ import ScrollReveal from "@/components/common/ScrollReveal";
 import { fetchTestimonials } from "@/lib/api";
 import { Testimonial } from "@/types/inquiry";
 
-const fallbackTestimonials: Testimonial[] = [
-  {
-    _id: "1",
-    customerName: "Ahmed Hassan",
-    location: "Cairo",
-    rating: 5,
-    quote:
-      "Excellent service! Lord installed my Carrier AC unit professionally and on time. Highly recommended for anyone looking for quality air conditioning solutions.",
-    isApproved: true,
-    isFeatured: true,
-  },
-  {
-    _id: "2",
-    customerName: "Sara Mohamed",
-    location: "Giza",
-    rating: 5,
-    quote:
-      "Been using Lord for maintenance for 3 years now. Their technicians are knowledgeable and always punctual. Best AC dealer in Egypt!",
-    isApproved: true,
-    isFeatured: true,
-  },
-  {
-    _id: "3",
-    customerName: "Mohamed Ali",
-    location: "Alexandria",
-    rating: 4,
-    quote:
-      "Great prices and fast delivery. The Midea split AC I bought from Lord works perfectly. Their after-sales support is impressive.",
-    isApproved: true,
-    isFeatured: true,
-  },
-];
+interface TestimonialsCarouselProps {
+  title?: string;
+}
 
-export default function TestimonialsCarousel() {
-  const { t } = useLanguage();
-  const [testimonials, setTestimonials] =
-    useState<Testimonial[]>(fallbackTestimonials);
+export default function TestimonialsCarousel({ title }: TestimonialsCarouselProps) {
+  const { t, localize } = useLanguage();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   useEffect(() => {
     fetchTestimonials()
       .then((data: unknown) => {
         const res = data as { data: Testimonial[] };
-        if (res.data?.length) setTestimonials(res.data);
+        setTestimonials(res.data ?? []);
       })
       .catch(() => {});
   }, []);
@@ -66,7 +36,7 @@ export default function TestimonialsCarousel() {
       <div className="mx-auto max-w-container px-4 md:px-6">
         <ScrollReveal>
           <h2 className="mb-10 text-center text-3xl font-bold text-white md:text-4xl">
-            {t("home.testimonials.title")}
+            {title || t("home.testimonials.title")}
           </h2>
         </ScrollReveal>
 
@@ -118,7 +88,7 @@ export default function TestimonialsCarousel() {
                   </div>
 
                   <p className="mb-4 text-sm italic text-white/80 leading-relaxed line-clamp-4">
-                    &ldquo;{testimonial.quote}&rdquo;
+                    &ldquo;{localize(testimonial.quote, testimonial.quoteAr)}&rdquo;
                   </p>
 
                   <div>
@@ -127,7 +97,7 @@ export default function TestimonialsCarousel() {
                     </p>
                     {testimonial.location && (
                       <p className="text-xs text-white/50">
-                        {testimonial.location}
+                        {localize(testimonial.location, testimonial.locationAr)}
                       </p>
                     )}
                   </div>

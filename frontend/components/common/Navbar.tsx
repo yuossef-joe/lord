@@ -35,7 +35,10 @@ const navLinks = [
   { key: "nav.products", href: "/products" },
   { key: "nav.services", href: "/services" },
   { key: "nav.about", href: "/about" },
+  { key: "nav.faq", href: "/faq" },
   { key: "nav.contact", href: "/contact" },
+  { key: "legal.privacyPolicy", href: "/privacy-policy" },
+  { key: "legal.termsConditions", href: "/terms-and-conditions" },
 ];
 
 export default function Navbar() {
@@ -278,7 +281,7 @@ export default function Navbar() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-lord-navy md:hidden"
-              aria-label="Toggle menu"
+              aria-label={t("general.toggleMenu")}
             >
               {isMobileMenuOpen ? (
                 <X className="h-6 w-6" />

@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { MessageCircle } from "lucide-react";
 import { floatingPulse } from "@/lib/animations";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface FloatingWhatsAppProps {
   phoneNumber: string;
@@ -12,6 +13,7 @@ interface FloatingWhatsAppProps {
 export default function FloatingWhatsApp({
   phoneNumber,
 }: FloatingWhatsAppProps) {
+  const { t } = useLanguage();
   return (
     <motion.a
       href={`https://wa.me/${phoneNumber}`}
@@ -23,7 +25,7 @@ export default function FloatingWhatsApp({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       className="fixed bottom-6 right-6 z-50 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-whatsapp text-white shadow-lg hover:shadow-xl transition-shadow"
-      aria-label="Chat on WhatsApp"
+      aria-label={t("general.chatOnWhatsApp")}
     >
       <motion.div {...floatingPulse}>
         <MessageCircle className="h-7 w-7" fill="white" />

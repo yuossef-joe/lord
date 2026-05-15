@@ -20,18 +20,20 @@ const quickLinks = [
   { key: "nav.about", href: "/about" },
   { key: "nav.contact", href: "/contact" },
   { key: "nav.faq", href: "/faq" },
+  { key: "legal.privacyPolicy", href: "/privacy-policy" },
+  { key: "legal.termsConditions", href: "/terms-and-conditions" },
 ];
 
 const serviceLinks = [
-  { label: "Installation", href: "/services" },
-  { label: "Maintenance", href: "/services" },
-  { label: "Repair", href: "/services" },
-  { label: "Delivery", href: "/services" },
-  { label: "Spare Parts", href: "/services" },
+  { key: "footer.service.installation", href: "/services" },
+  { key: "footer.service.maintenance", href: "/services" },
+  { key: "footer.service.repair", href: "/services" },
+  { key: "footer.service.delivery", href: "/services" },
+  { key: "footer.service.spareParts", href: "/services" },
 ];
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const { ref, controls } = useScrollReveal();
   const [contact, setContact] = useState<ContactSettings | null>(null);
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -76,8 +78,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm text-white/70 leading-relaxed mb-4">
-              Authorized Carrier & Midea Dealer. Air Conditioning solutions
-              since 1986.
+              {t("footer.description")}
             </p>
             <div className="flex items-center gap-3">
               <div className="h-8 w-auto text-xs bg-white/10 rounded px-2 py-1 flex items-center">
@@ -145,12 +146,12 @@ export default function Footer() {
               } md:block`}
             >
               {serviceLinks.map((link) => (
-                <motion.div key={link.label} whileHover={{ x: 4 }}>
+                <motion.div key={link.key} whileHover={{ x: 4 }}>
                   <Link
                     href={link.href}
                     className="block text-sm text-white/70 hover:text-lord-teal transition-colors py-1"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 </motion.div>
               ))}
@@ -180,7 +181,7 @@ export default function Footer() {
               <div className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-lord-teal mt-0.5 flex-shrink-0" />
                 <span className="text-sm text-white/70">
-                  {contact?.address || "Cairo, Egypt"}
+                  {contact?.address || localize("Cairo, Egypt", "القاهرة، مصر")}
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
@@ -189,7 +190,7 @@ export default function Footer() {
                   href={`tel:${contact?.phone || ""}`}
                   className="text-sm text-white/70 hover:text-lord-teal transition-colors"
                 >
-                  {contact?.phone || "Loading..."}
+                  {contact?.phone || t("general.loadingShort")}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
@@ -200,7 +201,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-white/70 hover:text-lord-teal transition-colors"
                 >
-                  WhatsApp
+                  {t("general.whatsapp")}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
@@ -209,7 +210,7 @@ export default function Footer() {
                   href={`mailto:${contact?.email || ""}`}
                   className="text-sm text-white/70 hover:text-lord-teal transition-colors"
                 >
-                  {contact?.email || "Loading..."}
+                  {contact?.email || t("general.loadingShort")}
                 </a>
               </div>
             </div>
@@ -232,7 +233,7 @@ export default function Footer() {
                 whileHover={{ scale: 1.15, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="text-white/50 hover:text-lord-teal transition-colors"
-                aria-label="Facebook"
+                aria-label={t("general.facebook")}
               >
                 <FacebookIcon className="h-5 w-5" />
               </motion.a>
@@ -245,7 +246,7 @@ export default function Footer() {
                 whileHover={{ scale: 1.15, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="text-white/50 hover:text-lord-teal transition-colors"
-                aria-label="Instagram"
+                aria-label={t("general.instagram")}
               >
                 <InstagramIcon className="h-5 w-5" />
               </motion.a>
@@ -258,7 +259,7 @@ export default function Footer() {
                 whileHover={{ scale: 1.15, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="text-white/50 hover:text-lord-teal transition-colors"
-                aria-label="WhatsApp"
+                aria-label={t("general.whatsapp")}
               >
                 <MessageCircle className="h-5 w-5" />
               </motion.a>

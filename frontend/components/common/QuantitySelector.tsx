@@ -3,6 +3,7 @@
 import React from "react";
 import { Minus, Plus } from "lucide-react";
 import { motion } from "motion/react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface QuantitySelectorProps {
   value: number;
@@ -19,6 +20,7 @@ export default function QuantitySelector({
   onChange,
   disabled = false,
 }: QuantitySelectorProps) {
+  const { t } = useLanguage();
   const decrement = () => {
     if (value > min) onChange(value - 1);
   };
@@ -32,7 +34,7 @@ export default function QuantitySelector({
         onClick={decrement}
         disabled={disabled || value <= min}
         className="flex items-center justify-center w-10 h-11 text-medium-gray hover:bg-light-gray hover:text-lord-navy transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        aria-label="Decrease quantity"
+        aria-label={t("general.decreaseQuantity")}
       >
         <Minus className="h-4 w-4" />
       </button>
@@ -49,7 +51,7 @@ export default function QuantitySelector({
         onClick={increment}
         disabled={disabled || value >= max}
         className="flex items-center justify-center w-10 h-11 text-medium-gray hover:bg-light-gray hover:text-lord-navy transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        aria-label="Increase quantity"
+        aria-label={t("general.increaseQuantity")}
       >
         <Plus className="h-4 w-4" />
       </button>

@@ -175,7 +175,7 @@ export default function ServiceRequestPage() {
                 {...register("serviceTypeId")}
                 className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
               >
-                <option value="">Select service type</option>
+                <option value="">{t("services.selectServiceType")}</option>
                 {SERVICE_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -197,10 +197,10 @@ export default function ServiceRequestPage() {
                 {...register("unitBrand")}
                 className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
               >
-                <option value="">Select brand</option>
+                <option value="">{t("services.selectBrand")}</option>
                 <option value="Carrier">Carrier</option>
                 <option value="Midea">Midea</option>
-                <option value="Other">Other</option>
+                <option value="Other">{t("services.otherBrand")}</option>
               </select>
             </div>
 
@@ -212,7 +212,7 @@ export default function ServiceRequestPage() {
                 {...register("installationAddress")}
                 rows={2}
                 className="w-full rounded-button border border-[#E8EAED] px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal resize-none"
-                placeholder="Full installation address"
+                placeholder={t("services.installationAddressPlaceholder")}
               />
             </div>
 

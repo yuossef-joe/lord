@@ -43,8 +43,10 @@ export interface Testimonial {
   _id: string;
   customerName: string;
   location?: string;
+  locationAr?: string;
   rating: number;
   quote: string;
+  quoteAr?: string;
   isApproved: boolean;
   isFeatured: boolean;
 }
@@ -52,7 +54,9 @@ export interface Testimonial {
 export interface FAQ {
   _id: string;
   question: string;
+  questionAr?: string;
   answer: string;
+  answerAr?: string;
   category: string;
   sortOrder: number;
   isActive: boolean;

@@ -177,6 +177,7 @@
     - Brand: checkboxes (Carrier, Midea) with brand logos
     - Type: multi-select (Split, Multi-Split, Cassette, Duct, Central, VRF/VRV, Window, Portable)
     - Capacity: range slider (BTU/ton)
+    - Horsepower (HP): segmented or checkbox filter for common AC sizes (1.5 HP, 2.25 HP, 3 HP, 4 HP, 5 HP)
     - Price: range slider
     - "Clear All Filters" button (Ghost style)
   - Active filter tags displayed as removable badges above grid
@@ -208,6 +209,7 @@
     - `?brand=carrier,midea` — filter by brand
     - `?type=split,cassette` — filter by product type
     - `?capacityMin=12000&capacityMax=36000` — BTU range
+    - `?hp=1.5,2.25,3` or `?hpMin=1.5&hpMax=5` — horsepower filter for air conditioners
     - `?priceMin=0&priceMax=10000` — price range
     - `?search=keyword` — search by name or model number
     - `?sort=price_asc|price_desc|name_asc|newest` — sort order
@@ -237,6 +239,7 @@
     "modelNumber": "42QHF024",
     "capacity": 24000,
     "capacityUnit": "BTU",
+    "horsepower": 3,
     "type": "Split",
     "price": 4500,
     "originalPrice": null,
@@ -316,6 +319,7 @@
     "type": "Split",
     "capacity": 24000,
     "capacityUnit": "BTU",
+    "horsepower": 3,
     "eerSeer": "12.5 EER",
     "voltage": "220-240V / 50Hz",
     "refrigerant": "R-410A",
@@ -554,7 +558,7 @@
   - `GET /api/settings/contact` — Fetch contact info (address, phone, WhatsApp, email, hours, maps link, social links)
   - `GET /api/brands` — Fetch brand data (Carrier/Midea logos, dealer credentials)
   - `GET /api/cart` — Fetch current cart (authenticated: server cart; guest: returns empty, handled client-side)
-  - `GET /api/settings/shipping` — Fetch shipping settings (flat rate, free shipping threshold)
+  - `GET /api/shipping/options?governorate=&city=&subtotal=` — Fetch available shipping methods, fees, delivery estimates, and free-shipping eligibility
 
 ---
 
@@ -592,6 +596,7 @@ Products
 ├── type            VARCHAR(50) NOT NULL
 ├── capacity        INTEGER                        -- BTU
 ├── capacityUnit    VARCHAR(10) DEFAULT 'BTU'
+├── horsepower      DECIMAL(4,2)                   -- AC HP, e.g. 1.5, 2.25, 3
 ├── eerSeer         VARCHAR(50)                    -- e.g. "12.5 EER"
 ├── voltage         VARCHAR(50)                    -- e.g. "220-240V / 50Hz"
 ├── refrigerant     VARCHAR(50)                    -- e.g. "R-410A"
@@ -837,7 +842,7 @@ Status badge colors (from UI/UX spec):
   - Updates debounced (500ms) → calls `PATCH /api/cart/items/:itemId`
 - **Price Summary Sidebar** (desktop) / **Bottom Sticky Bar** (mobile):
   - Subtotal (sum of all line totals)
-  - Shipping (flat rate from `SiteSettings` or "Free" if subtotal ≥ threshold)
+  - Shipping (selected method/zone from shipping options or "Free" if subtotal ≥ threshold)
   - Discount (if coupon applied — shows code + discount amount)
   - **Grand Total** (bold, large, Teal)
 - **Coupon Input:** Text input + "Apply" button; success: green badge; error: red text "Invalid code"
@@ -1061,6 +1066,8 @@ CustomerAddresses
 - Logged-in users: display saved address cards (selectable); pre-select default
 - New address form: recipient name, phone, address line 1, line 2, city, governorate (dropdown), postal code
 - Guest checkout: also requires national ID field (14-digit Egyptian National ID, validated)
+- After governorate/city selection, show simple shipping method cards with fee, estimated delivery, free-shipping eligibility, and a recommended/default method
+- Shipping choices come from `GET /api/shipping/options?governorate=&city=&subtotal=` so customers do not need to understand shipping rules manually
 - "Save this address" checkbox (logged-in only)
 - "Continue to Review" Primary CTA
 
@@ -1068,6 +1075,7 @@ CustomerAddresses
 
 - Read-only items list (thumbnail, name, qty, unit price, line total)
 - Shipping address display with "Edit" link
+- Shipping method display with fee, delivery estimate, and "Change" link
 - Price breakdown: Subtotal + Shipping + Discount = **Total (EGP)**
 - "Proceed to Payment" Primary CTA
 
@@ -1250,10 +1258,13 @@ OrderStatusHistory
 | Method | Endpoint                     | Auth      | Description                               |
 | ------ | ---------------------------- | --------- | ----------------------------------------- |
 | GET    | `/api/cms/orders`            | CMS Staff | List all orders (filtered, paginated)     |
+| POST   | `/api/cms/orders`            | CMS Staff | Create manual/admin order                 |
 | GET    | `/api/cms/orders/:id`        | CMS Staff | Get order detail                          |
+| PATCH  | `/api/cms/orders/:id`        | CMS Staff | Update editable order fields              |
 | PATCH  | `/api/cms/orders/:id/status` | CMS Staff | Update order status                       |
 | POST   | `/api/cms/orders/:id/refund` | CMS Admin | Initiate refund via Paymob API            |
 | POST   | `/api/cms/orders/:id/notes`  | CMS Staff | Add internal note                         |
+| DELETE | `/api/cms/orders/:id`        | CMS Admin | Archive / soft delete eligible order      |
 | GET    | `/api/cms/orders/export`     | CMS Staff | Export orders to CSV                      |
 | GET    | `/api/cms/orders/stats`      | CMS Staff | Dashboard stats (today's orders, revenue) |
 
@@ -1759,7 +1770,8 @@ Status badge colors:
 
 #### Frontend
 
-- **Settings Tabs:** General | Contact | Email | SEO | Brands | **Paymob** | **Shipping**
+- **Settings Tabs:** General | Contact | Email | SEO | Brands | **Shipping**
+- Do not expose a Paymob/payment integration page in the CMS frontend; Paymob credentials are backend-only environment/deployment secrets
 - **General Tab:**
   - Company name, Logo upload, Favicon upload
   - Primary color, Secondary color (color pickers — pre-filled with `#172041` and `#0DBACA`)
@@ -1779,13 +1791,6 @@ Status badge colors:
 - **Brands Tab:**
   - Carrier: name, logo upload, dealer certificate upload, active toggle
   - Midea: name, logo upload, dealer certificate upload, active toggle
-- **Paymob Tab:**
-  - Paymob API Key (masked input)
-  - Card Integration ID, Wallet Integration ID, Installment Integration ID (optional)
-  - HMAC Secret (masked input)
-  - Iframe ID (for embedded payment page)
-  - Test mode toggle (sandbox vs. production)
-  - Connection test button: "Test Paymob Connection"
 - **Shipping Tab:**
   - Flat-rate shipping fee (EGP number input)
   - Free shipping threshold (minimum order value for free shipping; 0 = no free shipping)
@@ -1795,12 +1800,27 @@ Status badge colors:
 #### Backend
 
 - **API Endpoints**
-  - `GET /api/cms/settings/:key` — Get settings by key (general, contact, email, seo, brands, paymob, shipping)
+  - `GET /api/cms/settings/:key` — Get settings by key (general, contact, email, seo, brands, shipping)
   - `PATCH /api/cms/settings/:key` — Update settings by key
   - `POST /api/cms/settings/email/test` — Send test email
-  - `POST /api/cms/settings/paymob/test` — Test Paymob connection
   - `POST /api/cms/settings/upload` — Upload logo/favicon/OG image/certificate
 - **Authorization:** Settings endpoints restricted to `cms_admin` role only (except viewing)
+
+### **9.11A CMS Shipping Management**
+
+#### Frontend
+
+- **Shipping Page:** tabs for Shipping Zones and Shipping Methods
+- **Shipping Zones CRUD:** create, edit, deactivate/delete delivery zones with governorates/cities, fee, free-shipping threshold, delivery estimate, and active status
+- **Shipping Methods CRUD:** create, edit, deactivate/delete customer-facing delivery options such as delivery, pickup, and installation-bundled delivery
+- **UX Requirement:** shipping choices shown to customers must be simple cards with clear fee, estimate, and recommended/default labels
+
+#### Backend
+
+- **API Endpoints**
+  - `GET/POST/PATCH/DELETE /api/cms/shipping/zones`
+  - `GET/POST/PATCH/DELETE /api/cms/shipping/methods`
+  - `GET /api/shipping/options?governorate=&city=&subtotal=` — Public checkout helper for available shipping options
 
 ---
 
@@ -1809,14 +1829,18 @@ Status badge colors:
 #### Frontend
 
 - **Orders List**
-  - Data table columns: Order #, Customer Name, Items Count, Total (EGP), Payment Status (badge), Order Status (badge), Date, Actions
+  - Data table columns: Order #, Customer Name, National ID, Items Count, Total (EGP), Payment Status (badge), Order Status (badge), Date, Actions
   - Filters: order status dropdown, payment status, date range picker, search by order # or customer email
   - Sort: newest first (default), oldest first, total (high/low)
   - Pagination: 20 per page
   - Bulk actions: bulk status update, export CSV
-  - "Export Orders" button (CSV with current filters)
+  - "Create Order" button for manual/admin orders and "Export Orders" button (CSV with current filters)
+- **Order Create/Edit**
+  - Customer picker or guest/customer snapshot fields including national ID
+  - Product line items, quantity, stock warning, shipping method, shipping address, coupon, internal notes
+  - Edit is allowed only before fulfillment/processing locks sensitive order fields
 - **Order Detail View** (dedicated page or slide-out panel)
-  - **Customer Info Card:** name, email, phone, link to customer profile (if registered)
+  - **Customer Info Card:** name, national ID, email, phone, link to customer profile (if registered)
   - **Order Items Table:** product image, name, brand, model, quantity, unit price, line total
   - **Payment Details Card:** Paymob transaction ID, payment method (card/wallet), card brand + last 4, amount, paid at timestamp
   - **Shipping Address Card:** full address with copy button
@@ -1837,12 +1861,15 @@ Status badge colors:
 #### Frontend
 
 - **Customer List**
-  - Data table columns: Name, Email, Phone, Orders Count, Total Spent (EGP), Registration Date, Status (Active/Disabled), Actions
-  - Search: by name, email, phone
+  - Data table columns: Name, National ID, Email, Phone, Orders Count, Total Spent (EGP), Registration Date, Status (Active/Disabled), Actions
+  - Search: by name, national ID, email, phone
   - Filter: status (active/disabled)
   - Pagination: 20 per page
+- **Customer Create/Edit**
+  - Fields: name, national ID, email, phone, password/reset invitation option, active status
+  - Validate national ID as exactly 14 digits and preserve order history on deactivate/delete
 - **Customer Detail View**
-  - Profile info card: name, email, phone, registered date, email verified status
+  - Profile info card: name, national ID, email, phone, registered date, email verified status
   - **Order History Tab:** list of customer's orders (same table format as orders list)
   - **Service Requests Tab:** list of customer's service requests
   - **Addresses Tab:** read-only view of customer's saved addresses
@@ -1852,8 +1879,10 @@ Status badge colors:
 
 - **API Endpoints**
   - `GET /api/cms/customers` — List all customers (paginated, searchable)
+  - `POST /api/cms/customers` — Create customer
   - `GET /api/cms/customers/:id` — Get customer detail with order count and total spent
-  - `PATCH /api/cms/customers/:id/status` — Enable/disable customer account
+  - `PATCH /api/cms/customers/:id` — Update customer profile/status
+  - `DELETE /api/cms/customers/:id` — Deactivate / soft delete customer
   - `GET /api/cms/customers/:id/orders` — Get customer's order history
 
 ---

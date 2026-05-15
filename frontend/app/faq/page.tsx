@@ -13,84 +13,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import { fetchFaqs } from "@/lib/api";
 import { FAQ } from "@/types/inquiry";
 
-const FALLBACK_FAQS: FAQ[] = [
-  {
-    _id: "1",
-    question: "What brands do you sell?",
-    answer:
-      "Lord is an authorized dealer for Carrier and Midea air conditioning systems in Egypt. We carry the full range of split, window, cassette, and central AC units from both brands.",
-    category: "General",
-    sortOrder: 1,
-    isActive: true,
-  },
-  {
-    _id: "2",
-    question: "Do you provide installation services?",
-    answer:
-      "Yes! We provide professional installation by certified technicians. Installation is available for all AC types and includes site assessment, optimal placement, and a warranty-backed setup.",
-    category: "Services",
-    sortOrder: 2,
-    isActive: true,
-  },
-  {
-    _id: "3",
-    question: "What is the warranty on your products?",
-    answer:
-      "All products come with the manufacturer's official warranty. Carrier units typically include a 5-year compressor warranty and 2-year general warranty. Midea units include similar coverage. Exact terms vary by model.",
-    category: "Products",
-    sortOrder: 3,
-    isActive: true,
-  },
-  {
-    _id: "4",
-    question: "Do you deliver across Egypt?",
-    answer:
-      "Yes, we offer free delivery across Egypt for all AC units. Delivery typically takes 2-5 business days depending on your location. You'll receive tracking updates via SMS.",
-    category: "Delivery",
-    sortOrder: 4,
-    isActive: true,
-  },
-  {
-    _id: "5",
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept online payments via Paymob (credit/debit cards, installments, mobile wallets). Cash on delivery is not available — all orders must be prepaid online for security.",
-    category: "Payment",
-    sortOrder: 5,
-    isActive: true,
-  },
-  {
-    _id: "6",
-    question: "Can I return or exchange a product?",
-    answer:
-      "Products can be returned within 14 days if they are in their original packaging and unused. Installed units are not eligible for return but are covered under warranty for defects.",
-    category: "Returns",
-    sortOrder: 6,
-    isActive: true,
-  },
-  {
-    _id: "7",
-    question: "How do I schedule a maintenance service?",
-    answer:
-      "You can schedule a maintenance service through our website by submitting a service request form, or by contacting us via WhatsApp. Our team will confirm the appointment within 24 hours.",
-    category: "Services",
-    sortOrder: 7,
-    isActive: true,
-  },
-  {
-    _id: "8",
-    question: "Do you offer maintenance contracts?",
-    answer:
-      "Yes, we offer annual maintenance packages that include periodic inspections, filter cleaning, refrigerant checks, and priority support. Contact us for pricing and plans.",
-    category: "Services",
-    sortOrder: 8,
-    isActive: true,
-  },
-];
-
 export default function FaqPage() {
-  const { t, isRTL } = useLanguage();
-  const [faqs, setFaqs] = useState<FAQ[]>(FALLBACK_FAQS);
+  const { t, isRTL, localize } = useLanguage();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -98,7 +23,7 @@ export default function FaqPage() {
     fetchFaqs()
       .then((data) => {
         const d = data as { data: FAQ[] };
-        if (d.data && d.data.length > 0) setFaqs(d.data);
+        setFaqs(d.data ?? []);
       })
       .catch(() => {});
   }, []);
@@ -113,8 +38,12 @@ export default function FaqPage() {
       activeCategory === "All" || faq.category === activeCategory;
     const matchesSearch =
       !searchQuery ||
-      faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+      localize(faq.question, faq.questionAr)
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      localize(faq.answer, faq.answerAr)
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -128,10 +57,10 @@ export default function FaqPage() {
           "@type": "FAQPage",
           mainEntity: faqs.map((faq) => ({
             "@type": "Question",
-            name: faq.question,
+            name: localize(faq.question, faq.questionAr),
             acceptedAnswer: {
               "@type": "Answer",
-              text: faq.answer,
+              text: localize(faq.answer, faq.answerAr),
             },
           })),
         }}
@@ -207,13 +136,13 @@ export default function FaqPage() {
                   >
                     <Accordion.Header>
                       <Accordion.Trigger className="group flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-lord-navy hover:text-lord-teal transition-colors">
-                        <span>{faq.question}</span>
+                        <span>{localize(faq.question, faq.questionAr)}</span>
                         <ChevronDown className="h-4 w-4 flex-shrink-0 text-medium-gray transition-transform duration-200 group-data-[state=open]:rotate-180" />
                       </Accordion.Trigger>
                     </Accordion.Header>
                     <Accordion.Content className="overflow-hidden data-[state=open]:animate-slideDown data-[state=closed]:animate-slideUp">
                       <div className="px-5 pb-4 text-sm text-dark-charcoal leading-relaxed">
-                        {faq.answer}
+                        {localize(faq.answer, faq.answerAr)}
                       </div>
                     </Accordion.Content>
                   </Accordion.Item>

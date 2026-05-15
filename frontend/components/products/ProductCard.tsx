@@ -19,7 +19,7 @@ type AddState = "idle" | "loading" | "success";
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [addState, setAddState] = useState<AddState>("idle");
   const [isHovered, setIsHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -27,6 +27,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const primaryImage =
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const isOutOfStock = product.stockQuantity === 0;
+  const productName = localize(product.name, product.nameAr);
+  const brandName = localize(product.brand?.name, product.brand?.nameAr);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -47,6 +49,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     product.brand?.name?.toLowerCase() === "carrier"
       ? "bg-lord-navy"
       : "bg-lord-teal";
+  const hpLabel = product.horsepower
+    ? `${product.horsepower} HP`
+    : product.capacity;
 
   return (
     <motion.div
@@ -70,7 +75,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             >
               <Image
                 src={primaryImage.url}
-                alt={primaryImage.alt || product.name}
+                alt={primaryImage.alt || productName}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -91,7 +96,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               transition={{ delay: 0.2 }}
               className={`absolute top-3 left-3 rounded px-2 py-0.5 text-[11px] font-semibold text-white ${brandBadgeColor}`}
             >
-              {product.brand.name}
+              {brandName}
             </motion.span>
           )}
 
@@ -122,7 +127,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   // Quick view modal would open here
                 }}
                 className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lord-navy shadow-md hover:bg-white transition-colors"
-                aria-label="Quick view"
+                aria-label={t("products.quickView")}
               >
                 <Eye className="h-4 w-4" />
               </motion.button>
@@ -133,10 +138,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Card Body */}
         <div className="flex flex-col flex-1 p-4">
           <h3 className="text-base font-semibold text-lord-navy line-clamp-2 mb-1">
-            {product.name}
+            {productName}
           </h3>
           <p className="text-xs text-medium-gray mb-2">
-            {product.capacity} · {product.type}
+            {hpLabel} · {product.type}
           </p>
 
           <div className="mt-auto">

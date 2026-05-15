@@ -30,8 +30,11 @@ import { fetchAbout } from "@/lib/api";
 
 interface AboutData {
   story?: string;
+  storyAr?: string;
   mission?: string;
+  missionAr?: string;
   vision?: string;
+  visionAr?: string;
   values?: string[];
   team?: { name: string; role: string; image?: string }[];
 }
@@ -71,7 +74,7 @@ function StatCard({
 }
 
 export default function AboutPage() {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [about, setAbout] = useState<AboutData | null>(null);
 
   useEffect(() => {
@@ -87,7 +90,7 @@ export default function AboutPage() {
     <PageTransition>
       <SeoHead
         title={`${t("nav.about")} | Lord`}
-        description="Lord is an authorized Carrier and Midea dealer in Egypt, providing premium AC solutions, professional installation, and after-sales support."
+        description={t("about.seoDescription")}
       />
 
       <div className="mx-auto max-w-container px-4 py-6 md:px-6 md:py-8">
@@ -118,8 +121,7 @@ export default function AboutPage() {
                 {t("about.storyTitle")}
               </h2>
               <p className="text-dark-charcoal leading-relaxed">
-                {about?.story ||
-                  "Lord is Egypt's premier authorized dealer for Carrier and Midea air conditioning systems. With years of experience in the HVAC industry, we have built a reputation for providing top-quality products, expert installation services, and exceptional after-sales support. Our commitment to excellence has made us the go-to destination for residential and commercial cooling solutions across Egypt."}
+                {localize(about?.story, about?.storyAr) || t("about.storyBody")}
               </p>
             </motion.div>
           </ScrollReveal>
@@ -131,7 +133,7 @@ export default function AboutPage() {
             >
               <Image
                 src="/assets/about.png"
-                alt="Lord Showroom"
+                alt={t("about.showroomAlt")}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -186,8 +188,8 @@ export default function AboutPage() {
                 {t("about.missionTitle")}
               </h3>
               <p className="text-dark-charcoal leading-relaxed">
-                {about?.mission ||
-                  "To provide Egypt with the highest quality air conditioning solutions through authorized Carrier and Midea products, professional installation, and unmatched customer service."}
+                {localize(about?.mission, about?.missionAr) ||
+                  t("about.missionBody")}
               </p>
             </div>
           </ScrollReveal>
@@ -201,8 +203,8 @@ export default function AboutPage() {
                 {t("about.visionTitle")}
               </h3>
               <p className="text-dark-charcoal leading-relaxed">
-                {about?.vision ||
-                  "To become the leading AC solutions provider in Egypt, known for our reliability, technical expertise, and commitment to customer satisfaction."}
+                {localize(about?.vision, about?.visionAr) ||
+                  t("about.visionBody")}
               </p>
             </div>
           </ScrollReveal>
