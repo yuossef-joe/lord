@@ -1,4 +1,5 @@
 import type { Product } from "@/types/product";
+import type { Order } from "@/types/order";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -12,6 +13,55 @@ function normalizeProduct(product: Record<string, unknown>): Product {
   } as unknown as Product;
 }
 
+function normalizeStatus(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/-/g, "_");
+}
+
+function normalizeOrder(order: Record<string, unknown>): Order {
+  const items = Array.isArray(order.items)
+    ? (order.items as Order["items"])
+    : [];
+  const payments = Array.isArray(order.payments)
+    ? (order.payments as Array<Record<string, unknown>>)
+    : [];
+  const firstPayment = payments[0];
+
+  return {
+    ...(order as unknown as Order),
+    _id: String(order._id ?? order.id ?? ""),
+    items,
+    subtotal: Number(order.subtotal ?? 0),
+    shipping: Number(order.shipping ?? order.shippingFee ?? 0),
+    discount: Number(order.discount ?? order.discountAmount ?? 0),
+    total: Number(order.total ?? 0),
+    status: normalizeStatus(order.status ?? order.orderStatus) as Order["status"],
+    payment: {
+      ...((order.payment as Order["payment"] | undefined) ?? {}),
+      method: normalizeStatus(
+        firstPayment?.paymentMethod ?? "card",
+      ) as Order["payment"]["method"],
+      amount: Number(firstPayment?.amount ?? order.total ?? 0),
+    },
+    statusHistory: Array.isArray(order.statusHistory)
+      ? order.statusHistory.map((entry) => {
+          const historyEntry = entry as Record<string, unknown>;
+          return {
+            status: normalizeStatus(
+              historyEntry.status ?? historyEntry.newStatus,
+            ) as Order["status"],
+            note:
+              historyEntry.note == null ? undefined : String(historyEntry.note),
+            timestamp: String(
+              historyEntry.timestamp ?? historyEntry.createdAt ?? "",
+            ),
+          };
+        })
+      : [],
+  };
+}
+
 async function apiRequest<T>(
   endpoint: string,
   options?: RequestInit,
@@ -23,6 +73,7 @@ async function apiRequest<T>(
 
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -79,7 +130,8 @@ export const fetchRelatedProducts = async (slug: string) => {
 };
 export const fetchBrands = () => apiRequest("/brands");
 export const fetchProductCategories = () => apiRequest("/product-categories");
-export const fetchServices = () => apiRequest("/services?active=true");
+export const fetchServices = () =>
+  apiRequest(`/services?active=true&_=${Date.now()}`);
 export const fetchServiceBySlug = (slug: string) =>
   apiRequest(`/services/${slug}`);
 export const fetchServiceTypes = () => apiRequest("/service-types");
@@ -124,12 +176,10 @@ export const removeCartItem = (itemId: string) =>
 export const clearServerCart = () =>
   apiRequest("/cart", { method: "DELETE" });
 export const applyCouponApi = (code: string) =>
-  apiRequest("/cart/coupon", {
+  apiRequest("/coupons/validate", {
     method: "POST",
     body: JSON.stringify({ code }),
   });
-export const removeCouponApi = () =>
-  apiRequest("/cart/coupon", { method: "DELETE" });
 export const mergeCart = () => apiRequest("/cart/merge", { method: "POST" });
 
 export const registerCustomer = (data: Record<string, unknown>) =>
@@ -205,11 +255,25 @@ export const deleteAddress = (id: string) =>
 export const deleteCustomerAddress = deleteAddress;
 export const setDefaultAddress = (id: string) =>
   apiRequest(`/account/addresses/${id}/default`, { method: "PATCH" });
-export const fetchOrders = (params?: string) =>
-  apiRequest(`/account/orders${params || ""}`);
+export const fetchOrders = async (params?: string) => {
+  const response = await apiRequest<{ data: Array<Record<string, unknown>> }>(
+    `/account/orders${params || ""}`,
+  );
+  return {
+    ...response,
+    data: (response.data ?? []).map(normalizeOrder),
+  };
+};
 export const fetchCustomerOrders = fetchOrders;
-export const fetchOrderDetail = (id: string) =>
-  apiRequest(`/account/orders/${id}`);
+export const fetchOrderDetail = async (id: string) => {
+  const response = await apiRequest<{ data: Record<string, unknown> }>(
+    `/account/orders/${id}`,
+  );
+  return {
+    ...response,
+    data: normalizeOrder(response.data),
+  };
+};
 export const cancelOrder = (id: string) =>
   apiRequest(`/account/orders/${id}/cancel`, { method: "POST" });
 

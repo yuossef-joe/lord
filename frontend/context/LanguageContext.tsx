@@ -200,6 +200,7 @@ const en: Translations = {
   "auth.otpSent": "We sent a verification code to",
 
   // Account
+  "account.dashboard": "Dashboard",
   "account.welcome": "Welcome back",
   "account.orders": "My Orders",
   "account.addresses": "My Addresses",
@@ -233,6 +234,7 @@ const en: Translations = {
   "account.office": "Office",
   "account.recipientName": "Recipient Name",
   "account.postalCode": "Postal Code",
+  "account.defaultAddress": "Default",
   "account.setDefaultAddress": "Set as default address",
   "account.backToOrders": "Back to orders",
   "account.statusHistory": "Status History",
@@ -285,6 +287,10 @@ const en: Translations = {
   "footer.service.spareParts": "Spare Parts",
   "legal.privacyPolicy": "Privacy Policy",
   "legal.termsConditions": "Terms and Conditions",
+  "legal.privacyBody":
+    "We use customer information to process orders, provide services, and improve support.",
+  "legal.termsBody":
+    "Orders, installation visits, warranties, and returns follow Lord AC published policies.",
 
   // Services page
   "services.title": "Our Services",
@@ -295,6 +301,7 @@ const en: Translations = {
   "services.ctaTitle": "Need help with your AC?",
   "services.ctaSubtitle": "Send us a service request and our team will contact you.",
   "services.chatWhatsApp": "Chat on WhatsApp",
+  "services.loadError": "Could not load services.",
   "services.requestSubmitted": "Service request submitted",
   "services.requestDesc": "We received your request and will contact you soon.",
   "services.submitAnother": "Submit Another Request",
@@ -379,8 +386,14 @@ const en: Translations = {
   "about.title": "About Lord",
   "about.subtitle": "Authorized AC solutions, installation, and support since 1986.",
   "about.storyTitle": "Our Story",
+  "about.storyBody":
+    "Lord is Egypt's premier authorized dealer for Carrier and Midea air conditioning systems. With years of experience in the HVAC industry, we have built a reputation for providing top-quality products, expert installation services, and exceptional after-sales support. Our commitment to excellence has made us the go-to destination for residential and commercial cooling solutions across Egypt.",
   "about.missionTitle": "Our Mission",
+  "about.missionBody":
+    "To provide Egypt with the highest quality air conditioning solutions through authorized Carrier and Midea products, professional installation, and unmatched customer service.",
   "about.visionTitle": "Our Vision",
+  "about.visionBody":
+    "To become the leading AC solutions provider in Egypt, known for our reliability, technical expertise, and commitment to customer satisfaction.",
   "about.authorizedTitle": "Authorized Carrier & Midea Dealer",
   "about.authorizedDesc":
     "We provide original products, professional installation, and reliable after-sales support.",
@@ -388,6 +401,9 @@ const en: Translations = {
   "about.happyCustomers": "Happy Customers",
   "about.governorates": "Governorates",
   "about.rating": "Customer Rating",
+  "about.seoDescription":
+    "Lord is an authorized Carrier and Midea dealer in Egypt, providing premium AC solutions, professional installation, and after-sales support.",
+  "about.showroomAlt": "Lord showroom",
 };
 
 // Arabic translations
@@ -554,6 +570,7 @@ const ar: Translations = {
   "auth.otpResent": "تمت إعادة إرسال كود التحقق.",
   "auth.resendError": "تعذر إعادة إرسال الكود.",
 
+  "account.dashboard": "لوحة الحساب",
   "account.welcome": "مرحباً بك",
   "account.orders": "طلباتي",
   "account.addresses": "عناويني",
@@ -587,6 +604,7 @@ const ar: Translations = {
   "account.office": "المكتب",
   "account.recipientName": "اسم المستلم",
   "account.postalCode": "الرقم البريدي",
+  "account.defaultAddress": "افتراضي",
   "account.setDefaultAddress": "تعيين كعنوان افتراضي",
   "account.backToOrders": "العودة إلى الطلبات",
   "account.statusHistory": "سجل الحالة",
@@ -637,6 +655,10 @@ const ar: Translations = {
   "footer.service.spareParts": "قطع الغيار",
   "legal.privacyPolicy": "سياسة الخصوصية",
   "legal.termsConditions": "الشروط والأحكام",
+  "legal.privacyBody":
+    "نستخدم بيانات العملاء لمعالجة الطلبات وتقديم الخدمات وتحسين الدعم.",
+  "legal.termsBody":
+    "تخضع الطلبات وزيارات التركيب والضمانات والإرجاع لسياسات لورد للتكييف المنشورة.",
 
   "services.title": "خدماتنا",
   "services.tagline": "دعم ما بعد البيع الكامل لتكييف الهواء الخاص بك",
@@ -646,6 +668,7 @@ const ar: Translations = {
   "services.ctaTitle": "تحتاج مساعدة في التكييف؟",
   "services.ctaSubtitle": "أرسل طلب خدمة وسيتواصل معك فريقنا.",
   "services.chatWhatsApp": "تواصل عبر واتساب",
+  "services.loadError": "تعذر تحميل الخدمات.",
   "services.requestSubmitted": "تم إرسال طلب الخدمة",
   "services.requestDesc": "استلمنا طلبك وسنتواصل معك قريباً.",
   "services.submitAnother": "إرسال طلب آخر",
@@ -724,8 +747,14 @@ const ar: Translations = {
   "about.title": "عن لورد",
   "about.subtitle": "حلول تكييف معتمدة وتركيب ودعم منذ ١٩٨٦.",
   "about.storyTitle": "قصتنا",
+  "about.storyBody":
+    "لورد هي الوكيل المعتمد الرائد في مصر لأنظمة تكييف كاريير وميديا. وبفضل سنوات من الخبرة في مجال التكييف، بنينا سمعة قوية في تقديم منتجات عالية الجودة وخدمات تركيب احترافية ودعم متميز بعد البيع. وقد جعلنا التزامنا بالجودة وجهة موثوقة لحلول التبريد السكنية والتجارية في جميع أنحاء مصر.",
   "about.missionTitle": "مهمتنا",
+  "about.missionBody":
+    "تزويد مصر بأعلى جودة من حلول التكييف من خلال منتجات كاريير وميديا المعتمدة، والتركيب الاحترافي، وخدمة العملاء المتميزة.",
   "about.visionTitle": "رؤيتنا",
+  "about.visionBody":
+    "أن نصبح المزود الرائد لحلول التكييف في مصر، معروفين بالموثوقية والخبرة الفنية والالتزام برضا العملاء.",
   "about.authorizedTitle": "وكيل معتمد لكاريير وميديا",
   "about.authorizedDesc":
     "نوفر منتجات أصلية وتركيباً احترافياً ودعماً موثوقاً بعد البيع.",
@@ -733,6 +762,9 @@ const ar: Translations = {
   "about.happyCustomers": "عملاء سعداء",
   "about.governorates": "محافظات",
   "about.rating": "تقييم العملاء",
+  "about.seoDescription":
+    "لورد وكيل معتمد لكاريير وميديا في مصر، تقدم حلول تكييف متميزة وتركيباً احترافياً ودعماً بعد البيع.",
+  "about.showroomAlt": "معرض لورد",
 };
 
 const translations: Record<Language, Translations> = { en, ar };

@@ -98,7 +98,16 @@ function publicList(model: string, defaultWhere: Record<string, unknown> = {}) {
   });
 }
 
-function cmsCrud(model: string, options: { searchFields?: string[]; softDelete?: boolean } = {}) {
+function cmsCrud(
+  model: string,
+  options: {
+    searchFields?: string[];
+    softDelete?: boolean;
+    orderBy?: Record<string, "asc" | "desc">;
+    include?: Record<string, boolean>;
+    serialize?: (item: any) => any;
+  } = {},
+) {
   const crud = Router();
   crud.use(cmsAuth);
 
@@ -116,19 +125,33 @@ function cmsCrud(model: string, options: { searchFields?: string[]; softDelete?:
           }
         : {};
       const [items, total] = await Promise.all([
-        db[model].findMany({ where, skip, take, orderBy: { createdAt: "desc" } }),
+        db[model].findMany({
+          where,
+          skip,
+          take,
+          orderBy: options.orderBy ?? { createdAt: "desc" },
+          ...(options.include ? { include: options.include } : {}),
+        }),
         db[model].count({ where }),
       ]);
-      return paginated(res, items, getPaginationMeta(page, limit, total), "Fetched successfully");
+      return paginated(
+        res,
+        options.serialize ? items.map(options.serialize) : items,
+        getPaginationMeta(page, limit, total),
+        "Fetched successfully",
+      );
     }),
   );
 
   crud.get(
     "/:id",
     asyncHandler(async (req, res) => {
-      const item = await db[model].findUnique({ where: { id: parseId(req) } });
+      const item = await db[model].findUnique({
+        where: { id: parseId(req) },
+        ...(options.include ? { include: options.include } : {}),
+      });
       if (!item) throw ApiError.notFound();
-      return success(res, item);
+      return success(res, options.serialize ? options.serialize(item) : item);
     }),
   );
 
@@ -272,7 +295,30 @@ router.get("/products/:slug/related", asyncHandler(async (req, res) => {
 
 router.get("/brands", publicList("brands", { isActive: true }));
 router.get("/product-categories", publicList("productCategories", { isActive: true }));
-router.get("/services", publicList("services", { isActive: true }));
+function serializeService(service: any) {
+  const content =
+    service.content && typeof service.content === "object" ? service.content : {};
+
+  return {
+    ...service,
+    _id: service.id,
+    serviceType: service.serviceType,
+    inclusions: Array.isArray(content.bullets) ? content.bullets : [],
+    inclusionsAr: Array.isArray(content.bulletsAr) ? content.bulletsAr : [],
+  };
+}
+
+router.get(
+  "/services",
+  asyncHandler(async (req, res) => {
+    const services = await prisma.services.findMany({
+      where: { isActive: true },
+      include: { serviceType: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    return success(res, services.map(serializeService), "Services fetched successfully");
+  }),
+);
 router.get("/service-types", publicList("serviceTypes", { isActive: true }));
 router.get("/testimonials", publicList("testimonials", { isApproved: true }));
 router.get("/faqs", asyncHandler(async (req, res) => {
@@ -385,8 +431,27 @@ router.post("/cms/auth/login", authLimiter, asyncHandler(async (req, res) => {
 router.use("/cms/products", cmsCrud("products", { searchFields: ["name", "modelNumber"], softDelete: true }));
 router.use("/cms/brands", cmsCrud("brands", { searchFields: ["name"], softDelete: true }));
 router.use("/cms/product-categories", cmsCrud("productCategories", { searchFields: ["name"], softDelete: true }));
-router.use("/cms/services", cmsCrud("services", { searchFields: ["name"], softDelete: true }));
-router.use("/cms/service-types", cmsCrud("serviceTypes", { searchFields: ["name"], softDelete: true }));
+router.use(
+  "/cms/services",
+  cmsCrud("services", {
+    searchFields: ["name"],
+    softDelete: true,
+    orderBy: { sortOrder: "asc" },
+    include: { serviceType: true },
+    serialize: (service) => ({
+      ...service,
+      type: service.serviceType,
+    }),
+  }),
+);
+router.use(
+  "/cms/service-types",
+  cmsCrud("serviceTypes", {
+    searchFields: ["name"],
+    softDelete: true,
+    orderBy: { name: "asc" },
+  }),
+);
 router.use("/cms/coupons", cmsCrud("coupons", { searchFields: ["code"], softDelete: true }));
 router.use("/cms/content", cmsCrud("contentPages", { searchFields: ["title", "pageKey"], softDelete: true }));
 router.use("/cms/testimonials", cmsCrud("testimonials", { searchFields: ["customerName"], softDelete: false }));
@@ -428,10 +493,28 @@ router.get("/cms/orders/:id", asyncHandler(async (req, res) => {
 }));
 router.put("/cms/orders/:id", asyncHandler(async (req, res) => success(res, await prisma.orders.update({ where: { id: parseId(req) }, data: req.body }))));
 router.put("/cms/orders/:id/status", asyncHandler(async (req, res) => {
-  const body = z.object({ status: z.string(), note: z.string().optional() }).parse(req.body);
+  const body = z.object({
+    status: z.enum(["pending_payment", "confirmed", "processing", "shipped", "delivered", "cancelled"]),
+    note: z.string().optional(),
+  }).parse(req.body);
   const current = await prisma.orders.findUniqueOrThrow({ where: { id: parseId(req) } });
   const updated = await prisma.orders.update({ where: { id: current.id }, data: { orderStatus: body.status.toUpperCase() as any } });
   await prisma.orderStatusHistory.create({ data: { orderId: current.id, oldStatus: current.orderStatus, newStatus: updated.orderStatus, note: body.note, changedBy: req.cmsUser?.id } });
+  return success(res, updated);
+}));
+router.put("/cms/orders/:id/payment-status", asyncHandler(async (req, res) => {
+  const body = z.object({
+    status: z.enum(["pending", "paid", "failed", "refunded"]),
+  }).parse(req.body);
+  const current = await prisma.orders.findUniqueOrThrow({ where: { id: parseId(req) } });
+  const updated = await prisma.orders.update({
+    where: { id: current.id },
+    data: { paymentStatus: body.status.toUpperCase() as any },
+  });
+  await prisma.payments.updateMany({
+    where: { orderId: current.id },
+    data: { status: body.status.toUpperCase() as any },
+  });
   return success(res, updated);
 }));
 router.put("/cms/orders/:id/shipping", asyncHandler(async (req, res) => success(res, await prisma.orders.update({ where: { id: parseId(req) }, data: { ...req.body, orderStatus: "SHIPPED" } }))));

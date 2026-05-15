@@ -5,6 +5,7 @@ export default function PrivacyPolicyPage() {
     <ContentPageView
       pageKey="privacy-policy"
       fallbackTitleKey="legal.privacyPolicy"
+      fallbackBodyKey="legal.privacyBody"
     />
   );
 }

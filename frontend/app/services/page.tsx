@@ -25,14 +25,18 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 export default function ServicesPage() {
   const { t, localize, language } = useLanguage();
   const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     fetchServices()
       .then((data) => {
         const d = data as { data: Service[] };
         setServices(d.data ?? []);
+        setHasError(false);
       })
-      .catch(() => {});
+      .catch(() => setHasError(true))
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -70,6 +74,16 @@ export default function ServicesPage() {
           viewport={{ once: true }}
           className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         >
+          {isLoading && (
+            <div className="col-span-full rounded-card border border-[#E8EAED] bg-white p-8 text-center text-sm text-medium-gray">
+              {t("general.loading")}
+            </div>
+          )}
+          {hasError && (
+            <div className="col-span-full rounded-card border border-[#E8EAED] bg-white p-8 text-center text-sm text-medium-gray">
+              {t("services.loadError")}
+            </div>
+          )}
           {services.map((service) => (
             <motion.div
               key={service._id}

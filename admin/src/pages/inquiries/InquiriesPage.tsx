@@ -58,13 +58,14 @@ const inquiryColumns = (onView: (inquiry: Inquiry) => void) => [
   }),
   inquiryHelper.accessor("message", {
     header: "Message",
-    cell: (info) => (
-      <span className="max-w-[200px] truncate block" title={info.getValue()}>
-        {info.getValue().length > 50
-          ? info.getValue().slice(0, 50) + "…"
-          : info.getValue()}
-      </span>
-    ),
+    cell: (info) => {
+      const message = info.getValue() ?? "";
+      return (
+        <span className="max-w-[200px] truncate block" title={message}>
+          {message.length > 50 ? message.slice(0, 50) + "…" : message}
+        </span>
+      );
+    },
   }),
   inquiryHelper.accessor("status", {
     header: "Status",

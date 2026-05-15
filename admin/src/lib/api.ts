@@ -39,6 +39,7 @@ async function cmsApiRequest<T>(
 
   const res = await fetch(`${API_BASE_URL}/cms${endpoint}`, {
     ...options,
+    cache: "no-store",
     headers: {
       ...headers,
       ...options?.headers,
@@ -57,6 +58,34 @@ async function cmsApiRequest<T>(
   }
 
   return res.json();
+}
+
+function normalizeService(service: Service & Record<string, unknown>): Service {
+  const content =
+    service.content && typeof service.content === "object"
+      ? (service.content as Record<string, unknown>)
+      : {};
+  const type =
+    (service.type as Service["type"] | undefined) ??
+    (service.serviceType as Service["type"] | undefined);
+
+  return {
+    ...service,
+    type: type ?? { id: "", name: "", slug: "" },
+    scopeOfWork: Array.isArray(content.bullets)
+      ? (content.bullets as string[])
+      : [],
+    applicableUnitTypes: Array.isArray(content.applicableUnitTypes)
+      ? (content.applicableUnitTypes as string[])
+      : [],
+    estimatedDuration:
+      content.estimatedTime == null ? undefined : String(content.estimatedTime),
+    pricingType:
+      content.pricingType == null ? undefined : String(content.pricingType),
+    price: content.price == null ? undefined : Number(content.price),
+    imageUrl:
+      content.imageUrl == null ? undefined : String(content.imageUrl),
+  };
 }
 
 function normalizeCustomer(customer: Customer & Record<string, unknown>): Customer {
@@ -186,9 +215,82 @@ function normalizeOrder(order: Order & Record<string, unknown>): Order {
       amount: Number(firstPayment?.amount ?? order.total ?? 0),
     },
     status: normalizeStatus(order.status ?? order.orderStatus ?? "pending_payment") as Order["status"],
-    statusHistory: Array.isArray(order.statusHistory) ? order.statusHistory : [],
+    statusHistory: Array.isArray(order.statusHistory)
+      ? order.statusHistory.map((entry) => {
+          const historyEntry = entry as unknown as Record<string, unknown>;
+          return {
+            status: normalizeStatus(
+              historyEntry.status ?? historyEntry.newStatus ?? "",
+            ) as Order["status"],
+            timestamp: String(
+              historyEntry.timestamp ?? historyEntry.createdAt ?? "",
+            ),
+            note:
+              historyEntry.note == null ? undefined : String(historyEntry.note),
+            updatedBy:
+              historyEntry.updatedBy == null && historyEntry.changedBy == null
+                ? undefined
+                : String(historyEntry.updatedBy ?? historyEntry.changedBy),
+          };
+        })
+      : [],
     refunds: Array.isArray(order.refunds) ? order.refunds : [],
     notes: Array.isArray(order.notes) ? order.notes : [],
+  };
+}
+
+function normalizeInquiryNote(note: Record<string, unknown>) {
+  return {
+    id: String(note.id ?? ""),
+    note: String(note.note ?? note.content ?? ""),
+    createdBy: String(note.createdBy ?? "Staff"),
+    createdAt: String(note.createdAt ?? ""),
+  };
+}
+
+function normalizeInquiry(inquiry: Inquiry & Record<string, unknown>): Inquiry {
+  return {
+    ...inquiry,
+    name: String(inquiry.name ?? ""),
+    email: String(inquiry.email ?? ""),
+    phone: String(inquiry.phone ?? ""),
+    inquiryType: normalizeStatus(inquiry.inquiryType ?? "general") as Inquiry["inquiryType"],
+    message: String(inquiry.message ?? ""),
+    source: String(inquiry.source ?? "website"),
+    status: normalizeStatus(inquiry.status ?? "new") as Inquiry["status"],
+    notes: Array.isArray(inquiry.notes)
+      ? inquiry.notes.map((note) =>
+          normalizeInquiryNote(note as unknown as Record<string, unknown>),
+        )
+      : [],
+  };
+}
+
+function normalizeServiceRequest(
+  request: ServiceRequest & Record<string, unknown>,
+): ServiceRequest {
+  return {
+    ...request,
+    name: String(request.name ?? ""),
+    phone: String(request.phone ?? ""),
+    email: request.email == null ? undefined : String(request.email),
+    serviceTypeId: String(request.serviceTypeId ?? ""),
+    serviceTypeName: String(
+      request.serviceTypeName ?? request.serviceType ?? "Service request",
+    ),
+    urgency: (normalizeStatus(request.urgency ?? "normal") ||
+      "normal") as ServiceRequest["urgency"],
+    installationAddress:
+      request.installationAddress == null
+        ? undefined
+        : String(request.installationAddress),
+    message: request.message == null ? undefined : String(request.message),
+    status: normalizeStatus(request.status ?? "new") as ServiceRequest["status"],
+    notes: Array.isArray(request.notes)
+      ? request.notes.map((note) =>
+          normalizeInquiryNote(note as unknown as Record<string, unknown>),
+        )
+      : [],
   };
 }
 
@@ -271,8 +373,14 @@ export const updateOrder = (id: string, data: Record<string, unknown>) =>
 
 export const updateOrderStatus = (id: string, status: string, note?: string) =>
   cmsApiRequest(`/orders/${id}/status`, {
-    method: "PATCH",
+    method: "PUT",
     body: JSON.stringify({ status, note }),
+  });
+
+export const updateOrderPaymentStatus = (id: string, status: string) =>
+  cmsApiRequest(`/orders/${id}/payment-status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
   });
 
 export const addTrackingInfo = (
@@ -426,11 +534,17 @@ export const updateProductStock = (id: string, stockQuantity: number) =>
 // ─── Brands ──────────────────────────────────────────
 export const fetchBrands = () => cmsApiRequest<ApiResponse<Brand[]>>("/brands");
 
-export const createBrand = (data: FormData) =>
-  cmsApiRequest("/brands", { method: "POST", body: data });
+export const createBrand = (data: Record<string, unknown>) =>
+  cmsApiRequest("/brands", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 
-export const updateBrand = (id: string, data: FormData) =>
-  cmsApiRequest(`/brands/${id}`, { method: "PUT", body: data });
+export const updateBrand = (id: string, data: Record<string, unknown>) =>
+  cmsApiRequest(`/brands/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 
 export const deleteBrand = (id: string) =>
   cmsApiRequest(`/brands/${id}`, { method: "DELETE" });
@@ -458,13 +572,25 @@ export const deleteProductCategory = (id: string) =>
   cmsApiRequest(`/product-categories/${id}`, { method: "DELETE" });
 
 // ─── Services ────────────────────────────────────────
-export const fetchServices = (params?: string) =>
-  cmsApiRequest<PaginatedResponse<Service>>(
-    `/services${params ? `?${params}` : ""}`,
-  );
+export const fetchServices = async (params?: string) => {
+  const response = await cmsApiRequest<
+    PaginatedResponse<Service & Record<string, unknown>>
+  >(`/services${params ? `?${params}` : ""}`);
+  return {
+    ...response,
+    data: response.data.map(normalizeService),
+  };
+};
 
-export const fetchService = (id: string) =>
-  cmsApiRequest<ApiResponse<Service>>(`/services/${id}`);
+export const fetchService = async (id: string) => {
+  const response = await cmsApiRequest<
+    ApiResponse<Service & Record<string, unknown>>
+  >(`/services/${id}`);
+  return {
+    ...response,
+    data: normalizeService(response.data),
+  };
+};
 
 export const createService = (data: Record<string, unknown>) =>
   cmsApiRequest("/services", { method: "POST", body: JSON.stringify(data) });
@@ -482,11 +608,27 @@ export const fetchServiceTypes = () =>
   cmsApiRequest<ApiResponse<ServiceType[]>>("/service-types");
 
 // ─── Inquiries ───────────────────────────────────────
-export const fetchInquiries = (params: string) =>
-  cmsApiRequest<PaginatedResponse<Inquiry>>(`/inquiries?${params}`);
+export const fetchInquiries = async (params: string) => {
+  const response = await cmsApiRequest<PaginatedResponse<Inquiry>>(
+    `/inquiries?${params}`,
+  );
+  return {
+    ...response,
+    data: Array.isArray(response.data)
+      ? response.data.map((inquiry) =>
+          normalizeInquiry(inquiry as Inquiry & Record<string, unknown>),
+        )
+      : [],
+  };
+};
 
-export const fetchInquiry = (id: string) =>
-  cmsApiRequest<ApiResponse<Inquiry>>(`/inquiries/${id}`);
+export const fetchInquiry = async (id: string) => {
+  const response = await cmsApiRequest<ApiResponse<Inquiry>>(`/inquiries/${id}`);
+  return {
+    ...response,
+    data: normalizeInquiry(response.data as Inquiry & Record<string, unknown>),
+  };
+};
 
 export const updateInquiryStatus = (id: string, status: string) =>
   cmsApiRequest(`/inquiries/${id}/status`, {
@@ -500,13 +642,33 @@ export const addInquiryNote = (id: string, note: string) =>
     body: JSON.stringify({ note }),
   });
 
-export const fetchServiceRequests = (params: string) =>
-  cmsApiRequest<PaginatedResponse<ServiceRequest>>(
+export const fetchServiceRequests = async (params: string) => {
+  const response = await cmsApiRequest<PaginatedResponse<ServiceRequest>>(
     `/service-requests?${params}`,
   );
+  return {
+    ...response,
+    data: Array.isArray(response.data)
+      ? response.data.map((request) =>
+          normalizeServiceRequest(
+            request as ServiceRequest & Record<string, unknown>,
+          ),
+        )
+      : [],
+  };
+};
 
-export const fetchServiceRequest = (id: string) =>
-  cmsApiRequest<ApiResponse<ServiceRequest>>(`/service-requests/${id}`);
+export const fetchServiceRequest = async (id: string) => {
+  const response = await cmsApiRequest<ApiResponse<ServiceRequest>>(
+    `/service-requests/${id}`,
+  );
+  return {
+    ...response,
+    data: normalizeServiceRequest(
+      response.data as ServiceRequest & Record<string, unknown>,
+    ),
+  };
+};
 
 export const updateServiceRequestStatus = (id: string, status: string) =>
   cmsApiRequest(`/service-requests/${id}/status`, {

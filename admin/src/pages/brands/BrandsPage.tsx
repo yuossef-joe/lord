@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ImagePlus, Plus, Pencil, Trash2 } from "lucide-react";
 import type { Brand, ProductCategory } from "@/types";
 import {
   createBrand,
@@ -29,7 +29,6 @@ import { useLanguage } from "@/context/LanguageContext";
 const brandSchema = z.object({
   name: z.string().min(1, "Brand name is required"),
   nameAr: z.string().min(1, "Arabic brand name is required"),
-  logoUrl: z.string().optional(),
   isActive: z.boolean(),
 });
 
@@ -68,6 +67,15 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ── Component ───────────────────────────────────────── */
 
 export default function BrandsPage() {
@@ -77,6 +85,8 @@ export default function BrandsPage() {
   const [brandModalOpen, setBrandModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [deletingBrand, setDeletingBrand] = useState<Brand | null>(null);
+  const [brandLogoFile, setBrandLogoFile] = useState<File | null>(null);
+  const [brandLogoPreview, setBrandLogoPreview] = useState("");
 
   /* categories state */
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -99,7 +109,7 @@ export default function BrandsPage() {
 
   const brandForm = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "", nameAr: "", logoUrl: "", isActive: true },
+    defaultValues: { name: "", nameAr: "", isActive: true },
   });
 
   const openBrandModal = (brand?: Brand) => {
@@ -108,31 +118,39 @@ export default function BrandsPage() {
       brandForm.reset({
         name: brand.name,
         nameAr: brand.nameAr ?? "",
-        logoUrl: brand.logoUrl ?? "",
         isActive: brand.isActive,
       });
+      setBrandLogoPreview(brand.logoUrl ?? "");
     } else {
       setEditingBrand(null);
-      brandForm.reset({ name: "", nameAr: "", logoUrl: "", isActive: true });
+      brandForm.reset({ name: "", nameAr: "", isActive: true });
+      setBrandLogoPreview("");
     }
+    setBrandLogoFile(null);
     setBrandModalOpen(true);
   };
 
   const closeBrandModal = () => {
     setBrandModalOpen(false);
     setEditingBrand(null);
+    setBrandLogoFile(null);
+    setBrandLogoPreview("");
   };
 
   const onBrandSubmit = async (data: BrandFormValues) => {
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("nameAr", data.nameAr);
-    if (data.logoUrl) formData.append("logoUrl", data.logoUrl);
-    formData.append("isActive", String(data.isActive));
+    const logoUrl = brandLogoFile
+      ? await readFileAsDataUrl(brandLogoFile)
+      : editingBrand?.logoUrl;
+    const payload = {
+      name: data.name,
+      nameAr: data.nameAr,
+      logoUrl,
+      isActive: data.isActive,
+    };
     if (editingBrand) {
-      await updateBrand(editingBrand.id, formData);
+      await updateBrand(editingBrand.id, payload);
     } else {
-      await createBrand(formData);
+      await createBrand(payload);
     }
     const response = await fetchBrands();
     setBrands(response.data);
@@ -407,15 +425,37 @@ export default function BrandsPage() {
             />
           </FormField>
 
-          <FormField
-            label="Logo URL"
-            error={brandForm.formState.errors.logoUrl?.message}
-          >
-            <input
-              {...brandForm.register("logoUrl")}
-              className={inputStyles}
-              placeholder="https://example.com/logo.png"
-            />
+          <FormField label="Logo Image">
+            <label className="flex min-h-24 cursor-pointer items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3 transition hover:border-teal hover:bg-teal/5">
+              {brandLogoPreview ? (
+                <img
+                  src={brandLogoPreview}
+                  alt=""
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+              ) : (
+                <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                  <ImagePlus size={22} />
+                </span>
+              )}
+              <span className="text-sm text-gray-600">
+                {brandLogoFile ? brandLogoFile.name : "Choose image"}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setBrandLogoFile(file);
+                  if (!file) {
+                    setBrandLogoPreview(editingBrand?.logoUrl ?? "");
+                    return;
+                  }
+                  setBrandLogoPreview(URL.createObjectURL(file));
+                }}
+              />
+            </label>
           </FormField>
 
           <label className="flex items-center justify-between cursor-pointer">

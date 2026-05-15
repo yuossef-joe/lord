@@ -142,7 +142,7 @@ export default function ServicesPage() {
       }),
       columnHelper.accessor("createdAt", {
         header: t("common.date"),
-        cell: (info) => formatDate(info.getValue()),
+        cell: (info) => formatDate(info.getValue() ?? ""),
       }),
       columnHelper.display({
         id: "actions",

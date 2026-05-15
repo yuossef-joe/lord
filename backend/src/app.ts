@@ -9,11 +9,16 @@ import routes from "./routes/index.js";
 
 export function createApp() {
   const app = express();
+  app.set("etag", false);
 
   app.use(helmet());
   app.use(cors(corsOptions));
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
+  app.use((_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  });
   app.use(requestLogger);
   app.use(apiLimiter);
 

@@ -2,6 +2,7 @@ export interface ServiceType {
   id: string;
   name: string;
   nameAr?: string;
+  slug?: string;
   icon?: string;
 }
 
@@ -18,8 +19,9 @@ export interface Service {
   estimatedDuration?: string;
   pricingType?: string;
   price?: number;
+  imageUrl?: string;
   isActive: boolean;
   sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

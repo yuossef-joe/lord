@@ -33,11 +33,13 @@ type CmsContentPage = {
 interface ContentPageViewProps {
   pageKey: string;
   fallbackTitleKey: string;
+  fallbackBodyKey: string;
 }
 
 export default function ContentPageView({
   pageKey,
   fallbackTitleKey,
+  fallbackBodyKey,
 }: ContentPageViewProps) {
   const { t, localize } = useLanguage();
   const [page, setPage] = useState<CmsContentPage | null>(null);
@@ -58,7 +60,8 @@ export default function ContentPageView({
     localize(page?.content?.title, page?.content?.titleAr) ||
     localize(page?.title, page?.titleAr) ||
     t(fallbackTitleKey);
-  const body = localize(page?.content?.body, page?.content?.bodyAr);
+  const body =
+    localize(page?.content?.body, page?.content?.bodyAr) || t(fallbackBodyKey);
   const seoTitle =
     localize(page?.seo?.metaTitle, page?.seo?.metaTitleAr) ||
     localize(page?.seo?.title, page?.seo?.titleAr) ||
@@ -87,13 +90,9 @@ export default function ContentPageView({
               {title}
             </h1>
             <div className="mt-6 rounded-card border border-[#E8EAED] bg-white p-6 shadow-sm md:p-8">
-              {body ? (
-                <div className="whitespace-pre-line text-base leading-8 text-dark-charcoal">
-                  {body}
-                </div>
-              ) : (
-                <p className="text-medium-gray">{t("general.noResults")}</p>
-              )}
+              <div className="whitespace-pre-line text-base leading-8 text-dark-charcoal">
+                {body}
+              </div>
             </div>
           </article>
         )}

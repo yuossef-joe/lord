@@ -30,13 +30,13 @@ export default function OrdersPage() {
   }, [statusFilter]);
 
   const statuses = [
-    "",
-    "pending",
-    "confirmed",
-    "processing",
-    "shipped",
-    "delivered",
-    "cancelled",
+    { value: "", label: t("account.viewAll") },
+    { value: "pending_payment", label: t("order.pendingPayment") },
+    { value: "confirmed", label: t("order.confirmed") },
+    { value: "processing", label: t("order.processing") },
+    { value: "shipped", label: t("order.shipped") },
+    { value: "delivered", label: t("order.delivered") },
+    { value: "cancelled", label: t("order.cancelled") },
   ];
 
   return (
@@ -49,15 +49,15 @@ export default function OrdersPage() {
       <div className="flex flex-wrap gap-2">
         {statuses.map((status) => (
           <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
+            key={status.value}
+            onClick={() => setStatusFilter(status.value)}
             className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
-              statusFilter === status
+              statusFilter === status.value
                 ? "bg-lord-teal text-white"
                 : "bg-off-white text-dark-charcoal hover:bg-lord-teal/10"
             }`}
           >
-            {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All"}
+            {status.label}
           </button>
         ))}
       </div>

@@ -41,6 +41,39 @@ async function upsertSiteSetting(key: string, group: string, value: Prisma.Input
   });
 }
 
+async function clearSeedData() {
+  await prisma.emailQueue.deleteMany();
+  await prisma.couponUsage.deleteMany();
+  await prisma.refunds.deleteMany();
+  await prisma.payments.deleteMany();
+  await prisma.orderStatusHistory.deleteMany();
+  await prisma.orderItems.deleteMany();
+  await prisma.orders.deleteMany();
+  await prisma.cartItems.deleteMany();
+  await prisma.carts.deleteMany();
+  await prisma.customerAddresses.deleteMany();
+  await prisma.customers.deleteMany();
+  await prisma.productImages.deleteMany();
+  await prisma.products.deleteMany();
+  await prisma.services.deleteMany();
+  await prisma.serviceTypes.deleteMany();
+  await prisma.inquiryNotes.deleteMany();
+  await prisma.inquiries.deleteMany();
+  await prisma.serviceRequestNotes.deleteMany();
+  await prisma.serviceRequests.deleteMany();
+  await prisma.testimonials.deleteMany();
+  await prisma.promotions.deleteMany();
+  await prisma.faqs.deleteMany();
+  await prisma.contentPages.deleteMany();
+  await prisma.shippingMethods.deleteMany();
+  await prisma.shippingZones.deleteMany();
+  await prisma.coupons.deleteMany();
+  await prisma.brands.deleteMany();
+  await prisma.productCategories.deleteMany();
+  await prisma.siteSettings.deleteMany();
+  await prisma.cmsUsers.deleteMany();
+}
+
 async function seedBrands() {
   const brands = [
     {
@@ -302,6 +335,7 @@ async function seedProducts() {
           capacity: `${product.capacity.toLocaleString()} BTU`,
           horsepower: `${product.horsepower} HP`,
           warranty: "5 years compressor warranty",
+          warrantyAr: "ضمان الضاغط لمدة 5 سنوات",
         },
         price: product.price,
         originalPrice: product.originalPrice ?? null,
@@ -313,7 +347,9 @@ async function seedProducts() {
         isActive: true,
         seo: {
           title: product.name,
+          titleAr: product.nameAr,
           description: `Buy ${product.name} from Lord AC in Egypt.`,
+          descriptionAr: `اشتر ${product.nameAr} من لورد للتكييف في مصر.`,
         },
       },
       create: {
@@ -351,6 +387,7 @@ async function seedProducts() {
           capacity: `${product.capacity.toLocaleString()} BTU`,
           horsepower: `${product.horsepower} HP`,
           warranty: "5 years compressor warranty",
+          warrantyAr: "ضمان الضاغط لمدة 5 سنوات",
         },
         price: product.price,
         originalPrice: product.originalPrice,
@@ -362,7 +399,9 @@ async function seedProducts() {
         isActive: true,
         seo: {
           title: product.name,
+          titleAr: product.nameAr,
           description: `Buy ${product.name} from Lord AC in Egypt.`,
+          descriptionAr: `اشتر ${product.nameAr} من لورد للتكييف في مصر.`,
         },
       },
     });
@@ -942,6 +981,20 @@ async function seedServices() {
       description: "Diagnostics and repairs for cooling issues.",
       descriptionAr: "تشخيص وإصلاح مشكلات التبريد والتسريب والكهرباء.",
     },
+    {
+      name: "Delivery",
+      nameAr: "التوصيل",
+      slug: "delivery",
+      description: "Safe delivery for AC units and accessories.",
+      descriptionAr: "توصيل آمن لوحدات التكييف وملحقاتها.",
+    },
+    {
+      name: "Spare Parts",
+      nameAr: "قطع الغيار",
+      slug: "spare-parts",
+      description: "Original spare parts for supported AC systems.",
+      descriptionAr: "قطع غيار أصلية لأنظمة التكييف المدعومة.",
+    },
   ];
 
   for (const serviceType of serviceTypes) {
@@ -963,6 +1016,10 @@ async function seedServices() {
       sortOrder: 1,
       description: "Mounting, copper piping, drainage, vacuum, and startup testing.",
       descriptionAr: "تركيب الوحدة وتمديد مواسير النحاس والصرف والتفريغ واختبار التشغيل.",
+      bullets: ["Indoor and outdoor unit mounting", "Copper piping and insulation", "Vacuum test and startup check"],
+      bulletsAr: ["تركيب الوحدتين الداخلية والخارجية", "تمديد مواسير النحاس والعزل", "اختبار التفريغ وفحص التشغيل"],
+      estimatedTime: "2-4 hours",
+      estimatedTimeAr: "من ساعتين إلى 4 ساعات",
     },
     {
       typeSlug: "maintenance",
@@ -972,6 +1029,10 @@ async function seedServices() {
       sortOrder: 2,
       description: "Filter cleaning, coil check, gas pressure check, and performance test.",
       descriptionAr: "تنظيف الفلاتر وفحص الملفات وضغط الغاز واختبار الأداء.",
+      bullets: ["Filter and coil cleaning", "Gas pressure inspection", "Cooling performance report"],
+      bulletsAr: ["تنظيف الفلاتر والملفات", "فحص ضغط الغاز", "تقرير أداء التبريد"],
+      estimatedTime: "1-2 hours",
+      estimatedTimeAr: "من ساعة إلى ساعتين",
     },
     {
       typeSlug: "repair",
@@ -981,6 +1042,36 @@ async function seedServices() {
       sortOrder: 3,
       description: "Fast diagnosis for no-cooling, water leakage, electrical, and noise issues.",
       descriptionAr: "تشخيص سريع لمشكلات ضعف التبريد وتسريب المياه والكهرباء والضوضاء.",
+      bullets: ["Fault diagnosis", "Electrical and leakage checks", "Repair recommendation"],
+      bulletsAr: ["تشخيص الأعطال", "فحص الكهرباء والتسريب", "توصية بالإصلاح"],
+      estimatedTime: "1-3 hours",
+      estimatedTimeAr: "من ساعة إلى 3 ساعات",
+    },
+    {
+      typeSlug: "delivery",
+      name: "AC Delivery",
+      nameAr: "توصيل التكييف",
+      slug: "ac-delivery",
+      sortOrder: 4,
+      description: "Scheduled delivery for AC units with careful handling.",
+      descriptionAr: "توصيل مجدول لوحدات التكييف مع عناية أثناء النقل.",
+      bullets: ["Scheduled delivery windows", "Careful product handling", "Delivery confirmation"],
+      bulletsAr: ["مواعيد توصيل مجدولة", "مناولة آمنة للمنتجات", "تأكيد التسليم"],
+      estimatedTime: "Same day or scheduled",
+      estimatedTimeAr: "في نفس اليوم أو حسب الموعد",
+    },
+    {
+      typeSlug: "spare-parts",
+      name: "Original Spare Parts",
+      nameAr: "قطع غيار أصلية",
+      slug: "original-spare-parts",
+      sortOrder: 5,
+      description: "Original replacement parts for supported Carrier and Midea systems.",
+      descriptionAr: "قطع غيار أصلية لأنظمة كاريير وميديا المدعومة.",
+      bullets: ["Original supported parts", "Compatibility verification", "Installation guidance"],
+      bulletsAr: ["قطع أصلية مدعومة", "التحقق من التوافق", "إرشادات التركيب"],
+      estimatedTime: "Based on part availability",
+      estimatedTimeAr: "حسب توفر القطعة",
     },
   ];
 
@@ -995,10 +1086,10 @@ async function seedServices() {
         description: service.description,
         descriptionAr: service.descriptionAr,
         content: {
-          bullets: ["Certified technicians", "Clear pricing", "Warranty-backed work"],
-          bulletsAr: ["فنيون معتمدون", "أسعار واضحة", "أعمال مدعومة بالضمان"],
-          estimatedTime: "1-3 hours",
-          estimatedTimeAr: "من ساعة إلى 3 ساعات",
+          bullets: service.bullets,
+          bulletsAr: service.bulletsAr,
+          estimatedTime: service.estimatedTime,
+          estimatedTimeAr: service.estimatedTimeAr,
         },
         sortOrder: service.sortOrder,
         isActive: true,
@@ -1011,10 +1102,10 @@ async function seedServices() {
         description: service.description,
         descriptionAr: service.descriptionAr,
         content: {
-          bullets: ["Certified technicians", "Clear pricing", "Warranty-backed work"],
-          bulletsAr: ["فنيون معتمدون", "أسعار واضحة", "أعمال مدعومة بالضمان"],
-          estimatedTime: "1-3 hours",
-          estimatedTimeAr: "من ساعة إلى 3 ساعات",
+          bullets: service.bullets,
+          bulletsAr: service.bulletsAr,
+          estimatedTime: service.estimatedTime,
+          estimatedTimeAr: service.estimatedTimeAr,
         },
         sortOrder: service.sortOrder,
         isActive: true,
@@ -1184,6 +1275,18 @@ async function seedContent() {
         heroAr: "نبرد مصر منذ 1986",
         body: "Lord AC supplies, installs, and services residential and commercial air conditioning systems.",
         bodyAr: "لورد للتكييف توفر وتثبت وتصون أنظمة التكييف السكنية والتجارية.",
+        story:
+          "Lord AC is Egypt's trusted authorized dealer for Carrier and Midea air conditioning systems, serving homes and businesses with quality products, professional installation, and dependable after-sales support.",
+        storyAr:
+          "لورد للتكييف هي الوكيل المعتمد الموثوق في مصر لأنظمة كاريير وميديا، وتخدم المنازل والشركات بمنتجات عالية الجودة وتركيب احترافي ودعم موثوق بعد البيع.",
+        mission:
+          "To provide reliable air conditioning solutions through authorized products, expert installation, and responsive customer care.",
+        missionAr:
+          "تقديم حلول تكييف موثوقة من خلال منتجات معتمدة وتركيب احترافي وخدمة عملاء سريعة الاستجابة.",
+        vision:
+          "To be Egypt's leading air conditioning partner for comfort, efficiency, and long-term trust.",
+        visionAr:
+          "أن نكون الشريك الرائد في مصر لحلول التكييف التي تجمع بين الراحة والكفاءة والثقة طويلة الأمد.",
       },
       seo: {
         title: "About Lord AC",
@@ -1441,6 +1544,7 @@ async function seedSettingsAndUsers() {
 }
 
 async function main() {
+  await clearSeedData();
   await seedSettingsAndUsers();
   await seedBrands();
   await seedCategories();

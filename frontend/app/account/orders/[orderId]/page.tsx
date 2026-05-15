@@ -231,7 +231,7 @@ export default function OrderDetailPage() {
             </span>
           </div>
           <p className="text-sm text-dark-charcoal">
-            {order.payment?.method || "Paymob Accept"}
+            {order.payment?.method || t("checkout.paymobAccept")}
           </p>
           <p className="text-xs text-medium-gray mt-1">
             {order.payment?.paidAt

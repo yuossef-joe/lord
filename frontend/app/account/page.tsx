@@ -124,7 +124,7 @@ export default function AccountDashboard() {
                   </p>
                   <p className="text-xs text-medium-gray">
                     {new Date(order.createdAt).toLocaleDateString()} ·{" "}
-                    {order.items?.length || 0} items
+                    {order.items?.length || 0} {t("account.items")}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

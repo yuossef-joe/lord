@@ -5,6 +5,7 @@ export default function TermsAndConditionsPage() {
     <ContentPageView
       pageKey="terms"
       fallbackTitleKey="legal.termsConditions"
+      fallbackBodyKey="legal.termsBody"
     />
   );
 }

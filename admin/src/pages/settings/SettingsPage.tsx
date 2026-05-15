@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "motion/react";
-import { Globe, Phone, Mail, Search, Truck } from "lucide-react";
+import { Globe, Phone, Mail, Search } from "lucide-react";
 import type {
   SiteSettings,
   ContactSettings,
   EmailSettings,
   SeoSettings,
-  ShippingSettings,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import Breadcrumb from "@/components/common/Breadcrumb";
@@ -44,15 +43,13 @@ type SettingsTab =
   | "site"
   | "contact"
   | "email"
-  | "seo"
-  | "shipping";
+  | "seo";
 
 const TABS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { key: "site", label: "Site", icon: <Globe size={16} /> },
   { key: "contact", label: "Contact", icon: <Phone size={16} /> },
   { key: "email", label: "Email", icon: <Mail size={16} /> },
   { key: "seo", label: "SEO", icon: <Search size={16} /> },
-  { key: "shipping", label: "Shipping", icon: <Truck size={16} /> },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -94,29 +91,6 @@ const defaultSeoSettings: SeoSettings = {
     "Shop the best Carrier and Midea air conditioners in Egypt. Professional installation, maintenance, and repair services.",
   googleAnalyticsId: "",
 };
-
-const defaultShippingSettings: ShippingSettings = {
-  freeShippingThreshold: 15000,
-  flatRate: 150,
-  estimatedDeliveryTime: "3-5 business days",
-  shippingNote: "Free shipping on orders above EGP 15,000",
-  availableGovernorates: ["Cairo", "Giza", "Alexandria", "Qalyubia", "Sharqia"],
-};
-
-/* ------------------------------------------------------------------ */
-/*  Governorate rates (inline)                                        */
-/* ------------------------------------------------------------------ */
-
-const GOVERNORATE_RATES = [
-  { name: "Cairo", rate: 50 },
-  { name: "Giza", rate: 50 },
-  { name: "Alexandria", rate: 100 },
-  { name: "Qalyubia", rate: 75 },
-  { name: "Sharqia", rate: 100 },
-  { name: "Dakahlia", rate: 120 },
-  { name: "Gharbia", rate: 120 },
-  { name: "Aswan", rate: 200 },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Sub-form components                                               */
@@ -361,96 +335,6 @@ function SeoSettingsForm() {
   );
 }
 
-function ShippingSettingsForm() {
-  const { register, handleSubmit } = useForm<ShippingSettings>({
-    defaultValues: defaultShippingSettings,
-  });
-
-  const onSubmit = () => {
-    alert("Settings saved successfully");
-  };
-
-  return (
-    <Card>
-      <h2 className="text-lg font-semibold text-navy mb-5">
-        Shipping Settings
-      </h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField label="Free Shipping Threshold (EGP)">
-            <input
-              type="number"
-              {...register("freeShippingThreshold", { valueAsNumber: true })}
-              className={inputStyles}
-            />
-          </FormField>
-
-          <FormField label="Default Shipping Cost (EGP)">
-            <input
-              type="number"
-              {...register("flatRate", { valueAsNumber: true })}
-              className={inputStyles}
-            />
-          </FormField>
-
-          <FormField label="Estimated Delivery">
-            <input
-              {...register("estimatedDeliveryTime")}
-              className={inputStyles}
-              placeholder="e.g. 3-5 business days"
-            />
-          </FormField>
-        </div>
-
-        <FormField label="Shipping Note">
-          <input {...register("shippingNote")} className={inputStyles} />
-        </FormField>
-
-        {/* Governorate rates */}
-        <div className="pt-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Governorate-Specific Rates
-          </h3>
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-2.5 font-medium text-gray-700">
-                    Governorate
-                  </th>
-                  <th className="text-right px-4 py-2.5 font-medium text-gray-700">
-                    Rate (EGP)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {GOVERNORATE_RATES.map((gov, idx) => (
-                  <tr
-                    key={gov.name}
-                    className={cn(
-                      "border-b border-gray-100 last:border-b-0",
-                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/50",
-                    )}
-                  >
-                    <td className="px-4 py-2.5 text-gray-900">{gov.name}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-600">
-                      {gov.rate}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button type="submit">Save Changes</Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Page component                                                    */
 /* ------------------------------------------------------------------ */
@@ -505,7 +389,6 @@ export default function SettingsPage() {
         {activeTab === "contact" && <ContactSettingsForm />}
         {activeTab === "email" && <EmailSettingsForm />}
         {activeTab === "seo" && <SeoSettingsForm />}
-        {activeTab === "shipping" && <ShippingSettingsForm />}
       </motion.div>
     </motion.div>
   );

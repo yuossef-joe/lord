@@ -4,9 +4,10 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, X, Wrench } from "lucide-react";
+import { ImagePlus, Plus, X, Wrench } from "lucide-react";
 import type { Service } from "@/types";
-import { fetchService, updateService } from "@/lib/api";
+import type { ServiceType } from "@/types";
+import { fetchService, fetchServiceTypes, updateService } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -20,14 +21,11 @@ const serviceSchema = z.object({
   nameAr: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
   descriptionAr: z.string().min(1, "Required"),
-  type: z.enum(["installation", "maintenance", "repair", "consultation"], {
-    error: "Required",
-  }),
+  serviceTypeId: z.string().min(1, "Required"),
   price: z.number().min(0, "Must be 0 or more"),
   isActive: z.boolean(),
   scopeOfWork: z.string().optional(),
   applicableUnitTypes: z.array(z.object({ value: z.string() })).optional(),
-  imageUrl: z.string().optional(),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -54,12 +52,14 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
-const SERVICE_TYPES = [
-  { label: "Installation", value: "installation" },
-  { label: "Maintenance", value: "maintenance" },
-  { label: "Repair", value: "repair" },
-  { label: "Consultation", value: "consultation" },
-] as const;
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 /* ── Component ────────────────────────────────────────── */
 
@@ -68,6 +68,9 @@ export default function ServiceEditPage() {
   const navigate = useNavigate();
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
   const {
     register,
@@ -82,12 +85,11 @@ export default function ServiceEditPage() {
       nameAr: "",
       description: "",
       descriptionAr: "",
-      type: undefined,
+      serviceTypeId: "",
       price: 0,
       isActive: true,
       scopeOfWork: "",
       applicableUnitTypes: [],
-      imageUrl: "",
     },
   });
 
@@ -96,6 +98,10 @@ export default function ServiceEditPage() {
     append: appendUnitType,
     remove: removeUnitType,
   } = useFieldArray({ control, name: "applicableUnitTypes" });
+
+  useEffect(() => {
+    void fetchServiceTypes().then((response) => setServiceTypes(response.data));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -108,35 +114,40 @@ export default function ServiceEditPage() {
           nameAr: nextService.nameAr ?? "",
           description: nextService.description ?? "",
           descriptionAr: nextService.descriptionAr ?? "",
-          type: nextService.type.name.toLowerCase() as ServiceFormValues["type"],
+          serviceTypeId: nextService.type.id,
           price: nextService.price ?? 0,
           isActive: nextService.isActive,
           scopeOfWork: nextService.scopeOfWork?.join("\n") ?? "",
           applicableUnitTypes: (nextService.applicableUnitTypes ?? []).map(
             (value) => ({ value }),
           ),
-          imageUrl: "",
         });
+        setImagePreview(nextService.imageUrl ?? "");
       })
       .finally(() => setIsLoading(false));
   }, [id, reset]);
 
   const onSubmit = async (data: ServiceFormValues) => {
     if (!id) return;
+    const imageUrl = imageFile
+      ? await readFileAsDataUrl(imageFile)
+      : service?.imageUrl;
     await updateService(id, {
       name: data.name,
       nameAr: data.nameAr,
       description: data.description,
       descriptionAr: data.descriptionAr,
-      type: data.type,
-      price: data.price,
+      serviceTypeId: data.serviceTypeId,
       isActive: data.isActive,
-      scopeOfWork: data.scopeOfWork
-        ?.split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      applicableUnitTypes: data.applicableUnitTypes?.map((item) => item.value),
-      imageUrl: data.imageUrl,
+      content: {
+        bullets: data.scopeOfWork
+          ?.split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        applicableUnitTypes: data.applicableUnitTypes?.map((item) => item.value),
+        price: data.price,
+        imageUrl,
+      },
     });
     navigate("/services");
   };
@@ -258,12 +269,12 @@ export default function ServiceEditPage() {
                   </FormField>
                 </div>
 
-                <FormField label="Type" required error={errors.type?.message}>
-                  <select {...register("type")} className={selectStyles}>
+                <FormField label="Type" required error={errors.serviceTypeId?.message}>
+                  <select {...register("serviceTypeId")} className={selectStyles}>
                     <option value="">Select type</option>
-                    {SERVICE_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {serviceTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
                       </option>
                     ))}
                   </select>
@@ -371,12 +382,35 @@ export default function ServiceEditPage() {
             {/* Image */}
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-4">Image</h2>
-              <FormField label="Image URL" error={errors.imageUrl?.message}>
-                <input
-                  {...register("imageUrl")}
-                  className={inputStyles}
-                  placeholder="https://example.com/image.jpg"
-                />
+              <FormField label="Upload Image">
+                <label className="flex min-h-28 cursor-pointer items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3 transition hover:border-teal hover:bg-teal/5">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt=""
+                      className="h-20 w-20 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                      <ImagePlus size={24} />
+                    </span>
+                  )}
+                  <span className="text-sm text-gray-600">
+                    {imageFile ? imageFile.name : "Choose image"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setImageFile(file);
+                      setImagePreview(
+                        file ? URL.createObjectURL(file) : service.imageUrl ?? "",
+                      );
+                    }}
+                  />
+                </label>
               </FormField>
             </Card>
           </div>

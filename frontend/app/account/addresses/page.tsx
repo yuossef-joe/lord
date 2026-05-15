@@ -167,7 +167,7 @@ export default function AddressesPage() {
                   {addr.isDefault && (
                     <span className="flex items-center gap-0.5 rounded-full bg-lord-teal/10 px-2 py-0.5 text-[10px] font-medium text-lord-teal">
                       <Star className="h-3 w-3" fill="currentColor" />
-                      Default
+                      {t("account.defaultAddress")}
                     </span>
                   )}
                 </div>
@@ -176,7 +176,7 @@ export default function AddressesPage() {
                     onClick={() => openEdit(addr)}
                     className="rounded p-1 text-medium-gray hover:bg-off-white hover:text-lord-navy transition-colors"
                   >
-                    Edit
+                    {t("general.edit")}
                   </button>
                   <button
                     onClick={() => handleDelete(addr._id)}
