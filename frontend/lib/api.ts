@@ -1,7 +1,7 @@
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
-const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
+const PRODUCTION_API_BASE_URL = "https://lord-1o26.vercel.app/api";
 
 function getApiBaseUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -53,7 +53,9 @@ function normalizeOrder(order: Record<string, unknown>): Order {
     shipping: Number(order.shipping ?? order.shippingFee ?? 0),
     discount: Number(order.discount ?? order.discountAmount ?? 0),
     total: Number(order.total ?? 0),
-    status: normalizeStatus(order.status ?? order.orderStatus) as Order["status"],
+    status: normalizeStatus(
+      order.status ?? order.orderStatus,
+    ) as Order["status"],
     payment: {
       ...((order.payment as Order["payment"] | undefined) ?? {}),
       method: normalizeStatus(
@@ -190,8 +192,7 @@ export const updateCartItem = (itemId: string, quantity: number) =>
   });
 export const removeCartItem = (itemId: string) =>
   apiRequest(`/cart/items/${itemId}`, { method: "DELETE" });
-export const clearServerCart = () =>
-  apiRequest("/cart", { method: "DELETE" });
+export const clearServerCart = () => apiRequest("/cart", { method: "DELETE" });
 export const applyCouponApi = (code: string) =>
   apiRequest("/coupons/validate", {
     method: "POST",

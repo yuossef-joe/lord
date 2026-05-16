@@ -19,7 +19,7 @@ import type {
   FAQ,
 } from "@/types";
 
-const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
+const PRODUCTION_API_BASE_URL = "https://lord-1o26.vercel.app/api";
 
 function getApiBaseUrl() {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim();
@@ -99,12 +99,13 @@ function normalizeService(service: Service & Record<string, unknown>): Service {
     pricingType:
       content.pricingType == null ? undefined : String(content.pricingType),
     price: content.price == null ? undefined : Number(content.price),
-    imageUrl:
-      content.imageUrl == null ? undefined : String(content.imageUrl),
+    imageUrl: content.imageUrl == null ? undefined : String(content.imageUrl),
   };
 }
 
-function normalizeCustomer(customer: Customer & Record<string, unknown>): Customer {
+function normalizeCustomer(
+  customer: Customer & Record<string, unknown>,
+): Customer {
   const orders = Array.isArray(customer.orders)
     ? (customer.orders as Array<Record<string, unknown>>)
     : [];
@@ -169,14 +170,18 @@ function normalizeProduct(product: Product & Record<string, unknown>): Product {
 function normalizeCoupon(coupon: Coupon & Record<string, unknown>): Coupon {
   return {
     ...coupon,
-    type: (coupon.type ?? coupon.discountType ?? "percentage") as Coupon["type"],
+    type: (coupon.type ??
+      coupon.discountType ??
+      "percentage") as Coupon["type"],
     value: Number(coupon.value ?? coupon.discountValue ?? 0),
     minOrderAmount:
       coupon.minOrderAmount == null && coupon.minimumOrderAmount == null
         ? undefined
         : Number(coupon.minOrderAmount ?? coupon.minimumOrderAmount),
     usedCount: Number(coupon.usedCount ?? coupon.usageCount ?? 0),
-    startDate: String(coupon.startDate ?? coupon.startsAt ?? coupon.createdAt ?? ""),
+    startDate: String(
+      coupon.startDate ?? coupon.startsAt ?? coupon.createdAt ?? "",
+    ),
     endDate: String(coupon.endDate ?? coupon.endsAt ?? ""),
   };
 }
@@ -224,13 +229,17 @@ function normalizeOrder(order: Order & Record<string, unknown>): Order {
     grandTotal: Number(order.grandTotal ?? order.total ?? 0),
     currency: String(order.currency ?? "EGP"),
     payment: payment ?? {
-      method: normalizeStatus(firstPayment?.paymentMethod ?? "cash_on_delivery") as Order["payment"]["method"],
+      method: normalizeStatus(
+        firstPayment?.paymentMethod ?? "cash_on_delivery",
+      ) as Order["payment"]["method"],
       status: normalizeStatus(
         firstPayment?.status ?? order.paymentStatus ?? "pending",
       ) as Order["payment"]["status"],
       amount: Number(firstPayment?.amount ?? order.total ?? 0),
     },
-    status: normalizeStatus(order.status ?? order.orderStatus ?? "pending_payment") as Order["status"],
+    status: normalizeStatus(
+      order.status ?? order.orderStatus ?? "pending_payment",
+    ) as Order["status"],
     statusHistory: Array.isArray(order.statusHistory)
       ? order.statusHistory.map((entry) => {
           const historyEntry = entry as unknown as Record<string, unknown>;
@@ -270,7 +279,9 @@ function normalizeInquiry(inquiry: Inquiry & Record<string, unknown>): Inquiry {
     name: String(inquiry.name ?? ""),
     email: String(inquiry.email ?? ""),
     phone: String(inquiry.phone ?? ""),
-    inquiryType: normalizeStatus(inquiry.inquiryType ?? "general") as Inquiry["inquiryType"],
+    inquiryType: normalizeStatus(
+      inquiry.inquiryType ?? "general",
+    ) as Inquiry["inquiryType"],
     message: String(inquiry.message ?? ""),
     source: String(inquiry.source ?? "website"),
     status: normalizeStatus(inquiry.status ?? "new") as Inquiry["status"],
@@ -301,7 +312,9 @@ function normalizeServiceRequest(
         ? undefined
         : String(request.installationAddress),
     message: request.message == null ? undefined : String(request.message),
-    status: normalizeStatus(request.status ?? "new") as ServiceRequest["status"],
+    status: normalizeStatus(
+      request.status ?? "new",
+    ) as ServiceRequest["status"],
     notes: Array.isArray(request.notes)
       ? request.notes.map((note) =>
           normalizeInquiryNote(note as unknown as Record<string, unknown>),
@@ -437,7 +450,9 @@ export const fetchCustomer = async (id: string) => {
   );
   return {
     ...response,
-    data: normalizeCustomer(response.data as Customer & Record<string, unknown>),
+    data: normalizeCustomer(
+      response.data as Customer & Record<string, unknown>,
+    ),
   };
 };
 
@@ -472,10 +487,7 @@ export const createShippingZone = (data: Record<string, unknown>) =>
     body: JSON.stringify(data),
   });
 
-export const updateShippingZone = (
-  id: string,
-  data: Record<string, unknown>,
-) =>
+export const updateShippingZone = (id: string, data: Record<string, unknown>) =>
   cmsApiRequest(`/shipping/zones/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
@@ -530,7 +542,10 @@ export const createProduct = (data: Record<string, unknown>) =>
   cmsApiRequest("/products", { method: "POST", body: JSON.stringify(data) });
 
 export const updateProduct = (id: string, data: Record<string, unknown>) =>
-  cmsApiRequest(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  cmsApiRequest(`/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 
 export const deleteProduct = (id: string) =>
   cmsApiRequest(`/products/${id}`, { method: "DELETE" });
@@ -639,7 +654,9 @@ export const fetchInquiries = async (params: string) => {
 };
 
 export const fetchInquiry = async (id: string) => {
-  const response = await cmsApiRequest<ApiResponse<Inquiry>>(`/inquiries/${id}`);
+  const response = await cmsApiRequest<ApiResponse<Inquiry>>(
+    `/inquiries/${id}`,
+  );
   return {
     ...response,
     data: normalizeInquiry(response.data as Inquiry & Record<string, unknown>),
@@ -741,10 +758,7 @@ export const createContentPage = (data: Record<string, unknown>) =>
     body: JSON.stringify(data),
   });
 
-export const updateContentPage = (
-  id: string,
-  data: Record<string, unknown>,
-) =>
+export const updateContentPage = (id: string, data: Record<string, unknown>) =>
   cmsApiRequest(`/content/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
