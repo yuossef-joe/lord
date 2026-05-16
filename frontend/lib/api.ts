@@ -1,8 +1,25 @@
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
+
+function getApiBaseUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (!configuredUrl) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    !["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    /localhost|127\.0\.0\.1/.test(configuredUrl)
+  ) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  return configuredUrl;
+}
 
 function normalizeProduct(product: Record<string, unknown>): Product {
   return {
@@ -36,7 +53,9 @@ function normalizeOrder(order: Record<string, unknown>): Order {
     shipping: Number(order.shipping ?? order.shippingFee ?? 0),
     discount: Number(order.discount ?? order.discountAmount ?? 0),
     total: Number(order.total ?? 0),
-    status: normalizeStatus(order.status ?? order.orderStatus) as Order["status"],
+    status: normalizeStatus(
+      order.status ?? order.orderStatus,
+    ) as Order["status"],
     payment: {
       ...((order.payment as Order["payment"] | undefined) ?? {}),
       method: normalizeStatus(
@@ -71,7 +90,7 @@ async function apiRequest<T>(
       ? localStorage.getItem("customerToken")
       : null;
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${getApiBaseUrl()}${endpoint}`, {
     ...options,
     cache: "no-store",
     headers: {
@@ -173,8 +192,7 @@ export const updateCartItem = (itemId: string, quantity: number) =>
   });
 export const removeCartItem = (itemId: string) =>
   apiRequest(`/cart/items/${itemId}`, { method: "DELETE" });
-export const clearServerCart = () =>
-  apiRequest("/cart", { method: "DELETE" });
+export const clearServerCart = () => apiRequest("/cart", { method: "DELETE" });
 export const applyCouponApi = (code: string) =>
   apiRequest("/coupons/validate", {
     method: "POST",
