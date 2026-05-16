@@ -1,7 +1,7 @@
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
-const PRODUCTION_API_BASE_URL = "https://lord-1o26.vercel.app/api";
+const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
 
 function getApiBaseUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
