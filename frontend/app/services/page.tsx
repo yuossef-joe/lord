@@ -1,12 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import { Wrench, Settings, Truck, Shield, Cog, ArrowRight } from "lucide-react";
-import { staggerContainer, staggerItem, fadeInUp } from "@/lib/animations";
 import PageTransition from "@/components/common/PageTransition";
 import Breadcrumb from "@/components/common/Breadcrumb";
-import ScrollReveal from "@/components/common/ScrollReveal";
 import SeoHead from "@/components/common/SeoHead";
 import Button from "@/components/common/Button";
 import { useLanguage } from "@/context/LanguageContext";
@@ -55,24 +52,17 @@ export default function ServicesPage() {
         />
 
         {/* Hero */}
-        <ScrollReveal>
-          <div className="mt-6 text-center">
-            <h1 className="text-3xl font-bold text-lord-navy md:text-4xl">
-              {t("services.title")}
-            </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-medium-gray">
-              {t("services.subtitle")}
-            </p>
-          </div>
-        </ScrollReveal>
+        <div className="mt-6 text-center">
+          <h1 className="text-3xl font-bold text-lord-navy md:text-4xl">
+            {t("services.title")}
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-medium-gray">
+            {t("services.subtitle")}
+          </p>
+        </div>
 
         {/* Services Grid */}
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
-        >
+        <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {isLoading && (
             <div className="col-span-full rounded-card border border-[#E8EAED] bg-white p-8 text-center text-sm text-medium-gray">
               {t("general.loading")}
@@ -84,11 +74,8 @@ export default function ServicesPage() {
             </div>
           )}
           {services.map((service) => (
-            <motion.div
+            <div
               key={service._id}
-              variants={staggerItem}
-              initial="hidden"
-              animate="visible"
               className="group rounded-card border border-[#E8EAED] bg-white p-6 transition-shadow hover:shadow-lg"
             >
               <div className="mb-4 inline-flex rounded-xl bg-lord-teal/10 p-3 text-lord-teal transition-colors group-hover:bg-lord-teal group-hover:text-white">
@@ -115,44 +102,39 @@ export default function ServicesPage() {
                   ))}
                 </ul>
               )}
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* CTA */}
-        <ScrollReveal>
-          <motion.div
-            variants={fadeInUp}
-            className="mt-16 rounded-card bg-gradient-to-r from-lord-navy to-lord-navy/90 p-8 text-center text-white md:p-12"
-          >
-            <h2 className="text-2xl font-bold md:text-3xl">
-              {t("services.ctaTitle")}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-white/80">
-              {t("services.ctaSubtitle")}
-            </p>
-            <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link href="/contact">
-                <Button className="bg-lord-teal hover:bg-lord-teal/90">
-                  {t("services.requestService")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <a
-                href="https://wa.me/201234567890"
-                target="_blank"
-                rel="noopener noreferrer"
+        <div className="mt-16 rounded-card bg-gradient-to-r from-lord-navy to-lord-navy/90 p-8 text-center text-white md:p-12">
+          <h2 className="text-2xl font-bold md:text-3xl">
+            {t("services.ctaTitle")}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-white/80">
+            {t("services.ctaSubtitle")}
+          </p>
+          <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Link href="/contact">
+              <Button className="bg-lord-teal hover:bg-lord-teal/90">
+                {t("services.requestService")}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <a
+              href="https://wa.me/201234567890"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="secondary"
+                className="border-white text-white hover:bg-white/10"
               >
-                <Button
-                  variant="secondary"
-                  className="border-white text-white hover:bg-white/10"
-                >
-                  {t("services.chatWhatsApp")}
-                </Button>
-              </a>
-            </div>
-          </motion.div>
-        </ScrollReveal>
+                {t("services.chatWhatsApp")}
+              </Button>
+            </a>
+          </div>
+        </div>
       </div>
     </PageTransition>
   );
