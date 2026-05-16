@@ -357,15 +357,29 @@ export const fetchRevenueChart = (period: string) =>
     `/dashboard/revenue?period=${period}`,
   );
 
-export const fetchRecentOrders = (limit: number) =>
-  cmsApiRequest<ApiResponse<Order[]>>(
+export const fetchRecentOrders = async (limit: number) => {
+  const response = await cmsApiRequest<ApiResponse<Order[]>>(
     `/dashboard/recent-orders?limit=${limit}`,
   );
+  return {
+    ...response,
+    data: response.data.map((order) =>
+      normalizeOrder(order as Order & Record<string, unknown>),
+    ),
+  };
+};
 
-export const fetchLatestInquiries = (limit: number) =>
-  cmsApiRequest<ApiResponse<Inquiry[]>>(
+export const fetchLatestInquiries = async (limit: number) => {
+  const response = await cmsApiRequest<ApiResponse<Inquiry[]>>(
     `/dashboard/latest-inquiries?limit=${limit}`,
   );
+  return {
+    ...response,
+    data: response.data.map((inquiry) =>
+      normalizeInquiry(inquiry as Inquiry & Record<string, unknown>),
+    ),
+  };
+};
 
 // ─── Orders ──────────────────────────────────────────
 export const fetchOrders = async (params: string) => {
