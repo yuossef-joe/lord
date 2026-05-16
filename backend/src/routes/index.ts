@@ -471,6 +471,108 @@ router.get("/cms/dashboard", cmsAuth, asyncHandler(async (_req, res) => {
   return success(res, { totalOrders, totalCustomers, totalProducts, recentOrders });
 }));
 
+function startOfDay(date = new Date()) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+router.get("/cms/dashboard/stats", cmsAuth, asyncHandler(async (_req, res) => {
+  const today = startOfDay();
+  const yesterday = startOfDay(new Date(today.getTime() - 24 * 60 * 60 * 1000));
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+  const [
+    revenueToday,
+    revenueYesterday,
+    newOrdersToday,
+    pendingOrders,
+    totalProducts,
+    totalCustomers,
+    newInquiriesToday,
+    outOfStockCount,
+    products,
+  ] = await Promise.all([
+    prisma.orders.aggregate({
+      _sum: { total: true },
+      where: { paymentStatus: "PAID", createdAt: { gte: today, lt: tomorrow } },
+    }),
+    prisma.orders.aggregate({
+      _sum: { total: true },
+      where: { paymentStatus: "PAID", createdAt: { gte: yesterday, lt: today } },
+    }),
+    prisma.orders.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
+    prisma.orders.count({ where: { orderStatus: { in: ["PENDING_PAYMENT", "CONFIRMED", "PROCESSING"] } } }),
+    prisma.products.count(),
+    prisma.customers.count(),
+    prisma.inquiries.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
+    prisma.products.count({ where: { stockQuantity: { lte: 0 } } }),
+    prisma.products.findMany({ select: { brand: { select: { name: true } } } }),
+  ]);
+
+  return success(res, {
+    revenueToday: Number(revenueToday._sum.total ?? 0),
+    revenueYesterday: Number(revenueYesterday._sum.total ?? 0),
+    newOrdersToday,
+    pendingOrders,
+    totalProducts,
+    totalCustomers,
+    newInquiriesToday,
+    outOfStockCount,
+    carrierProducts: products.filter((product) => product.brand.name.toLowerCase() === "carrier").length,
+    mideaProducts: products.filter((product) => product.brand.name.toLowerCase() === "midea").length,
+  });
+}));
+
+router.get("/cms/dashboard/revenue", cmsAuth, asyncHandler(async (req, res) => {
+  const period = String(req.query.period ?? "30d");
+  const days = period === "7d" ? 7 : period === "90d" ? 90 : 30;
+  const end = startOfDay();
+  end.setDate(end.getDate() + 1);
+  const start = startOfDay(new Date(end.getTime() - days * 24 * 60 * 60 * 1000));
+
+  const orders = await prisma.orders.findMany({
+    where: { paymentStatus: "PAID", createdAt: { gte: start, lt: end } },
+    select: { createdAt: true, total: true },
+  });
+
+  const revenueByDate = new Map<string, number>();
+  for (let offset = 0; offset < days; offset += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + offset);
+    revenueByDate.set(date.toISOString().slice(0, 10), 0);
+  }
+  for (const order of orders) {
+    const key = order.createdAt.toISOString().slice(0, 10);
+    revenueByDate.set(key, (revenueByDate.get(key) ?? 0) + Number(order.total));
+  }
+
+  return success(
+    res,
+    Array.from(revenueByDate, ([date, revenue]) => ({ date, revenue })),
+  );
+}));
+
+router.get("/cms/dashboard/recent-orders", cmsAuth, asyncHandler(async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit ?? 5) || 5, 1), 20);
+  const orders = await prisma.orders.findMany({
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    include: { customer: true, items: true, payments: true },
+  });
+  return success(res, orders);
+}));
+
+router.get("/cms/dashboard/latest-inquiries", cmsAuth, asyncHandler(async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit ?? 5) || 5, 1), 20);
+  const inquiries = await prisma.inquiries.findMany({
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    include: { notes: true },
+  });
+  return success(res, inquiries);
+}));
+
 router.use("/cms/inquiries", cmsCrud("inquiries", { searchFields: ["name", "email", "phone"], softDelete: false }));
 router.use("/cms/service-requests", cmsCrud("serviceRequests", { searchFields: ["name", "email", "phone"], softDelete: false }));
 router.use("/cms/customers", cmsCrud("customers", { searchFields: ["name", "email", "phone", "nationalId"], softDelete: true }));
