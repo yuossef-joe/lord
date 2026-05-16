@@ -647,6 +647,12 @@ async function seedOrdersAndCarts() {
   const productByModel = new Map(products.map((product) => [product.modelNumber, product]));
   const customerByEmail = new Map(customers.map((customer) => [customer.email, customer]));
   const couponByCode = new Map(coupons.map((item) => [item.code, item]));
+  const today = new Date();
+  today.setHours(10, 30, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const recentPaidDate = new Date(today);
+  recentPaidDate.setDate(today.getDate() - 4);
 
   const activeCustomer = customerByEmail.get("ahmed@example.com");
   const cartProduct = productByModel.get("AY-XP12YHE");
@@ -758,6 +764,66 @@ async function seedOrdersAndCarts() {
       shippingCarrier: "Express Courier",
       notes: "Refunded after customer cancellation.",
       createdAt: new Date("2026-02-18T17:45:00Z"),
+    },
+    {
+      orderNumber: "LORD-20260005",
+      customerEmail: "ahmed@example.com",
+      items: [{ modelNumber: "AY-XP12YHE", quantity: 1 }],
+      shippingFee: "150",
+      discountAmount: "0",
+      couponCode: null,
+      paymentStatus: PaymentStatus.PAID,
+      orderStatus: OrderStatus.CONFIRMED,
+      paymentMethod: PaymentMethod.CREDIT_CARD,
+      trackingNumber: null,
+      shippingCarrier: null,
+      notes: "Seeded for today's dashboard revenue.",
+      createdAt: today,
+    },
+    {
+      orderNumber: "LORD-20260006",
+      customerEmail: "sara@example.com",
+      items: [{ modelNumber: "42QHF024", quantity: 1 }],
+      shippingFee: "150",
+      discountAmount: "0",
+      couponCode: null,
+      paymentStatus: PaymentStatus.PAID,
+      orderStatus: OrderStatus.SHIPPED,
+      paymentMethod: PaymentMethod.MOBILE_WALLET,
+      trackingNumber: "TRK-LORD-006",
+      shippingCarrier: "Lord Delivery",
+      notes: "Seeded for yesterday's dashboard comparison.",
+      createdAt: yesterday,
+    },
+    {
+      orderNumber: "LORD-20260007",
+      customerEmail: "omar@example.com",
+      items: [{ modelNumber: "MSAGBU-18HRFN", quantity: 1 }],
+      shippingFee: "150",
+      discountAmount: "0",
+      couponCode: null,
+      paymentStatus: PaymentStatus.PENDING,
+      orderStatus: OrderStatus.PROCESSING,
+      paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+      trackingNumber: null,
+      shippingCarrier: null,
+      notes: "Seeded pending order for dashboard quick overview.",
+      createdAt: today,
+    },
+    {
+      orderNumber: "LORD-20260008",
+      customerEmail: "ahmed@example.com",
+      items: [{ modelNumber: "TPH-C10", quantity: 1 }],
+      shippingFee: "250",
+      discountAmount: "0",
+      couponCode: null,
+      paymentStatus: PaymentStatus.PAID,
+      orderStatus: OrderStatus.DELIVERED,
+      paymentMethod: PaymentMethod.CREDIT_CARD,
+      trackingNumber: "TRK-LORD-008",
+      shippingCarrier: "Express Courier",
+      notes: "Seeded for the 30-day revenue chart.",
+      createdAt: recentPaidDate,
     },
   ];
 
