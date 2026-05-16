@@ -11,7 +11,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default(
-      "http://localhost:3000,http://localhost:5173,http://localhost:5174,https://lord-blond.vercel.app",
+      "http://localhost:3000,http://localhost:5173,http://localhost:5174,https://lord-blond.vercel.app,https://lord-cms.vercel.app",
     ),
   JWT_CUSTOMER_SECRET: z.string().min(16).default("development-customer-secret-change-me"),
   JWT_CUSTOMER_REFRESH_SECRET: z.string().min(16).default("development-customer-refresh-secret-change-me"),
@@ -46,6 +46,7 @@ export const config = {
         .map((origin) => origin.trim())
         .filter(Boolean),
       "https://lord-blond.vercel.app",
+      "https://lord-cms.vercel.app",
     ]),
   ),
   jwt: {
