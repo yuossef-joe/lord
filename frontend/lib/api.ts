@@ -2,7 +2,7 @@ import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://lord-backend.vercel.app/api";
 
 function normalizeProduct(product: Record<string, unknown>): Product {
   return {
