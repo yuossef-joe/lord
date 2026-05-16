@@ -1,7 +1,7 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "motion/react";
 import { useCountUp } from "react-countup";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Card from "./Card";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export default function StatsCard({
   const decimals = format === "currency" ? 0 : 0;
   const countUpRef = useRef<HTMLElement>(null as any);
 
-  useCountUp({
+  const { update } = useCountUp({
     ref: countUpRef,
     end: value,
     prefix: displayPrefix,
@@ -39,6 +39,10 @@ export default function StatsCard({
     duration: 1.5,
     separator: ",",
   });
+
+  useEffect(() => {
+    update(value);
+  }, [update, value]);
 
   return (
     <motion.div
