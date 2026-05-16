@@ -60,7 +60,12 @@ export default function ServicesOverview({ title }: ServicesOverviewProps) {
             );
 
             return (
-              <motion.div key={service.slug} variants={staggerItem}>
+              <motion.div
+                key={service.slug}
+                variants={staggerItem}
+                initial="hidden"
+                animate="visible"
+              >
                 <Card className="flex flex-col items-center text-center h-full">
                   <motion.div
                     whileInView={{ rotate: [0, -10, 10, 0] }}

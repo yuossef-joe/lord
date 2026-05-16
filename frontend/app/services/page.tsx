@@ -87,6 +87,8 @@ export default function ServicesPage() {
             <motion.div
               key={service._id}
               variants={staggerItem}
+              initial="hidden"
+              animate="visible"
               className="group rounded-card border border-[#E8EAED] bg-white p-6 transition-shadow hover:shadow-lg"
             >
               <div className="mb-4 inline-flex rounded-xl bg-lord-teal/10 p-3 text-lord-teal transition-colors group-hover:bg-lord-teal group-hover:text-white">
