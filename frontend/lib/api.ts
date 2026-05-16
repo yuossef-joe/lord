@@ -1,5 +1,6 @@
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
+import type { Service } from "@/types/service";
 
 const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
 
@@ -28,6 +29,37 @@ function normalizeProduct(product: Record<string, unknown>): Product {
     salePrice: product.salePrice ?? product.originalPrice,
     specifications: product.specifications ?? product.specs ?? [],
   } as unknown as Product;
+}
+
+function normalizeService(service: Record<string, unknown>): Service {
+  const content =
+    service.content && typeof service.content === "object"
+      ? (service.content as Record<string, unknown>)
+      : {};
+
+  return {
+    ...(service as unknown as Service),
+    _id: String(service._id ?? service.id ?? ""),
+    serviceType: (service.serviceType as Service["serviceType"]) ?? {
+      _id: String(service.serviceTypeId ?? ""),
+      name: "",
+      slug: "",
+      isActive: true,
+    },
+    inclusions: Array.isArray(service.inclusions)
+      ? (service.inclusions as string[])
+      : Array.isArray(content.bullets)
+        ? (content.bullets as string[])
+        : [],
+    inclusionsAr: Array.isArray(service.inclusionsAr)
+      ? (service.inclusionsAr as string[])
+      : Array.isArray(content.bulletsAr)
+        ? (content.bulletsAr as string[])
+        : [],
+    applicableTypes: Array.isArray(service.applicableTypes)
+      ? (service.applicableTypes as string[])
+      : [],
+  };
 }
 
 function normalizeStatus(value: unknown): string {
@@ -149,8 +181,15 @@ export const fetchRelatedProducts = async (slug: string) => {
 };
 export const fetchBrands = () => apiRequest("/brands");
 export const fetchProductCategories = () => apiRequest("/product-categories");
-export const fetchServices = () =>
-  apiRequest(`/services?active=true&_=${Date.now()}`);
+export const fetchServices = async () => {
+  const response = await apiRequest<{ data: Array<Record<string, unknown>> }>(
+    `/services?active=true&_=${Date.now()}`,
+  );
+  return {
+    ...response,
+    data: (response.data ?? []).map(normalizeService),
+  };
+};
 export const fetchServiceBySlug = (slug: string) =>
   apiRequest(`/services/${slug}`);
 export const fetchServiceTypes = () => apiRequest("/service-types");
