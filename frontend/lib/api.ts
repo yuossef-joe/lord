@@ -1,8 +1,25 @@
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://lord-backend.vercel.app/api";
+const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
+
+function getApiBaseUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (!configuredUrl) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    !["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    /localhost|127\.0\.0\.1/.test(configuredUrl)
+  ) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  return configuredUrl;
+}
 
 function normalizeProduct(product: Record<string, unknown>): Product {
   return {
@@ -71,7 +88,7 @@ async function apiRequest<T>(
       ? localStorage.getItem("customerToken")
       : null;
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${getApiBaseUrl()}${endpoint}`, {
     ...options,
     cache: "no-store",
     headers: {

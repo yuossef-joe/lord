@@ -19,8 +19,24 @@ import type {
   FAQ,
 } from "@/types";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://lord-backend.vercel.app/api";
+const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
+
+function getApiBaseUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (!configuredUrl) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  if (
+    !["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    /localhost|127\.0\.0\.1/.test(configuredUrl)
+  ) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  return configuredUrl;
+}
 
 async function cmsApiRequest<T>(
   endpoint: string,
@@ -37,7 +53,7 @@ async function cmsApiRequest<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${API_BASE_URL}/cms${endpoint}`, {
+  const res = await fetch(`${getApiBaseUrl()}/cms${endpoint}`, {
     ...options,
     cache: "no-store",
     headers: {

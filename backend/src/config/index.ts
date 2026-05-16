@@ -40,7 +40,14 @@ export const config = {
   port: parsedEnv.PORT,
   apiBaseUrl: parsedEnv.API_BASE_URL,
   databaseUrl: parsedEnv.DATABASE_URL,
-  corsOrigins: parsedEnv.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean),
+  corsOrigins: Array.from(
+    new Set([
+      ...parsedEnv.CORS_ORIGINS.split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+      "https://lord-blond.vercel.app",
+    ]),
+  ),
   jwt: {
     customerSecret: parsedEnv.JWT_CUSTOMER_SECRET,
     customerRefreshSecret: parsedEnv.JWT_CUSTOMER_REFRESH_SECRET,
