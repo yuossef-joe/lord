@@ -17,7 +17,9 @@ export interface ContactSettings {
   whatsapp: string;
   email: string;
   workingHours: string;
+  workingHoursAr?: string;
   googleMapsUrl?: string;
+  googleMapsEmbedUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
   whatsappUrl?: string;

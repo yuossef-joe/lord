@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "motion/react";
 import { Globe, Phone, Mail, Search } from "lucide-react";
+import { toast } from "react-toastify";
 import type {
   SiteSettings,
   ContactSettings,
@@ -13,6 +14,7 @@ import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
 import FormField from "@/components/common/FormField";
+import { fetchSettings, updateSettings } from "@/lib/api";
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                */
@@ -72,8 +74,13 @@ const defaultContactSettings: ContactSettings = {
   email: "info@lordac.com",
   whatsapp: "+201001234567",
   address: "15 El-Thawra St, Heliopolis, Cairo, Egypt",
+  addressAr: "",
   workingHours: "Sun–Thu 9 AM – 6 PM, Sat 10 AM – 3 PM",
+  workingHoursAr: "",
   googleMapsUrl: "https://maps.google.com/?q=Lord+AC+Cairo",
+  googleMapsEmbedUrl: "",
+  facebookUrl: "",
+  instagramUrl: "",
 };
 
 const defaultEmailSettings: EmailSettings = {
@@ -163,12 +170,33 @@ function SiteSettingsForm() {
 }
 
 function ContactSettingsForm() {
-  const { register, handleSubmit } = useForm<ContactSettings>({
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { register, handleSubmit, reset } = useForm<ContactSettings>({
     defaultValues: defaultContactSettings,
   });
 
-  const onSubmit = () => {
-    alert("Settings saved successfully");
+  useEffect(() => {
+    fetchSettings<ContactSettings>("contact")
+      .then((response) => {
+        reset({ ...defaultContactSettings, ...response.data });
+      })
+      .catch(() => {
+        toast.error("Failed to load contact settings");
+      })
+      .finally(() => setIsLoading(false));
+  }, [reset]);
+
+  const onSubmit = async (values: ContactSettings) => {
+    setIsSaving(true);
+    try {
+      await updateSettings("contact", values as unknown as Record<string, unknown>);
+      toast.success("Contact settings saved");
+    } catch {
+      toast.error("Failed to save contact settings");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -200,11 +228,25 @@ function ContactSettingsForm() {
           />
         </FormField>
 
+        <FormField label="Address (Arabic)">
+          <textarea
+            {...register("addressAr")}
+            dir="rtl"
+            className={`${inputStyles} h-20 resize-none py-2`}
+          />
+        </FormField>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Working Hours">
             <input {...register("workingHours")} className={inputStyles} />
           </FormField>
 
+          <FormField label="Working Hours (Arabic)">
+            <input {...register("workingHoursAr")} dir="rtl" className={inputStyles} />
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Google Maps URL">
             <input
               {...register("googleMapsUrl")}
@@ -212,10 +254,30 @@ function ContactSettingsForm() {
               placeholder="https://maps.google.com/..."
             />
           </FormField>
+
+          <FormField label="Google Maps Embed URL">
+            <input
+              {...register("googleMapsEmbedUrl")}
+              className={inputStyles}
+              placeholder="https://www.google.com/maps/embed?..."
+            />
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Facebook URL">
+            <input {...register("facebookUrl")} className={inputStyles} />
+          </FormField>
+
+          <FormField label="Instagram URL">
+            <input {...register("instagramUrl")} className={inputStyles} />
+          </FormField>
         </div>
 
         <div className="flex justify-end pt-2">
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" isLoading={isSaving} disabled={isLoading}>
+            Save Changes
+          </Button>
         </div>
       </form>
     </Card>

@@ -333,11 +333,46 @@ router.get("/content/:pageKey", asyncHandler(async (req, res) => {
   if (!page || !page.isActive) throw ApiError.notFound("Content page not found");
   return success(res, page);
 }));
+const siteSettingsToObject = (
+  settings: Array<{ key: string; value: unknown }>,
+) => Object.fromEntries(settings.map((setting) => [setting.key, setting.value]));
+
+const normalizeContactSettings = (settings: Record<string, any>) => {
+  const legacyAddress = settings.contact_address ?? {};
+  const legacyAddressAr = settings.contact_address_ar ?? {};
+  const socialLinks = settings.social_links ?? {};
+
+  return {
+    phone: settings.phone ?? settings.contact_phone ?? "",
+    whatsapp:
+      settings.whatsapp ??
+      String(socialLinks.whatsapp ?? "").replace(/^https?:\/\/wa\.me\//, ""),
+    email: settings.email ?? settings.contact_email ?? "",
+    address:
+      settings.address ??
+      [legacyAddress.line1, legacyAddress.city, legacyAddress.country]
+        .filter(Boolean)
+        .join(", "),
+    addressAr:
+      settings.addressAr ??
+      [legacyAddressAr.line1, legacyAddressAr.city, legacyAddressAr.country]
+        .filter(Boolean)
+        .join("، "),
+    workingHours: settings.workingHours ?? "",
+    workingHoursAr: settings.workingHoursAr ?? "",
+    googleMapsUrl: settings.googleMapsUrl ?? "",
+    googleMapsEmbedUrl: settings.googleMapsEmbedUrl ?? "",
+    facebookUrl: settings.facebookUrl ?? socialLinks.facebook ?? "",
+    instagramUrl: settings.instagramUrl ?? socialLinks.instagram ?? "",
+  };
+};
+
 router.get("/settings/:group", asyncHandler(async (req, res) => {
   const group = String(req.params.group);
   if (!["contact", "site"].includes(group)) throw ApiError.notFound();
   const settings = await prisma.siteSettings.findMany({ where: { group } });
-  return success(res, Object.fromEntries(settings.map((setting) => [setting.key, setting.value])));
+  const payload = siteSettingsToObject(settings);
+  return success(res, group === "contact" ? normalizeContactSettings(payload) : payload);
 }));
 router.get("/shipping/options", asyncHandler(async (req, res) => {
   const governorate = String(req.query.governorate ?? "");
@@ -624,14 +659,21 @@ router.post("/cms/orders/:id/notes", asyncHandler(async (req, res) => success(re
 router.post("/cms/orders/:id/refund", asyncHandler(async (req, res) => created(res, await prisma.refunds.create({ data: { orderId: parseId(req), amount: req.body.amount, reason: req.body.reason, initiatedBy: req.cmsUser?.id } }))));
 router.delete("/cms/orders/:id", asyncHandler(async (req, res) => success(res, await prisma.orders.update({ where: { id: parseId(req) }, data: { archivedAt: new Date() } }))));
 
-router.get("/cms/settings/:group", cmsAuth, asyncHandler(async (req, res) => success(res, await prisma.siteSettings.findMany({ where: { group: String(req.params.group) } }))));
+router.get("/cms/settings/:group", cmsAuth, asyncHandler(async (req, res) => {
+  const group = String(req.params.group);
+  const settings = await prisma.siteSettings.findMany({ where: { group } });
+  const payload = siteSettingsToObject(settings);
+  return success(res, group === "contact" ? normalizeContactSettings(payload) : payload);
+}));
 router.put("/cms/settings/:group", cmsAuth, asyncHandler(async (req, res) => {
   const group = String(req.params.group);
   const entries = Object.entries(req.body as Record<string, unknown>);
-  const updates = await Promise.all(entries.map(([key, value]) =>
+  await Promise.all(entries.map(([key, value]) =>
     prisma.siteSettings.upsert({ where: { key }, update: { value: value as any, group }, create: { key, value: value as any, group } }),
   ));
-  return success(res, updates);
+  const settings = await prisma.siteSettings.findMany({ where: { group } });
+  const payload = siteSettingsToObject(settings);
+  return success(res, group === "contact" ? normalizeContactSettings(payload) : payload);
 }));
 
 router.post("/orders", asyncHandler(async (req, res) => created(res, await prisma.orders.create({ data: { ...req.body, orderNumber: await generateOrderNumber() } }))));

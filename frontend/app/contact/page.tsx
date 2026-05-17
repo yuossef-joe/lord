@@ -34,7 +34,7 @@ const CONTACT_DEFAULTS: ContactSettings = {
 };
 
 export default function ContactPage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, localize } = useLanguage();
   const [contact, setContact] = useState<ContactSettings>(CONTACT_DEFAULTS);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,8 +73,10 @@ export default function ContactPage() {
     {
       icon: MapPin,
       label: t("contact.address"),
-      value: contact.address,
-      href: `https://maps.google.com/?q=${encodeURIComponent(contact.address)}`,
+      value: localize(contact.address, contact.addressAr),
+      href:
+        contact.googleMapsUrl ||
+        `https://maps.google.com/?q=${encodeURIComponent(contact.address)}`,
     },
     {
       icon: Phone,
@@ -97,7 +99,7 @@ export default function ContactPage() {
     {
       icon: Clock,
       label: t("contact.workingHours"),
-      value: contact.workingHours,
+      value: localize(contact.workingHours, contact.workingHoursAr),
     },
   ];
 
@@ -338,7 +340,10 @@ export default function ContactPage() {
         <ScrollReveal>
           <div className="mt-12 overflow-hidden rounded-card">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.123!2d31.2357!3d30.0444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDAyJzQwLjAiTiAzMcKwMTQnMDguNSJF!5e0!3m2!1sen!2seg!4v1"
+              src={
+                contact.googleMapsEmbedUrl ||
+                "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.123!2d31.2357!3d30.0444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDAyJzQwLjAiTiAzMcKwMTQnMDguNSJF!5e0!3m2!1sen!2seg!4v1"
+              }
               width="100%"
               height="400"
               style={{ border: 0 }}
