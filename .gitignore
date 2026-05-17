@@ -1,0 +1,5 @@
+frontend/.next/
+admin/dist/
+backend/dist/
+node_modules/
+migrations/

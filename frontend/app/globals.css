@@ -123,3 +123,9 @@ html[dir="rtl"] body {
   background: #f0f9ff !important;
   color: #1a1a2e !important;
 }
+
+/* Keep service cards visible even if an animation state fails to resolve. */
+.services-page-card {
+  opacity: 1 !important;
+  transform: none !important;
+}
