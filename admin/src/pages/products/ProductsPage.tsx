@@ -1,133 +1,27 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import type { Product } from "@/types";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
+import { deleteProduct, fetchProducts } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import DataTable from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
 import SearchInput from "@/components/common/SearchInput";
 import Breadcrumb from "@/components/common/Breadcrumb";
+import { useLanguage } from "@/context/LanguageContext";
+import { localizedSearchText, localizedValue } from "@/lib/localization";
 
 const columnHelper = createColumnHelper<Product>();
 
-const columns = [
-  columnHelper.accessor("name", {
-    header: "Product",
-    cell: (info) => {
-      const product = info.row.original;
-      const image = product.images[0];
-      return (
-        <div className="flex items-center gap-3">
-          {image ? (
-            <img
-              src={image.url}
-              alt={image.altText ?? product.name}
-              className="w-12 h-12 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-lg bg-gray-200" />
-          )}
-          <div>
-            <Link
-              to={`/products/${product.id}/edit`}
-              className="font-medium text-gray-900 hover:text-teal transition"
-            >
-              {product.name}
-            </Link>
-            <div className="text-xs text-gray-500">{product.category.name}</div>
-          </div>
-        </div>
-      );
-    },
-  }),
-  columnHelper.accessor("brand", {
-    header: "Brand",
-    cell: (info) => info.getValue().name,
-  }),
-  columnHelper.accessor("price", {
-    header: "Price",
-    cell: (info) => {
-      const product = info.row.original;
-      if (product.originalPrice) {
-        return (
-          <div>
-            <span className="font-semibold">
-              {formatCurrency(product.price)}
-            </span>
-            <span className="text-xs text-gray-400 line-through ml-2">
-              {formatCurrency(product.originalPrice)}
-            </span>
-          </div>
-        );
-      }
-      return (
-        <span className="font-semibold">{formatCurrency(product.price)}</span>
-      );
-    },
-  }),
-  columnHelper.accessor("stockQuantity", {
-    header: "Stock",
-    cell: (info) => {
-      const stock = info.getValue();
-      let color = "text-green-600";
-      if (stock < 10) color = "text-red-600";
-      else if (stock < 50) color = "text-amber-600";
-      return <span className={`font-medium ${color}`}>{stock}</span>;
-    },
-  }),
-  columnHelper.accessor("isActive", {
-    header: "Status",
-    cell: (info) => (
-      <Badge variant={info.getValue() ? "success" : "default"}>
-        {info.getValue() ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("isFeatured", {
-    header: "Featured",
-    cell: (info) =>
-      info.getValue() ? (
-        <Star size={18} className="fill-amber-400 text-amber-400" />
-      ) : (
-        <Star size={18} className="text-gray-300" />
-      ),
-  }),
-  columnHelper.accessor("createdAt", {
-    header: "Date",
-    cell: (info) => formatDate(info.getValue()),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "",
-    cell: (info) => (
-      <div className="flex items-center gap-1">
-        <Link
-          to={`/products/${info.row.original.id}/edit`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
-        >
-          <Pencil size={16} />
-        </Link>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
-    ),
-  }),
-];
-
 type FilterTab = "all" | "active" | "inactive";
 
-const FILTER_TABS: { label: string; value: FilterTab }[] = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
+const FILTER_TABS: { labelKey: string; value: FilterTab }[] = [
+  { labelKey: "common.all", value: "all" },
+  { labelKey: "common.active", value: "active" },
+  { labelKey: "common.inactive", value: "inactive" },
 ];
 
 const containerVariants = {
@@ -144,31 +38,186 @@ const itemVariants = {
 };
 
 export default function ProductsPage() {
+  const { language, t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    void fetchProducts("").then((response) => setProducts(response.data));
+  }, []);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: t("common.product"),
+        cell: (info) => {
+          const product = info.row.original;
+          const image = product.images?.[0];
+          const productName = localizedValue(
+            language,
+            product.name,
+            product.nameAr,
+          );
+          const categoryName = localizedValue(
+            language,
+            product.category?.name,
+            product.category?.nameAr,
+          );
+          return (
+            <div className="flex items-center gap-3">
+              {image ? (
+                <img
+                  src={image.url}
+                  alt={image.altText ?? productName}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-gray-200" />
+              )}
+              <div>
+                <Link
+                  to={`/products/${product.id}/edit`}
+                  className="font-medium text-gray-900 hover:text-teal transition"
+                >
+                  {productName}
+                </Link>
+                <div className="text-xs text-gray-500">{categoryName}</div>
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("brand", {
+        header: t("common.brand"),
+        cell: (info) =>
+          localizedValue(
+            language,
+            info.getValue()?.name,
+            info.getValue()?.nameAr,
+          ) || "—",
+      }),
+      columnHelper.accessor("price", {
+        header: t("common.price"),
+        cell: (info) => {
+          const product = info.row.original;
+          if (product.originalPrice) {
+            return (
+              <div>
+                <span className="font-semibold">
+                  {formatCurrency(product.price)}
+                </span>
+                <span className="text-xs text-gray-400 line-through ml-2">
+                  {formatCurrency(product.originalPrice)}
+                </span>
+              </div>
+            );
+          }
+          return (
+            <span className="font-semibold">
+              {formatCurrency(product.price)}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor("stockQuantity", {
+        header: t("common.stock"),
+        cell: (info) => {
+          const stock = info.getValue();
+          let color = "text-green-600";
+          if (stock < 10) color = "text-red-600";
+          else if (stock < 50) color = "text-amber-600";
+          return <span className={`font-medium ${color}`}>{stock}</span>;
+        },
+      }),
+      columnHelper.accessor("isActive", {
+        header: t("common.status"),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "success" : "default"}>
+            {info.getValue() ? t("common.active") : t("common.inactive")}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("isFeatured", {
+        header: t("common.featured"),
+        cell: (info) =>
+          info.getValue() ? (
+            <Star size={18} className="fill-amber-400 text-amber-400" />
+          ) : (
+            <Star size={18} className="text-gray-300" />
+          ),
+      }),
+      columnHelper.accessor("createdAt", {
+        header: t("common.date"),
+        cell: (info) => formatDate(info.getValue()),
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: (info) => (
+          <div className="flex items-center gap-1">
+            <Link
+              to={`/products/${info.row.original.id}/edit`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-teal hover:bg-gray-100 transition"
+            >
+              <Pencil size={16} />
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                void deleteProduct(info.row.original.id).then(() =>
+                  setProducts((current) =>
+                    current.filter((item) => item.id !== info.row.original.id),
+                  ),
+                );
+              }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [language, t],
+  );
 
   const filteredProducts = useMemo(() => {
-    let products: Product[] = MOCK_PRODUCTS;
+    let result: Product[] = products;
 
     if (activeFilter === "active") {
-      products = products.filter((p) => p.isActive);
+      result = result.filter((p) => p.isActive);
     } else if (activeFilter === "inactive") {
-      products = products.filter((p) => !p.isActive);
+      result = result.filter((p) => !p.isActive);
     }
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      products = products.filter((p) => p.name.toLowerCase().includes(term));
+      result = result.filter((p) =>
+        localizedSearchText(
+          p.name,
+          p.nameAr,
+          p.description,
+          p.descriptionAr,
+          p.brand.name,
+          p.brand.nameAr,
+          p.category.name,
+          p.category.nameAr,
+        ).includes(term),
+      );
     }
 
-    return products;
-  }, [activeFilter, searchTerm]);
+    return result;
+  }, [activeFilter, products, searchTerm]);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
       <motion.div variants={itemVariants}>
         <Breadcrumb
-          items={[{ label: "Dashboard", href: "/" }, { label: "Products" }]}
+          items={[
+            { label: t("common.dashboard"), href: "/" },
+            { label: t("common.products") },
+          ]}
         />
       </motion.div>
 
@@ -176,15 +225,19 @@ export default function ProductsPage() {
         variants={itemVariants}
         className="flex justify-between items-center mb-6 mt-4"
       >
-        <h1 className="text-2xl font-bold text-navy">Products</h1>
+        <h1 className="text-2xl font-bold text-navy">
+          {t("common.products")}
+        </h1>
         <div className="flex items-center gap-3">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search products…"
+            placeholder={t("common.searchProducts")}
           />
           <Link to="/products/create">
-            <Button leftIcon={<Plus size={18} />}>Add Product</Button>
+            <Button leftIcon={<Plus size={18} />}>
+              {t("common.addProduct")}
+            </Button>
           </Link>
         </div>
       </motion.div>
@@ -200,7 +253,7 @@ export default function ProductsPage() {
                 : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
             }`}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </motion.div>
@@ -209,7 +262,7 @@ export default function ProductsPage() {
         <DataTable
           columns={columns}
           data={filteredProducts}
-          emptyMessage="No products found"
+          emptyMessage={t("common.noProducts")}
         />
       </motion.div>
     </motion.div>

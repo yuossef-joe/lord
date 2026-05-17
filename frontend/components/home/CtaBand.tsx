@@ -7,7 +7,11 @@ import ScrollReveal from "@/components/common/ScrollReveal";
 import Button from "@/components/common/Button";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function CtaBand() {
+interface CtaBandProps {
+  headline?: string;
+}
+
+export default function CtaBand({ headline }: CtaBandProps) {
   const { t } = useLanguage();
 
   return (
@@ -22,7 +26,7 @@ export default function CtaBand() {
               transition={{ duration: 0.5 }}
               className="text-2xl font-bold text-white md:text-3xl"
             >
-              {t("home.cta.headline")}
+              {headline || t("home.cta.headline")}
             </motion.h2>
             <Link href="/contact">
               <Button

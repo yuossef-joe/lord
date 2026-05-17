@@ -1,11 +1,20 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, Pencil, Trash2, Wand2 } from "lucide-react";
+import { ImagePlus, Plus, Pencil, Trash2 } from "lucide-react";
 import type { Brand, ProductCategory } from "@/types";
-import { MOCK_BRANDS, MOCK_CATEGORIES } from "@/lib/mock-data";
+import {
+  createBrand,
+  createProductCategory,
+  deleteBrand,
+  deleteProductCategory,
+  fetchBrands,
+  fetchProductCategories,
+  updateBrand,
+  updateProductCategory,
+} from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -13,12 +22,13 @@ import Badge from "@/components/common/Badge";
 import Modal from "@/components/common/Modal";
 import FormField from "@/components/common/FormField";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ── Zod Schemas ────────────────────────────────────── */
 
 const brandSchema = z.object({
   name: z.string().min(1, "Brand name is required"),
-  logoUrl: z.string().optional(),
+  nameAr: z.string().min(1, "Arabic brand name is required"),
   isActive: z.boolean(),
 });
 
@@ -26,8 +36,9 @@ type BrandFormValues = z.infer<typeof brandSchema>;
 
 const categorySchema = z.object({
   name: z.string().min(1, "Category name is required"),
-  slug: z.string().min(1, "Slug is required"),
+  nameAr: z.string().min(1, "Arabic category name is required"),
   description: z.string().optional(),
+  descriptionAr: z.string().optional(),
   parentId: z.string().optional(),
   isActive: z.boolean(),
 });
@@ -56,37 +67,49 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ── Component ───────────────────────────────────────── */
 
 export default function BrandsPage() {
+  const { localize } = useLanguage();
   /* brands state */
-  const [brands] = useState<Brand[]>(MOCK_BRANDS);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [brandModalOpen, setBrandModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [deletingBrand, setDeletingBrand] = useState<Brand | null>(null);
+  const [brandLogoFile, setBrandLogoFile] = useState<File | null>(null);
+  const [brandLogoPreview, setBrandLogoPreview] = useState("");
 
   /* categories state */
-  const [categories] = useState<ProductCategory[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategory | null>(null);
   const [deletingCategory, setDeletingCategory] =
     useState<ProductCategory | null>(null);
 
+  useEffect(() => {
+    void Promise.all([fetchBrands(), fetchProductCategories()]).then(
+      ([brandsResponse, categoriesResponse]) => {
+        setBrands(brandsResponse.data);
+        setCategories(categoriesResponse.data);
+      },
+    );
+  }, []);
+
   /* ── Brand Form ─────────────────────────────────── */
 
   const brandForm = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "", logoUrl: "", isActive: true },
+    defaultValues: { name: "", nameAr: "", isActive: true },
   });
 
   const openBrandModal = (brand?: Brand) => {
@@ -94,28 +117,50 @@ export default function BrandsPage() {
       setEditingBrand(brand);
       brandForm.reset({
         name: brand.name,
-        logoUrl: brand.logoUrl ?? "",
+        nameAr: brand.nameAr ?? "",
         isActive: brand.isActive,
       });
+      setBrandLogoPreview(brand.logoUrl ?? "");
     } else {
       setEditingBrand(null);
-      brandForm.reset({ name: "", logoUrl: "", isActive: true });
+      brandForm.reset({ name: "", nameAr: "", isActive: true });
+      setBrandLogoPreview("");
     }
+    setBrandLogoFile(null);
     setBrandModalOpen(true);
   };
 
   const closeBrandModal = () => {
     setBrandModalOpen(false);
     setEditingBrand(null);
+    setBrandLogoFile(null);
+    setBrandLogoPreview("");
   };
 
-  const onBrandSubmit = (_data: BrandFormValues) => {
-    // Mock: save brand
+  const onBrandSubmit = async (data: BrandFormValues) => {
+    const logoUrl = brandLogoFile
+      ? await readFileAsDataUrl(brandLogoFile)
+      : editingBrand?.logoUrl;
+    const payload = {
+      name: data.name,
+      nameAr: data.nameAr,
+      logoUrl,
+      isActive: data.isActive,
+    };
+    if (editingBrand) {
+      await updateBrand(editingBrand.id, payload);
+    } else {
+      await createBrand(payload);
+    }
+    const response = await fetchBrands();
+    setBrands(response.data);
     closeBrandModal();
   };
 
-  const confirmDeleteBrand = () => {
-    // Mock: delete brand
+  const confirmDeleteBrand = async () => {
+    if (!deletingBrand) return;
+    await deleteBrand(deletingBrand.id);
+    setBrands((current) => current.filter((brand) => brand.id !== deletingBrand.id));
     setDeletingBrand(null);
   };
 
@@ -125,8 +170,9 @@ export default function BrandsPage() {
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
-      slug: "",
+      nameAr: "",
       description: "",
+      descriptionAr: "",
       parentId: "",
       isActive: true,
     },
@@ -137,8 +183,9 @@ export default function BrandsPage() {
       setEditingCategory(category);
       categoryForm.reset({
         name: category.name,
-        slug: category.slug,
+        nameAr: category.nameAr ?? "",
         description: category.description ?? "",
+        descriptionAr: category.descriptionAr ?? "",
         parentId: "",
         isActive: category.isActive,
       });
@@ -146,8 +193,9 @@ export default function BrandsPage() {
       setEditingCategory(null);
       categoryForm.reset({
         name: "",
-        slug: "",
+        nameAr: "",
         description: "",
+        descriptionAr: "",
         parentId: "",
         isActive: true,
       });
@@ -160,17 +208,32 @@ export default function BrandsPage() {
     setEditingCategory(null);
   };
 
-  const onCategorySubmit = (_data: CategoryFormValues) => {
-    // Mock: save category
+  const onCategorySubmit = async (data: CategoryFormValues) => {
+    const payload = {
+      name: data.name,
+      nameAr: data.nameAr,
+      description: data.description,
+      descriptionAr: data.descriptionAr,
+      isActive: data.isActive,
+    };
+    if (editingCategory) {
+      await updateProductCategory(editingCategory.id, payload);
+    } else {
+      await createProductCategory(payload);
+    }
+    const response = await fetchProductCategories();
+    setCategories(response.data);
     closeCategoryModal();
   };
 
-  const confirmDeleteCategory = () => {
-    // Mock: delete category
+  const confirmDeleteCategory = async () => {
+    if (!deletingCategory) return;
+    await deleteProductCategory(deletingCategory.id);
+    setCategories((current) =>
+      current.filter((category) => category.id !== deletingCategory.id),
+    );
     setDeletingCategory(null);
   };
-
-  const categoryNameValue = categoryForm.watch("name");
 
   /* ── Available parent categories (exclude self when editing) ── */
   const parentCategoryOptions = useMemo(
@@ -231,7 +294,7 @@ export default function BrandsPage() {
                     <div className="w-10 h-10 rounded-lg bg-gray-200" />
                   )}
                   <span className="font-medium text-gray-900">
-                    {brand.name}
+                    {localize(brand.name, brand.nameAr)}
                   </span>
                   <Badge variant={brand.isActive ? "success" : "default"}>
                     {brand.isActive ? "Active" : "Inactive"}
@@ -282,7 +345,7 @@ export default function BrandsPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-900">
-                        {category.name}
+                        {localize(category.name, category.nameAr)}
                       </span>
                       <span className="text-xs text-gray-400">
                         /{category.slug}
@@ -295,7 +358,10 @@ export default function BrandsPage() {
                     </div>
                     {category.description && (
                       <p className="text-xs text-gray-500 truncate max-w-xs mt-0.5">
-                        {category.description}
+                        {localize(
+                          category.description,
+                          category.descriptionAr,
+                        )}
                       </p>
                     )}
                   </div>
@@ -334,7 +400,7 @@ export default function BrandsPage() {
           className="space-y-4"
         >
           <FormField
-            label="Name"
+            label="Name (English)"
             required
             error={brandForm.formState.errors.name?.message}
           >
@@ -342,18 +408,54 @@ export default function BrandsPage() {
               {...brandForm.register("name")}
               className={inputStyles}
               placeholder="Brand name"
+              dir="ltr"
             />
           </FormField>
 
           <FormField
-            label="Logo URL"
-            error={brandForm.formState.errors.logoUrl?.message}
+            label="Name (Arabic)"
+            required
+            error={brandForm.formState.errors.nameAr?.message}
           >
             <input
-              {...brandForm.register("logoUrl")}
-              className={inputStyles}
-              placeholder="https://example.com/logo.png"
+              {...brandForm.register("nameAr")}
+              className={`${inputStyles} text-right`}
+              placeholder="اسم العلامة التجارية"
+              dir="rtl"
             />
+          </FormField>
+
+          <FormField label="Logo Image">
+            <label className="flex min-h-24 cursor-pointer items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3 transition hover:border-teal hover:bg-teal/5">
+              {brandLogoPreview ? (
+                <img
+                  src={brandLogoPreview}
+                  alt=""
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+              ) : (
+                <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                  <ImagePlus size={22} />
+                </span>
+              )}
+              <span className="text-sm text-gray-600">
+                {brandLogoFile ? brandLogoFile.name : "Choose image"}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  setBrandLogoFile(file);
+                  if (!file) {
+                    setBrandLogoPreview(editingBrand?.logoUrl ?? "");
+                    return;
+                  }
+                  setBrandLogoPreview(URL.createObjectURL(file));
+                }}
+              />
+            </label>
           </FormField>
 
           <label className="flex items-center justify-between cursor-pointer">
@@ -392,7 +494,7 @@ export default function BrandsPage() {
           className="space-y-4"
         >
           <FormField
-            label="Name"
+            label="Name (English)"
             required
             error={categoryForm.formState.errors.name?.message}
           >
@@ -400,42 +502,44 @@ export default function BrandsPage() {
               {...categoryForm.register("name")}
               className={inputStyles}
               placeholder="Category name"
+              dir="ltr"
             />
           </FormField>
 
           <FormField
-            label="Slug"
+            label="Name (Arabic)"
             required
-            error={categoryForm.formState.errors.slug?.message}
+            error={categoryForm.formState.errors.nameAr?.message}
           >
-            <div className="flex gap-2">
-              <input
-                {...categoryForm.register("slug")}
-                className={inputStyles}
-                placeholder="category-slug"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={() =>
-                  categoryForm.setValue("slug", slugify(categoryNameValue))
-                }
-                leftIcon={<Wand2 size={16} />}
-              >
-                Generate
-              </Button>
-            </div>
+            <input
+              {...categoryForm.register("nameAr")}
+              className={`${inputStyles} text-right`}
+              placeholder="اسم التصنيف"
+              dir="rtl"
+            />
           </FormField>
 
           <FormField
-            label="Description"
+            label="Description (English)"
             error={categoryForm.formState.errors.description?.message}
           >
             <textarea
               {...categoryForm.register("description")}
               className={`${inputStyles} h-24 resize-none py-2`}
-              placeholder="Category description…"
+              placeholder="Category description..."
+              dir="ltr"
+            />
+          </FormField>
+
+          <FormField
+            label="Description (Arabic)"
+            error={categoryForm.formState.errors.descriptionAr?.message}
+          >
+            <textarea
+              {...categoryForm.register("descriptionAr")}
+              className={`${inputStyles} h-24 resize-none py-2 text-right`}
+              placeholder="وصف التصنيف..."
+              dir="rtl"
             />
           </FormField>
 
@@ -450,7 +554,7 @@ export default function BrandsPage() {
               <option value="">None (Top-level)</option>
               {parentCategoryOptions.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {localize(cat.name, cat.nameAr)}
                 </option>
               ))}
             </select>

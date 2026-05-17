@@ -1,0 +1,861 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+export type Language = "en" | "ar";
+
+interface LanguageContextValue {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  toggleLanguage: () => void;
+  dir: "ltr" | "rtl";
+  isRTL: boolean;
+  localize: (english?: string | null, arabic?: string | null) => string;
+  t: (key: string) => string;
+}
+
+const STORAGE_KEY = "cmsLanguage";
+
+const translations = {
+  en: {
+    "nav.dashboard": "Dashboard",
+    "nav.orders": "Orders",
+    "nav.customers": "Customers",
+    "nav.products": "Products",
+    "nav.brands": "Brands & Categories",
+    "nav.services": "Services",
+    "nav.inquiries": "Inquiries & Requests",
+    "nav.shipping": "Shipping",
+    "nav.coupons": "Coupons & Promos",
+    "nav.content": "Content Pages",
+    "nav.testimonials": "Testimonials",
+    "nav.faqs": "FAQs",
+    "nav.settings": "Settings",
+    "page.orderDetails": "Order Details",
+    "page.customerDetails": "Customer Details",
+    "page.productDetails": "Product Details",
+    "page.brandDetails": "Brand Details",
+    "page.serviceDetails": "Service Details",
+    "page.inquiryDetails": "Inquiry Details",
+    "page.couponDetails": "Coupon Details",
+    "page.contentDetails": "Content Details",
+    "page.testimonialDetails": "Testimonial Details",
+    "page.faqDetails": "FAQ Details",
+    "common.dashboard": "Dashboard",
+    "common.customers": "Customers",
+    "common.products": "Products",
+    "common.orders": "Orders",
+    "common.services": "Services",
+    "common.couponsPromos": "Coupons & Promos",
+    "common.contentPages": "Content Pages",
+    "common.customer": "Customer",
+    "common.product": "Product",
+    "common.service": "Service",
+    "common.phone": "Phone",
+    "common.nationalId": "National ID",
+    "common.brand": "Brand",
+    "common.price": "Price",
+    "common.stock": "Stock",
+    "common.featured": "Featured",
+    "common.date": "Date",
+    "common.description": "Description",
+    "common.items": "Items",
+    "common.total": "Total",
+    "common.payment": "Payment",
+    "common.orderNumber": "Order #",
+    "common.order": "Order",
+    "common.orderItems": "Order Items",
+    "common.orderNotes": "Order Notes",
+    "common.statusTimeline": "Status Timeline",
+    "common.customerInfo": "Customer Info",
+    "common.shippingAddress": "Shipping Address",
+    "common.paymentInfo": "Payment Info",
+    "common.updateStatus": "Update Status",
+    "common.updatePaymentStatus": "Update Payment Status",
+    "common.print": "Print",
+    "common.backToOrders": "Back to Orders",
+    "common.orderNotFound": "Order not found",
+    "common.orderNotFoundDescription":
+      "The order you're looking for doesn't exist or has been removed.",
+    "common.code": "Code",
+    "common.type": "Type",
+    "common.value": "Value",
+    "common.usage": "Usage",
+    "common.validPeriod": "Valid Period",
+    "common.totalSpent": "Total Spent",
+    "common.totalOrders": "Total Orders",
+    "common.revenueToday": "Revenue Today",
+    "common.newOrdersToday": "New Orders Today",
+    "common.totalCustomers": "Total Customers",
+    "common.totalProducts": "Total Products",
+    "common.revenueOverview": "Revenue Overview",
+    "common.revenue": "Revenue",
+    "common.quickOverview": "Quick Overview",
+    "common.pendingOrders": "Pending Orders",
+    "common.pendingInquiries": "Pending Inquiries",
+    "common.goToOrders": "Go to Orders",
+    "common.goToInquiries": "Go to Inquiries",
+    "common.recentOrders": "Recent Orders",
+    "common.latestInquiries": "Latest Inquiries",
+    "common.viewAll": "View All",
+    "common.orderId": "Order ID",
+    "common.email": "Email",
+    "common.name": "Name",
+    "common.orderHistory": "Order History",
+    "shipping.description": "Manage customer-friendly delivery zones, rates, and methods.",
+    "shipping.addZone": "Add Zone",
+    "shipping.addMethod": "Add Method",
+    "shipping.activeZones": "Active zones",
+    "shipping.methods": "Shipping Methods",
+    "shipping.estimatedDeliveryDays": "Estimated delivery days",
+    "shipping.zones": "Shipping Zones",
+    "shipping.zone": "Zone",
+    "shipping.method": "Method",
+    "shipping.governorates": "Governorates",
+    "shipping.cities": "Cities",
+    "shipping.fee": "Fee",
+    "shipping.feeModifier": "Fee modifier",
+    "shipping.freeFrom": "Free From",
+    "shipping.estimate": "Estimate",
+    "shipping.default": "Default",
+    "shipping.recommended": "Recommended",
+    "shipping.active": "Active",
+    "shipping.disabled": "Disabled",
+    "shipping.noZones": "No zones",
+    "shipping.noMethods": "No shipping methods",
+    "shipping.businessDays": "business days",
+    "shipping.minDays": "Minimum days",
+    "shipping.maxDays": "Maximum days",
+    "shipping.commaSeparated": "Comma-separated values",
+    "common.customerNotFound": "Customer not found",
+    "common.customerNotFoundDescription":
+      "The customer you're looking for doesn't exist or has been removed.",
+    "common.backToCustomers": "Back to Customers",
+    "common.noOrdersYet": "No orders yet",
+    "common.noCustomerOrders": "This customer hasn't placed any orders.",
+    "common.statistics": "Statistics",
+    "common.avgOrderValue": "Avg. Order Value",
+    "common.addresses": "Addresses",
+    "common.default": "Default",
+    "common.noAddresses": "No addresses on file.",
+    "common.subtotal": "Subtotal",
+    "common.shipping": "Shipping",
+    "common.free": "Free",
+    "common.discount": "Discount",
+    "common.status": "Status",
+    "common.method": "Method",
+    "common.amount": "Amount",
+    "common.reference": "Reference",
+    "common.paidAt": "Paid At",
+    "common.card": "Card",
+    "common.refunds": "Refunds",
+    "common.noNotes": "No notes",
+    "common.orderCreated": "Order created",
+    "common.quantity": "Qty",
+    "common.emailVerified": "Email Verified",
+    "common.joined": "Joined",
+    "common.active": "Active",
+    "common.inactive": "Inactive",
+    "common.verified": "Verified",
+    "common.unverified": "Unverified",
+    "common.viewCustomer": "View customer",
+    "common.editCustomer": "Edit customer",
+    "common.viewOrder": "View order",
+    "common.editOrder": "Edit order",
+    "common.archiveOrder": "Archive order",
+    "common.searchCustomers": "Search customers...",
+    "common.searchProducts": "Search products...",
+    "common.searchOrders": "Search orders...",
+    "common.searchServices": "Search services...",
+    "common.searchByCode": "Search by code...",
+    "common.addCustomer": "Add Customer",
+    "common.addProduct": "Add Product",
+    "common.addService": "Add Service",
+    "common.createOrder": "Create Order",
+    "common.createCoupon": "Create Coupon",
+    "common.noCustomers": "No customers found",
+    "common.noProducts": "No products found",
+    "common.noOrders": "No orders found",
+    "common.noServices": "No services found",
+    "common.noCoupons": "No coupons found",
+    "common.edit": "Edit",
+    "common.save": "Save",
+    "common.saveChanges": "Save Changes",
+    "common.cancel": "Cancel",
+    "common.delete": "Delete",
+    "common.loading": "Loading...",
+    "common.editPage": "Edit Page",
+    "common.title": "Title",
+    "common.arabicTitle": "Arabic Title",
+    "common.content": "Content",
+    "common.arabicContent": "Arabic Content",
+    "common.homePageContent": "Home Page Content",
+    "common.heroHeadline": "Hero Headline",
+    "common.arabicHeroHeadline": "Arabic Hero Headline",
+    "common.heroTagline": "Hero Tagline",
+    "common.arabicHeroTagline": "Arabic Hero Tagline",
+    "common.featuredProductsTitle": "Featured Products Title",
+    "common.arabicFeaturedProductsTitle": "Arabic Featured Products Title",
+    "common.servicesTitle": "Services Title",
+    "common.arabicServicesTitle": "Arabic Services Title",
+    "common.whyChooseTitle": "Why Choose Title",
+    "common.arabicWhyChooseTitle": "Arabic Why Choose Title",
+    "common.testimonialsTitle": "Testimonials Title",
+    "common.arabicTestimonialsTitle": "Arabic Testimonials Title",
+    "common.ctaHeadline": "CTA Headline",
+    "common.arabicCtaHeadline": "Arabic CTA Headline",
+    "common.published": "Published",
+    "common.draft": "Draft",
+    "common.publishThisPage": "Publish this page",
+    "common.seoTitle": "SEO Title",
+    "common.arabicSeoTitle": "Arabic SEO Title",
+    "common.seoDescription": "SEO Description",
+    "common.arabicSeoDescription": "Arabic SEO Description",
+    "common.pageTitlePlaceholder": "Page title",
+    "common.pageContentPlaceholder": "Page content...",
+    "common.arabicPageTitlePlaceholder": "عنوان الصفحة بالعربية",
+    "common.arabicPageContentPlaceholder": "محتوى الصفحة بالعربية",
+    "common.seoTitlePlaceholder": "SEO title",
+    "common.seoDescriptionPlaceholder": "SEO description...",
+    "common.arabicSeoTitlePlaceholder": "عنوان محركات البحث بالعربية",
+    "common.arabicSeoDescriptionPlaceholder": "وصف محركات البحث بالعربية",
+    "common.all": "All",
+    "common.pending": "Pending",
+    "common.confirmed": "Confirmed",
+    "common.processing": "Processing",
+    "common.shipped": "Shipped",
+    "common.delivered": "Delivered",
+    "common.cancelled": "Cancelled",
+    "common.refunded": "Refunded",
+    "common.pendingPayment": "Pending Payment",
+    "common.paid": "Paid",
+    "common.failed": "Failed",
+    "common.cashOnDelivery": "Cash On Delivery",
+    "common.creditCard": "Credit Card",
+    "common.mobileWallet": "Mobile Wallet",
+    "common.installment": "Installment",
+    "common.expired": "Expired",
+    "common.percentage": "Percentage",
+    "common.fixedAmount": "Fixed Amount",
+    "common.installation": "Installation",
+    "common.maintenance": "Maintenance",
+    "common.repair": "Repair",
+    "common.consultation": "Consultation",
+    "common.deleteCoupon": "Delete Coupon",
+    "common.deleteService": "Delete Service",
+    "common.deleteCouponConfirm":
+      "Are you sure you want to delete this coupon? This action cannot be undone.",
+    "common.deleteServiceConfirm":
+      "Are you sure you want to delete this service? This action cannot be undone.",
+  },
+  ar: {
+    "nav.dashboard": "لوحة التحكم",
+    "nav.orders": "الطلبات",
+    "nav.customers": "العملاء",
+    "nav.products": "المنتجات",
+    "nav.brands": "العلامات والتصنيفات",
+    "nav.services": "الخدمات",
+    "nav.inquiries": "الاستفسارات والطلبات",
+    "nav.shipping": "الشحن",
+    "nav.coupons": "الكوبونات والعروض",
+    "nav.content": "صفحات المحتوى",
+    "nav.testimonials": "آراء العملاء",
+    "nav.faqs": "الأسئلة الشائعة",
+    "nav.settings": "الإعدادات",
+    "page.orderDetails": "تفاصيل الطلب",
+    "page.customerDetails": "تفاصيل العميل",
+    "page.productDetails": "تفاصيل المنتج",
+    "page.brandDetails": "تفاصيل العلامة",
+    "page.serviceDetails": "تفاصيل الخدمة",
+    "page.inquiryDetails": "تفاصيل الاستفسار",
+    "page.couponDetails": "تفاصيل الكوبون",
+    "page.contentDetails": "تفاصيل المحتوى",
+    "page.testimonialDetails": "تفاصيل الرأي",
+    "page.faqDetails": "تفاصيل السؤال",
+    "common.dashboard": "لوحة التحكم",
+    "common.customers": "العملاء",
+    "common.products": "المنتجات",
+    "common.orders": "الطلبات",
+    "common.services": "الخدمات",
+    "common.couponsPromos": "الكوبونات والعروض",
+    "common.contentPages": "صفحات المحتوى",
+    "common.customer": "العميل",
+    "common.product": "المنتج",
+    "common.service": "الخدمة",
+    "common.phone": "الهاتف",
+    "common.nationalId": "الرقم القومي",
+    "common.brand": "العلامة",
+    "common.price": "السعر",
+    "common.stock": "المخزون",
+    "common.featured": "مميز",
+    "common.date": "التاريخ",
+    "common.description": "الوصف",
+    "common.items": "العناصر",
+    "common.total": "الإجمالي",
+    "common.payment": "الدفع",
+    "common.orderNumber": "رقم الطلب",
+    "common.order": "طلب",
+    "common.orderItems": "عناصر الطلب",
+    "common.orderNotes": "ملاحظات الطلب",
+    "common.statusTimeline": "تسلسل الحالة",
+    "common.customerInfo": "بيانات العميل",
+    "common.shippingAddress": "عنوان الشحن",
+    "common.paymentInfo": "بيانات الدفع",
+    "common.updateStatus": "تحديث الحالة",
+    "common.updatePaymentStatus": "تحديث حالة الدفع",
+    "common.print": "طباعة",
+    "common.backToOrders": "العودة إلى الطلبات",
+    "common.orderNotFound": "الطلب غير موجود",
+    "common.orderNotFoundDescription":
+      "الطلب الذي تبحث عنه غير موجود أو تم حذفه.",
+    "common.code": "الكود",
+    "common.type": "النوع",
+    "common.value": "القيمة",
+    "common.usage": "الاستخدام",
+    "common.validPeriod": "مدة الصلاحية",
+    "common.totalSpent": "إجمالي الإنفاق",
+    "common.totalOrders": "إجمالي الطلبات",
+    "common.revenueToday": "إيرادات اليوم",
+    "common.newOrdersToday": "طلبات اليوم الجديدة",
+    "common.totalCustomers": "إجمالي العملاء",
+    "common.totalProducts": "إجمالي المنتجات",
+    "common.revenueOverview": "نظرة عامة على الإيرادات",
+    "common.revenue": "الإيرادات",
+    "common.quickOverview": "نظرة سريعة",
+    "common.pendingOrders": "طلبات قيد الانتظار",
+    "common.pendingInquiries": "استفسارات قيد الانتظار",
+    "common.goToOrders": "اذهب إلى الطلبات",
+    "common.goToInquiries": "اذهب إلى الاستفسارات",
+    "common.recentOrders": "أحدث الطلبات",
+    "common.latestInquiries": "أحدث الاستفسارات",
+    "common.viewAll": "عرض الكل",
+    "common.orderId": "رقم الطلب",
+    "common.email": "البريد الإلكتروني",
+    "common.name": "الاسم",
+    "common.orderHistory": "سجل الطلبات",
+    "shipping.description": "إدارة مناطق التسليم والأسعار وطرق الشحن بسهولة.",
+    "shipping.addZone": "إضافة منطقة",
+    "shipping.addMethod": "إضافة طريقة",
+    "shipping.activeZones": "المناطق النشطة",
+    "shipping.methods": "طرق الشحن",
+    "shipping.estimatedDeliveryDays": "أيام التسليم المتوقعة",
+    "shipping.zones": "مناطق الشحن",
+    "shipping.zone": "المنطقة",
+    "shipping.method": "الطريقة",
+    "shipping.governorates": "المحافظات",
+    "shipping.cities": "المدن",
+    "shipping.fee": "الرسوم",
+    "shipping.feeModifier": "تعديل الرسوم",
+    "shipping.freeFrom": "مجاني من",
+    "shipping.estimate": "المدة المتوقعة",
+    "shipping.default": "الافتراضي",
+    "shipping.recommended": "موصى به",
+    "shipping.active": "نشط",
+    "shipping.disabled": "معطل",
+    "shipping.noZones": "لا توجد مناطق",
+    "shipping.noMethods": "لا توجد طرق شحن",
+    "shipping.businessDays": "أيام عمل",
+    "shipping.minDays": "الحد الأدنى للأيام",
+    "shipping.maxDays": "الحد الأقصى للأيام",
+    "shipping.commaSeparated": "قيم مفصولة بفواصل",
+    "common.customerNotFound": "العميل غير موجود",
+    "common.customerNotFoundDescription":
+      "العميل الذي تبحث عنه غير موجود أو تم حذفه.",
+    "common.backToCustomers": "العودة إلى العملاء",
+    "common.noOrdersYet": "لا توجد طلبات بعد",
+    "common.noCustomerOrders": "هذا العميل لم يقم بأي طلبات.",
+    "common.statistics": "الإحصائيات",
+    "common.avgOrderValue": "متوسط قيمة الطلب",
+    "common.addresses": "العناوين",
+    "common.default": "افتراضي",
+    "common.noAddresses": "لا توجد عناوين مسجلة.",
+    "common.subtotal": "المجموع الفرعي",
+    "common.shipping": "الشحن",
+    "common.free": "مجاني",
+    "common.discount": "الخصم",
+    "common.status": "الحالة",
+    "common.method": "الطريقة",
+    "common.amount": "المبلغ",
+    "common.reference": "المرجع",
+    "common.paidAt": "تاريخ الدفع",
+    "common.card": "البطاقة",
+    "common.refunds": "المبالغ المستردة",
+    "common.noNotes": "لا توجد ملاحظات",
+    "common.orderCreated": "تم إنشاء الطلب",
+    "common.quantity": "الكمية",
+    "common.emailVerified": "تأكيد البريد",
+    "common.joined": "تاريخ الانضمام",
+    "common.active": "نشط",
+    "common.inactive": "غير نشط",
+    "common.verified": "تم التأكيد",
+    "common.unverified": "غير مؤكد",
+    "common.viewCustomer": "عرض العميل",
+    "common.editCustomer": "تعديل العميل",
+    "common.viewOrder": "عرض الطلب",
+    "common.editOrder": "تعديل الطلب",
+    "common.archiveOrder": "أرشفة الطلب",
+    "common.searchCustomers": "ابحث عن العملاء...",
+    "common.searchProducts": "ابحث عن المنتجات...",
+    "common.searchOrders": "ابحث عن الطلبات...",
+    "common.searchServices": "ابحث عن الخدمات...",
+    "common.searchByCode": "ابحث بالكود...",
+    "common.addCustomer": "إضافة عميل",
+    "common.addProduct": "إضافة منتج",
+    "common.addService": "إضافة خدمة",
+    "common.createOrder": "إنشاء طلب",
+    "common.createCoupon": "إنشاء كوبون",
+    "common.noCustomers": "لا يوجد عملاء",
+    "common.noProducts": "لا توجد منتجات",
+    "common.noOrders": "لا توجد طلبات",
+    "common.noServices": "لا توجد خدمات",
+    "common.noCoupons": "لا توجد كوبونات",
+    "common.edit": "تعديل",
+    "common.save": "حفظ",
+    "common.saveChanges": "حفظ التغييرات",
+    "common.cancel": "إلغاء",
+    "common.delete": "حذف",
+    "common.loading": "جاري التحميل...",
+    "common.editPage": "تعديل الصفحة",
+    "common.title": "العنوان",
+    "common.arabicTitle": "العنوان بالعربية",
+    "common.content": "المحتوى",
+    "common.arabicContent": "المحتوى بالعربية",
+    "common.homePageContent": "محتوى الصفحة الرئيسية",
+    "common.heroHeadline": "عنوان البطل",
+    "common.arabicHeroHeadline": "عنوان البطل بالعربية",
+    "common.heroTagline": "وصف البطل",
+    "common.arabicHeroTagline": "وصف البطل بالعربية",
+    "common.featuredProductsTitle": "عنوان المنتجات المميزة",
+    "common.arabicFeaturedProductsTitle": "عنوان المنتجات المميزة بالعربية",
+    "common.servicesTitle": "عنوان الخدمات",
+    "common.arabicServicesTitle": "عنوان الخدمات بالعربية",
+    "common.whyChooseTitle": "عنوان لماذا تختارنا",
+    "common.arabicWhyChooseTitle": "عنوان لماذا تختارنا بالعربية",
+    "common.testimonialsTitle": "عنوان آراء العملاء",
+    "common.arabicTestimonialsTitle": "عنوان آراء العملاء بالعربية",
+    "common.ctaHeadline": "عنوان الدعوة لاتخاذ إجراء",
+    "common.arabicCtaHeadline": "عنوان الدعوة بالعربية",
+    "common.published": "منشور",
+    "common.draft": "مسودة",
+    "common.publishThisPage": "نشر هذه الصفحة",
+    "common.seoTitle": "عنوان SEO",
+    "common.arabicSeoTitle": "عنوان SEO بالعربية",
+    "common.seoDescription": "وصف SEO",
+    "common.arabicSeoDescription": "وصف SEO بالعربية",
+    "common.pageTitlePlaceholder": "عنوان الصفحة",
+    "common.pageContentPlaceholder": "محتوى الصفحة...",
+    "common.arabicPageTitlePlaceholder": "عنوان الصفحة بالعربية",
+    "common.arabicPageContentPlaceholder": "محتوى الصفحة بالعربية",
+    "common.seoTitlePlaceholder": "عنوان SEO",
+    "common.seoDescriptionPlaceholder": "وصف SEO...",
+    "common.arabicSeoTitlePlaceholder": "عنوان محركات البحث بالعربية",
+    "common.arabicSeoDescriptionPlaceholder": "وصف محركات البحث بالعربية",
+    "common.all": "الكل",
+    "common.pending": "قيد الانتظار",
+    "common.confirmed": "مؤكد",
+    "common.processing": "قيد المعالجة",
+    "common.shipped": "تم الشحن",
+    "common.delivered": "تم التسليم",
+    "common.cancelled": "ملغي",
+    "common.refunded": "مسترد",
+    "common.pendingPayment": "في انتظار الدفع",
+    "common.paid": "مدفوع",
+    "common.failed": "فشل",
+    "common.cashOnDelivery": "الدفع عند الاستلام",
+    "common.creditCard": "بطاقة ائتمان",
+    "common.mobileWallet": "محفظة إلكترونية",
+    "common.installment": "تقسيط",
+    "common.expired": "منتهي",
+    "common.percentage": "نسبة مئوية",
+    "common.fixedAmount": "مبلغ ثابت",
+    "common.installation": "التركيب",
+    "common.maintenance": "الصيانة",
+    "common.repair": "الإصلاح",
+    "common.consultation": "استشارة",
+    "common.deleteCoupon": "حذف الكوبون",
+    "common.deleteService": "حذف الخدمة",
+    "common.deleteCouponConfirm":
+      "هل أنت متأكد أنك تريد حذف هذا الكوبون؟ لا يمكن التراجع عن هذا الإجراء.",
+    "common.deleteServiceConfirm":
+      "هل أنت متأكد أنك تريد حذف هذه الخدمة؟ لا يمكن التراجع عن هذا الإجراء.",
+  },
+} as const;
+
+export type TranslationKey = keyof typeof translations.en;
+
+const legacyLiteralTranslations: Record<string, string> = {
+  Dashboard: "لوحة التحكم",
+  Orders: "الطلبات",
+  Customers: "العملاء",
+  Products: "المنتجات",
+  Services: "الخدمات",
+  Settings: "الإعدادات",
+  Shipping: "الشحن",
+  Testimonials: "آراء العملاء",
+  FAQs: "الأسئلة الشائعة",
+  "Brands & Categories": "العلامات والتصنيفات",
+  "Inquiries & Requests": "الاستفسارات والطلبات",
+  "Coupons & Promos": "الكوبونات والعروض",
+  "Content Pages": "صفحات المحتوى",
+  "Admin Dashboard": "لوحة تحكم الإدارة",
+  "Revenue Today": "إيرادات اليوم",
+  "New Orders Today": "طلبات اليوم الجديدة",
+  "Total Customers": "إجمالي العملاء",
+  "Total Products": "إجمالي المنتجات",
+  "Revenue Overview": "نظرة عامة على الإيرادات",
+  "Quick Overview": "نظرة سريعة",
+  "Pending Orders": "طلبات قيد الانتظار",
+  "Pending Inquiries": "استفسارات قيد الانتظار",
+  "Recent Orders": "أحدث الطلبات",
+  "Latest Inquiries": "أحدث الاستفسارات",
+  "View All": "عرض الكل",
+  "Order ID": "رقم الطلب",
+  Customer: "العميل",
+  Email: "البريد الإلكتروني",
+  Phone: "الهاتف",
+  Type: "النوع",
+  Status: "الحالة",
+  Date: "التاريخ",
+  Message: "الرسالة",
+  Service: "الخدمة",
+  Urgency: "الأولوية",
+  "Unit Brand": "علامة الوحدة",
+  "Additional Notes": "ملاحظات إضافية",
+  "No notes yet.": "لا توجد ملاحظات بعد.",
+  "Write a note...": "اكتب ملاحظة...",
+  "Write a note…": "اكتب ملاحظة...",
+  "Inquiry Details": "تفاصيل الاستفسار",
+  "Service Request Details": "تفاصيل طلب الخدمة",
+  "General Inquiries": "استفسارات عامة",
+  "Service Requests": "طلبات الخدمة",
+  "No inquiries found": "لا توجد استفسارات",
+  "No service requests found": "لا توجد طلبات خدمة",
+  Active: "نشط",
+  Inactive: "غير نشط",
+  Disabled: "معطل",
+  Recommended: "موصى به",
+  "Active zones": "مناطق نشطة",
+  "Shipping methods": "طرق الشحن",
+  "Estimated delivery days": "أيام التسليم المتوقعة",
+  "No zones": "لا توجد مناطق",
+  "No shipping methods": "لا توجد طرق شحن",
+  "Site Settings": "إعدادات الموقع",
+  "Contact Settings": "إعدادات التواصل",
+  "Email Settings": "إعدادات البريد",
+  "SEO Settings": "إعدادات SEO",
+  Site: "الموقع",
+  Contact: "التواصل",
+  "Save Changes": "حفظ التغييرات",
+  English: "الإنجليزية",
+  Arabic: "العربية",
+  "Verification code": "كود التحقق",
+  "e.g. 3-5 business days": "مثال: ٣-٥ أيام عمل",
+  "Create Coupon": "إنشاء كوبون",
+  "Edit Coupon": "تعديل الكوبون",
+  Coupons: "الكوبونات",
+  "Coupon not found": "الكوبون غير موجود",
+  "The coupon you're looking for doesn't exist or has been removed.":
+    "الكوبون الذي تبحث عنه غير موجود أو تم حذفه.",
+  "Not Found": "غير موجود",
+  "Optional description": "وصف اختياري",
+  Percentage: "نسبة مئوية",
+  "Fixed Amount": "مبلغ ثابت",
+  "No limit": "بدون حد",
+  Unlimited: "غير محدود",
+  "Create Order": "إنشاء طلب",
+  "Edit Order": "تعديل الطلب",
+  Create: "إنشاء",
+  Edit: "تعديل",
+  Save: "حفظ",
+  Items: "العناصر",
+  Tracking: "التتبع",
+  "Create Product": "إنشاء منتج",
+  "Edit Product": "تعديل المنتج",
+  "Product not found": "المنتج غير موجود",
+  "The product you're looking for doesn't exist or has been removed.":
+    "المنتج الذي تبحث عنه غير موجود أو تم حذفه.",
+  "Product name": "اسم المنتج",
+  "Product description...": "وصف المنتج...",
+  "Model Number": "رقم الموديل",
+  "Model number": "رقم الموديل",
+  "Product Type": "نوع المنتج",
+  Features: "المميزات",
+  "Feature in English": "الميزة بالإنجليزية",
+  "Key (English)": "المفتاح بالإنجليزية",
+  "Value (English)": "القيمة بالإنجليزية",
+  "e.g. Energy efficient": "مثال: موفر للطاقة",
+  Key: "المفتاح",
+  Value: "القيمة",
+  Images: "الصور",
+  SEO: "تحسين محركات البحث",
+  "SEO title": "عنوان محركات البحث",
+  "SEO description...": "وصف محركات البحث...",
+  "SEO description…": "وصف محركات البحث...",
+  "Select brand": "اختر العلامة",
+  "Select category": "اختر التصنيف",
+  "Create Service": "إنشاء خدمة",
+  "Edit Service": "تعديل الخدمة",
+  "Service not found": "الخدمة غير موجودة",
+  "The service you're looking for doesn't exist or has been removed.":
+    "الخدمة التي تبحث عنها غير موجودة أو تم حذفها.",
+  "Service name": "اسم الخدمة",
+  "Service description...": "وصف الخدمة...",
+  "Select type": "اختر النوع",
+  Pricing: "التسعير",
+  "Describe the scope of work...": "اكتب نطاق العمل...",
+  "Describe the scope of work…": "اكتب نطاق العمل...",
+  "e.g. Split, Cassette, Central": "مثال: سبليت، كاسيت، مركزي",
+  Image: "الصورة",
+  Installation: "التركيب",
+  Maintenance: "الصيانة",
+  Repair: "الإصلاح",
+  Consultation: "استشارة",
+  "Create FAQ": "إنشاء سؤال",
+  "Edit FAQ": "تعديل السؤال",
+  "Delete FAQ": "حذف السؤال",
+  "FAQ not found": "السؤال غير موجود",
+  "The FAQ you're looking for doesn't exist or has been removed.":
+    "السؤال الذي تبحث عنه غير موجود أو تم حذفه.",
+  "Enter the question": "أدخل السؤال",
+  "Enter the answer...": "أدخل الإجابة...",
+  "Publish this FAQ": "نشر هذا السؤال",
+  "Search FAQs...": "ابحث في الأسئلة...",
+  "Search FAQs…": "ابحث في الأسئلة...",
+  "Add FAQ": "إضافة سؤال",
+  "No FAQs found.": "لا توجد أسئلة.",
+  Brands: "العلامات",
+  Categories: "التصنيفات",
+  "Brand name": "اسم العلامة",
+  "Category name": "اسم التصنيف",
+  "Category description...": "وصف التصنيف...",
+  "None (Top-level)": "بدون (مستوى رئيسي)",
+  "Delete Brand": "حذف العلامة",
+  "Delete Category": "حذف التصنيف",
+  "Edit Customer": "تعديل العميل",
+  "Create Customer": "إنشاء عميل",
+  "Customer not found": "العميل غير موجود",
+  "The customer you're looking for doesn't exist or has been removed.":
+    "العميل الذي تبحث عنه غير موجود أو تم حذفه.",
+  "No orders yet": "لا توجد طلبات بعد",
+  "This customer hasn't placed any orders.": "هذا العميل لم يقم بأي طلبات.",
+  Statistics: "الإحصائيات",
+  "Total Orders": "إجمالي الطلبات",
+  "Total Spent": "إجمالي الإنفاق",
+  "Avg. Order Value": "متوسط قيمة الطلب",
+  Addresses: "العناوين",
+  Default: "افتراضي",
+  "No addresses on file.": "لا توجد عناوين مسجلة.",
+  "Order not found": "الطلب غير موجود",
+  "The order you're looking for doesn't exist or has been removed.":
+    "الطلب الذي تبحث عنه غير موجود أو تم حذفه.",
+  "Back to Orders": "العودة إلى الطلبات",
+  "Order Items": "عناصر الطلب",
+  Product: "المنتج",
+  Price: "السعر",
+  Qty: "الكمية",
+  Total: "الإجمالي",
+  Subtotal: "المجموع الفرعي",
+  Free: "مجاني",
+  Discount: "الخصم",
+  "Status Timeline": "تسلسل الحالة",
+  "Customer Info": "بيانات العميل",
+  "Shipping Address": "عنوان الشحن",
+  "Payment Info": "بيانات الدفع",
+  Method: "الطريقة",
+  Amount: "المبلغ",
+  Reference: "المرجع",
+  "Paid At": "تاريخ الدفع",
+  Card: "البطاقة",
+  Refunds: "المبالغ المستردة",
+  "Order Notes": "ملاحظات الطلب",
+  "No notes": "لا توجد ملاحظات",
+  Print: "طباعة",
+  "Update Status": "تحديث الحالة",
+  "Cash On Delivery": "الدفع عند الاستلام",
+  Pending: "قيد الانتظار",
+  Confirmed: "مؤكد",
+  Processing: "قيد المعالجة",
+  Shipped: "تم الشحن",
+  Delivered: "تم التسليم",
+  Cancelled: "ملغي",
+  Refunded: "مسترد",
+  "Pending Payment": "في انتظار الدفع",
+  Paid: "مدفوع",
+  Failed: "فشل",
+  Approve: "اعتماد",
+  Reject: "رفض",
+  Delete: "حذف",
+  "Delete Testimonial": "حذف رأي العميل",
+  "Search products...": "ابحث عن المنتجات...",
+  "Search products…": "ابحث عن المنتجات...",
+  "Search services...": "ابحث عن الخدمات...",
+  "Search services…": "ابحث عن الخدمات...",
+  "Search by code...": "ابحث بالكود...",
+  "Search by code…": "ابحث بالكود...",
+  "Search customers...": "ابحث عن العملاء...",
+  "Search customers…": "ابحث عن العملاء...",
+  "e.g. SUMMER20": "مثال: SUMMER20",
+  "Enter your password": "أدخل كلمة المرور",
+};
+
+const reverseLegacyLiteralTranslations = new Map(
+  Object.entries(legacyLiteralTranslations).map(([english, arabic]) => [
+    arabic,
+    english,
+  ]),
+);
+
+const LanguageContext = createContext<LanguageContextValue | undefined>(
+  undefined,
+);
+
+function getInitialLanguage(): Language {
+  if (typeof window === "undefined") return "en";
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+  return saved === "ar" ? "ar" : "en";
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const dir: "ltr" | "rtl" = language === "ar" ? "rtl" : "ltr";
+
+  const setLanguage = useCallback((nextLanguage: Language) => {
+    setLanguageState(nextLanguage);
+    window.localStorage.setItem(STORAGE_KEY, nextLanguage);
+  }, []);
+
+  const toggleLanguage = useCallback(() => {
+    setLanguage(language === "en" ? "ar" : "en");
+  }, [language, setLanguage]);
+
+  const localize = useCallback(
+    (english?: string | null, arabic?: string | null) => {
+      if (language === "ar") return arabic?.trim() || english?.trim() || "";
+      return english?.trim() || arabic?.trim() || "";
+    },
+    [language],
+  );
+
+  const t = useCallback(
+    (key: string) =>
+      (translations[language] as Record<string, string>)[key] ??
+      (translations.en as Record<string, string>)[key] ??
+      key,
+    [language],
+  );
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = dir;
+  }, [dir, language]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const originals = new WeakMap<Node, string>();
+    const attrNames = ["placeholder", "title", "aria-label"] as const;
+
+    const getParts = (value: string) => {
+      const leading = value.match(/^\s*/)?.[0] ?? "";
+      const trailing = value.match(/\s*$/)?.[0] ?? "";
+      const trimmed = value.trim();
+      return { leading, trailing, trimmed };
+    };
+
+    const getOriginalText = (value: string) => {
+      const { leading, trailing, trimmed } = getParts(value);
+      if (!trimmed) return value;
+      return `${leading}${reverseLegacyLiteralTranslations.get(trimmed) ?? trimmed}${trailing}`;
+    };
+
+    const translateText = (value: string) => {
+      const { leading, trailing, trimmed } = getParts(value);
+      if (!trimmed) return value;
+      return `${leading}${legacyLiteralTranslations[trimmed] ?? trimmed}${trailing}`;
+    };
+
+    const applyTranslations = () => {
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(node) {
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+            if (["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          },
+        },
+      );
+
+      let node = walker.nextNode();
+      while (node) {
+        if (!originals.has(node)) {
+          originals.set(node, getOriginalText(node.textContent ?? ""));
+        }
+        const original = originals.get(node) ?? "";
+        const translated = language === "ar" ? translateText(original) : original;
+        if (node.textContent !== translated) node.textContent = translated;
+        node = walker.nextNode();
+      }
+
+      document.querySelectorAll<HTMLElement>("*").forEach((element) => {
+        attrNames.forEach((attr) => {
+          const value = element.getAttribute(attr);
+          if (!value) return;
+          const key = `data-original-${attr}`;
+          const original = element.getAttribute(key) ?? getOriginalText(value);
+          if (!element.hasAttribute(key)) element.setAttribute(key, original);
+          const translated =
+            language === "ar" ? translateText(original) : original;
+          if (value !== translated) element.setAttribute(attr, translated);
+        });
+      });
+    };
+
+    applyTranslations();
+    const observer = new MutationObserver(applyTranslations);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: [...attrNames],
+    });
+    return () => observer.disconnect();
+  }, [language]);
+
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      toggleLanguage,
+      dir,
+      isRTL: language === "ar",
+      localize,
+      t,
+    }),
+    [dir, language, localize, setLanguage, t, toggleLanguage],
+  );
+
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error("useLanguage must be used within a LanguageProvider");
+  }
+  return context;
+}

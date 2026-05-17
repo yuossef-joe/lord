@@ -6,20 +6,28 @@ import type {
   ServiceRequestStatus,
 } from "@/types";
 
-export function formatCurrency(amount: number): string {
-  return `EGP ${amount.toLocaleString("en-EG", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+export function formatCurrency(amount?: number | string | null): string {
+  const value = Number(amount ?? 0);
+  const safeAmount = Number.isFinite(value) ? value : 0;
+  return `EGP ${safeAmount.toLocaleString("en-EG", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export function formatDate(dateStr: string): string {
-  return format(new Date(dateStr), "MMM d, yyyy");
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "—";
+  return format(date, "MMM d, yyyy");
 }
 
 export function formatDateTime(dateStr: string): string {
-  return format(new Date(dateStr), "MMM d, yyyy h:mm a");
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "—";
+  return format(date, "MMM d, yyyy h:mm a");
 }
 
 export function formatRelativeTime(dateStr: string): string {
-  return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "—";
+  return formatDistanceToNow(date, { addSuffix: true });
 }
 
 export function cn(...classes: (string | undefined | false | null)[]): string {

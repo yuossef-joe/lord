@@ -11,22 +11,28 @@ interface FilterSidebarProps {
   categories: ProductCategory[];
   selectedBrand: string;
   selectedCategory: string;
+  selectedHp: string;
   onBrandChange: (brand: string) => void;
   onCategoryChange: (category: string) => void;
+  onHpChange: (hp: string) => void;
   onClearAll: () => void;
 }
+
+const HP_OPTIONS = ["1", "1.5", "2.25", "3", "4", "5"];
 
 export default function FilterSidebar({
   brands,
   categories,
   selectedBrand,
   selectedCategory,
+  selectedHp,
   onBrandChange,
   onCategoryChange,
+  onHpChange,
   onClearAll,
 }: FilterSidebarProps) {
-  const { t } = useLanguage();
-  const hasActiveFilters = selectedBrand || selectedCategory;
+  const { t, localize } = useLanguage();
+  const hasActiveFilters = selectedBrand || selectedCategory || selectedHp;
 
   return (
     <div className="space-y-6">
@@ -52,8 +58,10 @@ export default function FilterSidebar({
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="inline-flex items-center gap-1 rounded-full bg-lord-teal/10 px-3 py-1 text-xs text-lord-teal"
               >
-                {brands.find((b) => b._id === selectedBrand)?.name ||
-                  selectedBrand}
+                {localize(
+                  brands.find((b) => b._id === selectedBrand)?.name,
+                  brands.find((b) => b._id === selectedBrand)?.nameAr,
+                ) || selectedBrand}
                 <button onClick={() => onBrandChange("")}>
                   <X className="h-3 w-3" />
                 </button>
@@ -66,9 +74,24 @@ export default function FilterSidebar({
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="inline-flex items-center gap-1 rounded-full bg-lord-teal/10 px-3 py-1 text-xs text-lord-teal"
               >
-                {categories.find((c) => c._id === selectedCategory)?.name ||
-                  selectedCategory}
+                {localize(
+                  categories.find((c) => c._id === selectedCategory)?.name,
+                  categories.find((c) => c._id === selectedCategory)?.nameAr,
+                ) || selectedCategory}
                 <button onClick={() => onCategoryChange("")}>
+                  <X className="h-3 w-3" />
+                </button>
+              </motion.span>
+            )}
+            {selectedHp && (
+              <motion.span
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="inline-flex items-center gap-1 rounded-full bg-lord-teal/10 px-3 py-1 text-xs text-lord-teal"
+              >
+                {selectedHp} HP
+                <button onClick={() => onHpChange("")}>
                   <X className="h-3 w-3" />
                 </button>
               </motion.span>
@@ -103,7 +126,29 @@ export default function FilterSidebar({
                   : "text-dark-charcoal hover:bg-off-white"
               }`}
             >
-              {brand.name}
+              {localize(brand.name, brand.nameAr)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Horsepower */}
+      <div>
+        <h4 className="mb-3 text-sm font-semibold text-lord-navy uppercase tracking-wide">
+          Air Conditioner HP
+        </h4>
+        <div className="grid grid-cols-3 gap-2">
+          {HP_OPTIONS.map((hp) => (
+            <button
+              key={hp}
+              onClick={() => onHpChange(selectedHp === hp ? "" : hp)}
+              className={`rounded-button border px-3 py-2 text-sm transition-colors ${
+                selectedHp === hp
+                  ? "border-lord-teal bg-lord-teal/10 text-lord-teal font-medium"
+                  : "border-[#E8EAED] text-dark-charcoal hover:bg-off-white"
+              }`}
+            >
+              {hp} HP
             </button>
           ))}
         </div>
@@ -135,7 +180,7 @@ export default function FilterSidebar({
                   : "text-dark-charcoal hover:bg-off-white"
               }`}
             >
-              {cat.name}
+              {localize(cat.name, cat.nameAr)}
             </button>
           ))}
         </div>

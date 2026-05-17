@@ -11,7 +11,7 @@ interface SpecsTableProps {
 }
 
 export default function SpecsTable({ specifications }: SpecsTableProps) {
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
 
   if (!specifications || specifications.length === 0) return null;
 
@@ -34,10 +34,10 @@ export default function SpecsTable({ specifications }: SpecsTableProps) {
                 className={index % 2 === 0 ? "bg-off-white" : "bg-white"}
               >
                 <td className="px-4 py-3 text-sm font-medium text-lord-navy w-1/3">
-                  {spec.key}
+                  {localize(spec.key, spec.keyAr)}
                 </td>
                 <td className="px-4 py-3 text-sm text-dark-charcoal">
-                  {spec.value}
+                  {localize(spec.value, spec.valueAr)}
                 </td>
               </tr>
             ))}

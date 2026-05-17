@@ -167,7 +167,7 @@ export default function AddressesPage() {
                   {addr.isDefault && (
                     <span className="flex items-center gap-0.5 rounded-full bg-lord-teal/10 px-2 py-0.5 text-[10px] font-medium text-lord-teal">
                       <Star className="h-3 w-3" fill="currentColor" />
-                      Default
+                      {t("account.defaultAddress")}
                     </span>
                   )}
                 </div>
@@ -176,7 +176,7 @@ export default function AddressesPage() {
                     onClick={() => openEdit(addr)}
                     className="rounded p-1 text-medium-gray hover:bg-off-white hover:text-lord-navy transition-colors"
                   >
-                    Edit
+                    {t("general.edit")}
                   </button>
                   <button
                     onClick={() => handleDelete(addr._id)}
@@ -244,20 +244,20 @@ export default function AddressesPage() {
                   >
                     <div>
                       <label className="mb-1 block text-sm font-medium text-lord-navy">
-                        Label *
+                        {t("account.label")} *
                       </label>
                       <select
                         {...form.register("label")}
                         className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
                       >
-                        <option value="home">Home</option>
-                        <option value="office">Office</option>
-                        <option value="other">Other</option>
+                        <option value="home">{t("account.home")}</option>
+                        <option value="office">{t("account.office")}</option>
+                        <option value="other">{t("general.other")}</option>
                       </select>
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-lord-navy">
-                        Recipient Name *
+                        {t("account.recipientName")} *
                       </label>
                       <input
                         {...form.register("recipientName")}
@@ -271,7 +271,7 @@ export default function AddressesPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-lord-navy">
-                        Address Line 1 *
+                        {t("checkout.addressLine1")} *
                       </label>
                       <input
                         {...form.register("addressLine1")}
@@ -285,7 +285,7 @@ export default function AddressesPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-lord-navy">
-                        Address Line 2
+                        {t("checkout.addressLine2")}
                       </label>
                       <input
                         {...form.register("addressLine2")}
@@ -295,7 +295,7 @@ export default function AddressesPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-medium text-lord-navy">
-                          City *
+                          {t("checkout.city")} *
                         </label>
                         <input
                           {...form.register("city")}
@@ -309,13 +309,13 @@ export default function AddressesPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-sm font-medium text-lord-navy">
-                          Governorate *
+                          {t("checkout.governorate")} *
                         </label>
                         <select
                           {...form.register("governorate")}
                           className="w-full rounded-button border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus:border-lord-teal focus:outline-none focus:ring-1 focus:ring-lord-teal"
                         >
-                          <option value="">Select</option>
+                          <option value="">{t("general.select")}</option>
                           {EGYPTIAN_GOVERNORATES.map((g) => (
                             <option key={g} value={g}>
                               {g}
@@ -327,7 +327,7 @@ export default function AddressesPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-medium text-lord-navy">
-                          Phone *
+                          {t("checkout.phone")} *
                         </label>
                         <input
                           {...form.register("phone")}
@@ -342,7 +342,7 @@ export default function AddressesPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-sm font-medium text-lord-navy">
-                          Postal Code
+                          {t("account.postalCode")}
                         </label>
                         <input
                           {...form.register("postalCode")}
@@ -357,7 +357,7 @@ export default function AddressesPage() {
                         className="accent-lord-teal"
                       />
                       <span className="text-sm text-dark-charcoal">
-                        Set as default address
+                        {t("account.setDefaultAddress")}
                       </span>
                     </label>
                     <Button

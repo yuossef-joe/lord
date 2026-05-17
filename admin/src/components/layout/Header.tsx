@@ -1,6 +1,7 @@
 import { Bell, ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getInitials } from "@/lib/utils";
+import LanguageSwitch from "@/components/common/LanguageSwitch";
 
 interface HeaderProps {
   pageTitle: string;
@@ -16,6 +17,8 @@ export default function Header({ pageTitle }: HeaderProps) {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-4">
+        <LanguageSwitch />
+
         {/* Notification Bell */}
         <button
           type="button"

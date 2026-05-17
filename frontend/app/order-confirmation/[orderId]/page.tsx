@@ -52,7 +52,9 @@ export default function OrderConfirmationPage() {
   if (!order) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <p className="text-lg font-semibold text-lord-navy">Order not found</p>
+        <p className="text-lg font-semibold text-lord-navy">
+          {t("order.notFound")}
+        </p>
       </div>
     );
   }
@@ -198,7 +200,9 @@ export default function OrderConfirmationPage() {
                 {t("checkout.payment")}
               </h3>
             </div>
-            <p className="text-sm text-dark-charcoal">Paymob Accept</p>
+            <p className="text-sm text-dark-charcoal">
+              {t("checkout.paymobAccept")}
+            </p>
           </motion.div>
         </motion.div>
 

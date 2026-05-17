@@ -19,51 +19,19 @@ const iconMap: Record<string, React.ReactNode> = {
   delivery: <Truck className="h-12 w-12" />,
 };
 
-const defaultServices = [
-  {
-    name: "Installation",
-    slug: "installation",
-    description: "Professional AC installation by certified technicians",
-  },
-  {
-    name: "Maintenance",
-    slug: "maintenance",
-    description: "Periodic maintenance to keep your AC running efficiently",
-  },
-  {
-    name: "Repair",
-    slug: "repair",
-    description: "Emergency and scheduled repair services",
-  },
-  {
-    name: "Spare Parts",
-    slug: "spare-parts",
-    description: "Genuine spare parts for all supported brands",
-  },
-  {
-    name: "Delivery",
-    slug: "delivery",
-    description: "Safe and timely delivery to your doorstep",
-  },
-];
+interface ServicesOverviewProps {
+  title?: string;
+}
 
-export default function ServicesOverview() {
-  const { t } = useLanguage();
-  const [services, setServices] = useState(defaultServices);
+export default function ServicesOverview({ title }: ServicesOverviewProps) {
+  const { t, localize } = useLanguage();
+  const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
     fetchServices()
       .then((data: unknown) => {
         const res = data as { data: Service[] };
-        if (res.data?.length) {
-          setServices(
-            res.data.map((s) => ({
-              name: s.name,
-              slug: s.slug,
-              description: s.shortDescription || s.description,
-            })),
-          );
-        }
+        setServices(res.data ?? []);
       })
       .catch(() => {});
   }, []);
@@ -73,7 +41,7 @@ export default function ServicesOverview() {
       <div className="mx-auto max-w-container px-4 md:px-6">
         <ScrollReveal>
           <h2 className="mb-10 text-center text-3xl font-bold text-lord-navy md:text-4xl">
-            {t("home.services.title")}
+            {title || t("home.services.title")}
           </h2>
         </ScrollReveal>
 
@@ -84,32 +52,43 @@ export default function ServicesOverview() {
           viewport={{ once: true, amount: 0.1 }}
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5"
         >
-          {services.map((service) => (
-            <motion.div key={service.slug} variants={staggerItem}>
-              <Card className="flex flex-col items-center text-center h-full">
-                <motion.div
-                  whileInView={{ rotate: [0, -10, 10, 0] }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  className="mb-4 text-lord-teal"
-                >
-                  {iconMap[service.slug] || <Settings className="h-12 w-12" />}
-                </motion.div>
-                <h3 className="mb-2 text-lg font-semibold text-lord-navy">
-                  {service.name}
-                </h3>
-                <p className="mb-4 text-sm text-medium-gray line-clamp-2 flex-1">
-                  {service.description}
-                </p>
-                <Link
-                  href={`/services`}
-                  className="text-sm font-medium text-lord-teal hover:underline"
-                >
-                  {t("home.services.learnMore")} →
-                </Link>
-              </Card>
-            </motion.div>
-          ))}
+          {services.map((service) => {
+            const serviceSlug = service.serviceType?.slug || service.slug;
+            const serviceName = localize(service.name, service.nameAr);
+            const serviceDescription = localize(
+              service.shortDescription || service.description,
+              service.shortDescriptionAr || service.descriptionAr,
+            );
+
+            return (
+              <motion.div key={service.slug} variants={staggerItem}>
+                <Card className="flex flex-col items-center text-center h-full">
+                  <motion.div
+                    whileInView={{ rotate: [0, -10, 10, 0] }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="mb-4 text-lord-teal"
+                  >
+                    {iconMap[serviceSlug] || (
+                      <Settings className="h-12 w-12" />
+                    )}
+                  </motion.div>
+                  <h3 className="mb-2 text-lg font-semibold text-lord-navy">
+                    {serviceName}
+                  </h3>
+                  <p className="mb-4 text-sm text-medium-gray line-clamp-2 flex-1">
+                    {serviceDescription}
+                  </p>
+                  <Link
+                    href={`/services`}
+                    className="text-sm font-medium text-lord-teal hover:underline"
+                  >
+                    {t("home.services.learnMore")} →
+                  </Link>
+                </Card>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>

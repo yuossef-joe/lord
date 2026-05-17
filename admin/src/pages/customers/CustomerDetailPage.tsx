@@ -1,14 +1,16 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ShoppingBag, MapPin, User, BarChart3 } from "lucide-react";
-import { MOCK_CUSTOMERS, MOCK_ORDERS } from "@/lib/mock-data";
+import type { Customer, Order } from "@/types";
+import { fetchCustomer, fetchOrders } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Card from "@/components/common/Card";
 import Badge from "@/components/common/Badge";
 import StatusBadge from "@/components/common/StatusBadge";
 import EmptyState from "@/components/common/EmptyState";
+import { useLanguage } from "@/context/LanguageContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,28 +31,42 @@ function maskNationalId(id: string): string {
 }
 
 export default function CustomerDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const customer = useMemo(() => MOCK_CUSTOMERS.find((c) => c.id === id), [id]);
+  useEffect(() => {
+    if (!id) return;
+    void Promise.all([fetchCustomer(id), fetchOrders(`customerId=${id}`)])
+      .then(([customerResponse, ordersResponse]) => {
+        setCustomer(customerResponse.data);
+        setOrders(ordersResponse.data);
+      })
+      .finally(() => setIsLoading(false));
+  }, [id]);
 
   const customerOrders = useMemo(() => {
     if (!customer) return [];
-    return MOCK_ORDERS.filter((order) => order.customer.name === customer.name);
-  }, [customer]);
+    return orders.filter((order) => order.customer?.id === customer.id);
+  }, [customer, orders]);
+
+  if (isLoading) return null;
 
   if (!customer) {
     return (
       <div className="py-20">
         <EmptyState
           icon={<User size={28} />}
-          title="Customer not found"
-          description="The customer you're looking for doesn't exist or has been removed."
+          title={t("common.customerNotFound")}
+          description={t("common.customerNotFoundDescription")}
           action={
             <Link
               to="/customers"
               className="text-teal font-medium hover:underline"
             >
-              ← Back to Customers
+              ← {t("common.backToCustomers")}
             </Link>
           }
         />
@@ -66,8 +82,8 @@ export default function CustomerDetailPage() {
       <motion.div variants={itemVariants}>
         <Breadcrumb
           items={[
-            { label: "Dashboard", href: "/" },
-            { label: "Customers", href: "/customers" },
+            { label: t("common.dashboard"), href: "/" },
+            { label: t("common.customers"), href: "/customers" },
             { label: customer.name },
           ]}
         />
@@ -80,14 +96,14 @@ export default function CustomerDetailPage() {
       >
         <h1 className="text-2xl font-bold text-navy">{customer.name}</h1>
         {customer.isActive ? (
-          <Badge variant="success">Active</Badge>
+          <Badge variant="success">{t("common.active")}</Badge>
         ) : (
-          <Badge variant="danger">Inactive</Badge>
+          <Badge variant="danger">{t("common.inactive")}</Badge>
         )}
         {customer.emailVerified ? (
-          <Badge variant="success">Verified</Badge>
+          <Badge variant="success">{t("common.verified")}</Badge>
         ) : (
-          <Badge variant="warning">Unverified</Badge>
+          <Badge variant="warning">{t("common.unverified")}</Badge>
         )}
       </motion.div>
 
@@ -101,13 +117,13 @@ export default function CustomerDetailPage() {
               <div className="flex items-center gap-2 mb-4">
                 <User size={18} className="text-teal" />
                 <h2 className="text-lg font-semibold text-navy">
-                  Customer Info
+                  {t("common.customerInfo")}
                 </h2>
               </div>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
+                    {t("common.name")}
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {customer.name}
@@ -115,7 +131,7 @@ export default function CustomerDetailPage() {
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
+                    {t("common.email")}
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {customer.email}
@@ -123,7 +139,7 @@ export default function CustomerDetailPage() {
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
+                    {t("common.phone")}
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {customer.phone}
@@ -132,7 +148,7 @@ export default function CustomerDetailPage() {
                 {customer.nationalId && (
                   <div>
                     <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      National ID
+                      {t("common.nationalId")}
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 font-mono">
                       {maskNationalId(customer.nationalId)}
@@ -141,7 +157,7 @@ export default function CustomerDetailPage() {
                 )}
                 <div>
                   <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
+                    {t("common.joined")}
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {formatDate(customer.createdAt)}
@@ -157,7 +173,7 @@ export default function CustomerDetailPage() {
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingBag size={18} className="text-teal" />
                 <h2 className="text-lg font-semibold text-navy">
-                  Order History
+                  {t("common.orderHistory")}
                 </h2>
               </div>
 
@@ -167,16 +183,16 @@ export default function CustomerDetailPage() {
                     <thead className="bg-gray-50 border-y border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Order #
+                          {t("common.orderNumber")}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total
+                          {t("common.total")}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
+                          {t("common.status")}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
+                          {t("common.date")}
                         </th>
                       </tr>
                     </thead>
@@ -211,8 +227,8 @@ export default function CustomerDetailPage() {
               ) : (
                 <EmptyState
                   icon={<ShoppingBag size={28} />}
-                  title="No orders yet"
-                  description="This customer hasn't placed any orders."
+                  title={t("common.noOrdersYet")}
+                  description={t("common.noCustomerOrders")}
                 />
               )}
             </Card>
@@ -226,23 +242,31 @@ export default function CustomerDetailPage() {
             <Card>
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 size={18} className="text-teal" />
-                <h2 className="text-lg font-semibold text-navy">Statistics</h2>
+                <h2 className="text-lg font-semibold text-navy">
+                  {t("common.statistics")}
+                </h2>
               </div>
               <dl className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <dt className="text-sm text-gray-500">Total Orders</dt>
+                  <dt className="text-sm text-gray-500">
+                    {t("common.totalOrders")}
+                  </dt>
                   <dd className="text-sm font-semibold text-gray-900">
                     {customer.ordersCount}
                   </dd>
                 </div>
                 <div className="flex justify-between items-center">
-                  <dt className="text-sm text-gray-500">Total Spent</dt>
+                  <dt className="text-sm text-gray-500">
+                    {t("common.totalSpent")}
+                  </dt>
                   <dd className="text-sm font-semibold text-gray-900">
                     {formatCurrency(customer.totalSpent)}
                   </dd>
                 </div>
                 <div className="flex justify-between items-center">
-                  <dt className="text-sm text-gray-500">Avg. Order Value</dt>
+                  <dt className="text-sm text-gray-500">
+                    {t("common.avgOrderValue")}
+                  </dt>
                   <dd className="text-sm font-semibold text-gray-900">
                     {formatCurrency(averageOrderValue)}
                   </dd>
@@ -256,7 +280,9 @@ export default function CustomerDetailPage() {
             <Card>
               <div className="flex items-center gap-2 mb-4">
                 <MapPin size={18} className="text-teal" />
-                <h2 className="text-lg font-semibold text-navy">Addresses</h2>
+                <h2 className="text-lg font-semibold text-navy">
+                  {t("common.addresses")}
+                </h2>
               </div>
 
               {customer.addresses.length > 0 ? (
@@ -271,7 +297,7 @@ export default function CustomerDetailPage() {
                           {address.recipientName}
                         </span>
                         {address.isDefault && (
-                          <Badge variant="info">Default</Badge>
+                          <Badge variant="info">{t("common.default")}</Badge>
                         )}
                       </div>
                       <div className="text-sm text-gray-600 space-y-0.5">
@@ -288,7 +314,7 @@ export default function CustomerDetailPage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No addresses on file.
+                  {t("common.noAddresses")}
                 </p>
               )}
             </Card>

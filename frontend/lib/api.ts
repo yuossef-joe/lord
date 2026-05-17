@@ -1,40 +1,98 @@
-import {
-  MOCK_PRODUCTS,
-  MOCK_BRANDS,
-  MOCK_CATEGORIES,
-  MOCK_SERVICES,
-  MOCK_TESTIMONIALS,
-  MOCK_FAQS,
-  MOCK_CONTACT_SETTINGS,
-  MOCK_ABOUT_CONTENT,
-  MOCK_SITE_SETTINGS,
-  MOCK_SHIPPING_SETTINGS,
-  MOCK_HOME_CONTENT,
-  MOCK_CUSTOMER,
-  MOCK_ADDRESSES,
-  MOCK_ORDERS,
-} from "./mock-data";
+import type { Product } from "@/types/product";
+import type { Order } from "@/types/order";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const PRODUCTION_API_BASE_URL = "https://lord-backend.vercel.app/api";
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+function getApiBaseUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (!configuredUrl) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    !["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    /localhost|127\.0\.0\.1/.test(configuredUrl)
+  ) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  return configuredUrl;
+}
+
+function normalizeProduct(product: Record<string, unknown>): Product {
+  return {
+    ...product,
+    _id: product._id ?? product.id,
+    salePrice: product.salePrice ?? product.originalPrice,
+    specifications: product.specifications ?? product.specs ?? [],
+  } as unknown as Product;
+}
+
+function normalizeStatus(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/-/g, "_");
+}
+
+function normalizeOrder(order: Record<string, unknown>): Order {
+  const items = Array.isArray(order.items)
+    ? (order.items as Order["items"])
+    : [];
+  const payments = Array.isArray(order.payments)
+    ? (order.payments as Array<Record<string, unknown>>)
+    : [];
+  const firstPayment = payments[0];
+
+  return {
+    ...(order as unknown as Order),
+    _id: String(order._id ?? order.id ?? ""),
+    items,
+    subtotal: Number(order.subtotal ?? 0),
+    shipping: Number(order.shipping ?? order.shippingFee ?? 0),
+    discount: Number(order.discount ?? order.discountAmount ?? 0),
+    total: Number(order.total ?? 0),
+    status: normalizeStatus(
+      order.status ?? order.orderStatus,
+    ) as Order["status"],
+    payment: {
+      ...((order.payment as Order["payment"] | undefined) ?? {}),
+      method: normalizeStatus(
+        firstPayment?.paymentMethod ?? "card",
+      ) as Order["payment"]["method"],
+      amount: Number(firstPayment?.amount ?? order.total ?? 0),
+    },
+    statusHistory: Array.isArray(order.statusHistory)
+      ? order.statusHistory.map((entry) => {
+          const historyEntry = entry as Record<string, unknown>;
+          return {
+            status: normalizeStatus(
+              historyEntry.status ?? historyEntry.newStatus,
+            ) as Order["status"],
+            note:
+              historyEntry.note == null ? undefined : String(historyEntry.note),
+            timestamp: String(
+              historyEntry.timestamp ?? historyEntry.createdAt ?? "",
+            ),
+          };
+        })
+      : [],
+  };
+}
 
 async function apiRequest<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
-  if (USE_MOCK) {
-    throw new Error("MOCK_MODE");
-  }
-
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("customerToken")
       : null;
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${getApiBaseUrl()}${endpoint}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -59,524 +117,194 @@ async function apiRequest<T>(
   return res.json();
 }
 
-// ─── Mock-aware wrapper ──────────────────────────────────
-async function withMock<T>(
-  apiFn: () => Promise<T>,
-  mockFn: () => T,
-): Promise<T> {
-  if (USE_MOCK) return mockFn();
-  try {
-    return await apiFn();
-  } catch {
-    if (typeof window !== "undefined") {
-      console.warn("[Lord API] Backend unreachable, using mock data");
-    }
-    return mockFn();
-  }
-}
-
-// ─── Public endpoints ────────────────────────────────────
-export const fetchHomeContent = () =>
-  withMock(
-    () => apiRequest("/content/home"),
-    () => ({ data: MOCK_HOME_CONTENT }) as never,
+export const fetchHomeContent = () => apiRequest("/content/home");
+export const fetchContentPage = (pageKey: string) =>
+  apiRequest(`/content/${pageKey}`);
+export const fetchProducts = async (params: string) => {
+  const response = await apiRequest<{ data: Array<Record<string, unknown>> }>(
+    `/products?${params}`,
   );
-
-export const fetchProducts = (params: string) =>
-  withMock(
-    () => apiRequest(`/products?${params}`),
-    () => {
-      const url = new URLSearchParams(params);
-      let items = [...MOCK_PRODUCTS];
-      const brand = url.get("brand");
-      const category = url.get("category");
-      const search = url.get("search");
-      const featured = url.get("featured");
-      const sort = url.get("sort");
-      const page = parseInt(url.get("page") || "1");
-      const limit = parseInt(url.get("limit") || "12");
-
-      if (featured === "true") items = items.filter((p) => p.isFeatured);
-      if (brand)
-        items = items.filter(
-          (p) => p.brand._id === brand || p.brand.slug === brand,
-        );
-      if (category)
-        items = items.filter(
-          (p) => p.category._id === category || p.category.slug === category,
-        );
-      if (search) {
-        const q = search.toLowerCase();
-        items = items.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.description.toLowerCase().includes(q) ||
-            p.modelNumber.toLowerCase().includes(q),
-        );
-      }
-      if (sort === "price_asc")
-        items.sort(
-          (a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price),
-        );
-      else if (sort === "price_desc")
-        items.sort(
-          (a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price),
-        );
-      else if (sort === "newest")
-        items.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-
-      const total = items.length;
-      const totalPages = Math.ceil(total / limit);
-      const paged = items.slice((page - 1) * limit, page * limit);
-
-      return {
-        data: paged,
-        pagination: { page, limit, total, totalPages },
-      } as never;
-    },
+  return {
+    ...response,
+    data: (response.data ?? []).map(normalizeProduct),
+  };
+};
+export const fetchProductBySlug = async (slug: string) => {
+  const response = await apiRequest<{ data: Record<string, unknown> }>(
+    `/products/${slug}`,
   );
-
-export const fetchProductBySlug = (slug: string) =>
-  withMock(
-    () => apiRequest(`/products/${slug}`),
-    () => {
-      const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
-      if (!product) throw new Error("Product not found");
-      return { data: product } as never;
-    },
+  return {
+    ...response,
+    data: normalizeProduct(response.data),
+  };
+};
+export const fetchRelatedProducts = async (slug: string) => {
+  const response = await apiRequest<{ data: Array<Record<string, unknown>> }>(
+    `/products/${slug}/related?limit=4`,
   );
-
-export const fetchRelatedProducts = (slug: string) =>
-  withMock(
-    () => apiRequest(`/products/${slug}/related?limit=4`),
-    () => {
-      const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
-      const related = MOCK_PRODUCTS.filter(
-        (p) =>
-          p.slug !== slug &&
-          (p.brand._id === product?.brand._id ||
-            p.category._id === product?.category._id),
-      ).slice(0, 4);
-      return { data: related } as never;
-    },
-  );
-
-export const fetchBrands = () =>
-  withMock(
-    () => apiRequest("/brands"),
-    () => ({ data: MOCK_BRANDS }) as never,
-  );
-
-export const fetchProductCategories = () =>
-  withMock(
-    () => apiRequest("/product-categories"),
-    () => ({ data: MOCK_CATEGORIES }) as never,
-  );
-
+  return {
+    ...response,
+    data: (response.data ?? []).map(normalizeProduct),
+  };
+};
+export const fetchBrands = () => apiRequest("/brands");
+export const fetchProductCategories = () => apiRequest("/product-categories");
 export const fetchServices = () =>
-  withMock(
-    () => apiRequest("/services?active=true"),
-    () => ({ data: MOCK_SERVICES }) as never,
-  );
-
+  apiRequest(`/services?active=true&_=${Date.now()}`);
 export const fetchServiceBySlug = (slug: string) =>
-  withMock(
-    () => apiRequest(`/services/${slug}`),
-    () => {
-      const svc = MOCK_SERVICES.find((s) => s.slug === slug);
-      return { data: svc } as never;
-    },
-  );
-
-export const fetchServiceTypes = () =>
-  withMock(
-    () => apiRequest("/service-types"),
-    () =>
-      ({
-        data: MOCK_SERVICES.map((s) => ({ _id: s._id, name: s.name })),
-      }) as never,
-  );
-
-export const fetchAboutContent = () =>
-  withMock(
-    () => apiRequest("/content/about"),
-    () => ({ data: MOCK_ABOUT_CONTENT }) as never,
-  );
+  apiRequest(`/services/${slug}`);
+export const fetchServiceTypes = () => apiRequest("/service-types");
+export const fetchAboutContent = () => apiRequest("/content/about");
 export const fetchAbout = fetchAboutContent;
-
 export const fetchTestimonials = () =>
-  withMock(
-    () => apiRequest("/testimonials?approved=true&featured=true"),
-    () => ({ data: MOCK_TESTIMONIALS }) as never,
-  );
+  apiRequest("/testimonials?approved=true&featured=true");
 export const fetchFaqs = (category?: string) =>
-  withMock(
-    () =>
-      apiRequest(`/faqs?active=true${category ? `&category=${category}` : ""}`),
-    () => {
-      const items = category
-        ? MOCK_FAQS.filter((f) => f.category === category)
-        : MOCK_FAQS;
-      return { data: items } as never;
-    },
-  );
+  apiRequest(`/faqs?active=true${category ? `&category=${category}` : ""}`);
+export const fetchContactSettings = () => apiRequest("/settings/contact");
+export const fetchSiteSettings = () => apiRequest("/settings/site");
+export const fetchShippingSettings = () => apiRequest("/settings/shipping");
+export const fetchShippingOptions = (params: string) =>
+  apiRequest(`/shipping/options?${params}`);
 
-export const fetchContactSettings = () =>
-  withMock(
-    () => apiRequest("/settings/contact"),
-    () => ({ data: MOCK_CONTACT_SETTINGS }) as never,
-  );
-
-export const fetchSiteSettings = () =>
-  withMock(
-    () => apiRequest("/settings/site"),
-    () => ({ data: MOCK_SITE_SETTINGS }) as never,
-  );
-
-export const fetchShippingSettings = () =>
-  withMock(
-    () => apiRequest("/settings/shipping"),
-    () => ({ data: MOCK_SHIPPING_SETTINGS }) as never,
-  );
-
-// ─── Inquiry & service request endpoints ─────────────────
 export const submitContactForm = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/inquiries/contact", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () => ({ success: true, message: "Mock: contact form submitted" }) as never,
-  );
+  apiRequest("/inquiries/contact", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 export const submitInquiry = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/inquiries", { method: "POST", body: JSON.stringify(data) }),
-    () => ({ success: true, message: "Mock: inquiry submitted" }) as never,
-  );
+  apiRequest("/inquiries", { method: "POST", body: JSON.stringify(data) });
 export const submitServiceRequest = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/service-requests", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () =>
-      ({ success: true, message: "Mock: service request submitted" }) as never,
-  );
+  apiRequest("/service-requests", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 
-// ─── Cart endpoints ──────────────────────────────────────
-export const fetchCart = () =>
-  withMock(
-    () => apiRequest("/cart"),
-    () =>
-      ({
-        data: {
-          _id: "cart-mock",
-          items: [],
-          itemCount: 0,
-          subtotal: 0,
-          shipping: 0,
-          discount: 0,
-          total: 0,
-        },
-      }) as never,
-  );
+export const fetchCart = () => apiRequest("/cart");
 export const addToCart = (productId: string, quantity: number) =>
-  withMock(
-    () =>
-      apiRequest("/cart/items", {
-        method: "POST",
-        body: JSON.stringify({ productId, quantity }),
-      }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest("/cart/items", {
+    method: "POST",
+    body: JSON.stringify({ productId, quantity }),
+  });
 export const updateCartItem = (itemId: string, quantity: number) =>
-  withMock(
-    () =>
-      apiRequest(`/cart/items/${itemId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ quantity }),
-      }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest(`/cart/items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ quantity }),
+  });
 export const removeCartItem = (itemId: string) =>
-  withMock(
-    () => apiRequest(`/cart/items/${itemId}`, { method: "DELETE" }),
-    () => ({ success: true }) as never,
-  );
-export const clearServerCart = () =>
-  withMock(
-    () => apiRequest("/cart", { method: "DELETE" }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest(`/cart/items/${itemId}`, { method: "DELETE" });
+export const clearServerCart = () => apiRequest("/cart", { method: "DELETE" });
 export const applyCouponApi = (code: string) =>
-  withMock(
-    () =>
-      apiRequest("/cart/coupon", {
-        method: "POST",
-        body: JSON.stringify({ code }),
-      }),
-    () => ({ data: { discount: 500, code } }) as never,
-  );
-export const removeCouponApi = () =>
-  withMock(
-    () => apiRequest("/cart/coupon", { method: "DELETE" }),
-    () => ({ success: true }) as never,
-  );
-export const mergeCart = () =>
-  withMock(
-    () => apiRequest("/cart/merge", { method: "POST" }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest("/coupons/validate", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+export const mergeCart = () => apiRequest("/cart/merge", { method: "POST" });
 
-// ─── Customer auth endpoints ─────────────────────────────
 export const registerCustomer = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () =>
-      ({
-        success: true,
-        message: "Mock: registration successful. Check email for OTP.",
-      }) as never,
-  );
+  apiRequest("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 export const verifyEmail = (data: { email: string; otp: string }) =>
-  withMock(
-    () =>
-      apiRequest("/auth/verify-email", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () =>
-      ({
-        success: true,
-        data: {
-          tokens: { accessToken: "mock-token", refreshToken: "mock-refresh" },
-          customer: MOCK_CUSTOMER,
-        },
-      }) as never,
-  );
+  apiRequest("/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 export const resendOtp = (email: string) =>
-  withMock(
-    () =>
-      apiRequest("/auth/resend-otp", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest("/auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 export const loginCustomer = (email: string, password: string) =>
-  withMock(
-    () =>
-      apiRequest("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      }),
-    () =>
-      ({
-        data: {
-          tokens: { accessToken: "mock-token", refreshToken: "mock-refresh" },
-          customer: MOCK_CUSTOMER,
-        },
-      }) as never,
-  );
+  apiRequest("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 export const logoutCustomer = () =>
-  withMock(
-    () => apiRequest("/auth/logout", { method: "POST" }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest("/auth/logout", { method: "POST" });
 export const refreshTokenApi = (refreshToken: string) =>
-  withMock(
-    () =>
-      apiRequest("/auth/refresh", {
-        method: "POST",
-        body: JSON.stringify({ refreshToken }),
-      }),
-    () =>
-      ({
-        data: {
-          accessToken: "mock-token-new",
-          refreshToken: "mock-refresh-new",
-        },
-      }) as never,
-  );
+  apiRequest("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
 export const forgotPassword = (email: string) =>
-  withMock(
-    () =>
-      apiRequest("/auth/forgot-password", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      }),
-    () => ({ success: true, message: "Mock: OTP sent to email" }) as never,
-  );
+  apiRequest("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 export const resetPassword = (data: {
   email: string;
   otp: string;
   newPassword: string;
 }) =>
-  withMock(
-    () =>
-      apiRequest("/auth/reset-password", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 
-// ─── Customer account endpoints ──────────────────────────
-export const fetchProfile = () =>
-  withMock(
-    () => apiRequest("/account/profile"),
-    () => ({ data: MOCK_CUSTOMER }) as never,
-  );
+export const fetchProfile = () => apiRequest("/account/profile");
 export const updateProfile = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/account/profile", {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      }),
-    () => ({ data: { ...MOCK_CUSTOMER, ...data } }) as never,
-  );
+  apiRequest("/account/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 export const updateCustomerProfile = updateProfile;
 export const changePassword = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/account/change-password", {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      }),
-    () => ({ success: true }) as never,
-  );
-export const fetchAddresses = () =>
-  withMock(
-    () => apiRequest("/account/addresses"),
-    () => ({ data: MOCK_ADDRESSES }) as never,
-  );
+  apiRequest("/account/change-password", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+export const fetchAddresses = () => apiRequest("/account/addresses");
 export const fetchCustomerAddresses = fetchAddresses;
 export const addAddress = (data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest("/account/addresses", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    () =>
-      ({
-        data: { _id: `addr-${Date.now()}`, ...data, isDefault: false },
-      }) as never,
-  );
+  apiRequest("/account/addresses", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 export const addCustomerAddress = addAddress;
 export const updateAddress = (id: string, data: Record<string, unknown>) =>
-  withMock(
-    () =>
-      apiRequest(`/account/addresses/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      }),
-    () => ({ data: { _id: id, ...data } }) as never,
-  );
+  apiRequest(`/account/addresses/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 export const updateCustomerAddress = updateAddress;
 export const deleteAddress = (id: string) =>
-  withMock(
-    () => apiRequest(`/account/addresses/${id}`, { method: "DELETE" }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest(`/account/addresses/${id}`, { method: "DELETE" });
 export const deleteCustomerAddress = deleteAddress;
 export const setDefaultAddress = (id: string) =>
-  withMock(
-    () => apiRequest(`/account/addresses/${id}/default`, { method: "PATCH" }),
-    () => ({ success: true }) as never,
+  apiRequest(`/account/addresses/${id}/default`, { method: "PATCH" });
+export const fetchOrders = async (params?: string) => {
+  const response = await apiRequest<{ data: Array<Record<string, unknown>> }>(
+    `/account/orders${params || ""}`,
   );
-export const fetchOrders = (params?: string) =>
-  withMock(
-    () => apiRequest(`/account/orders${params || ""}`),
-    () =>
-      ({
-        data: MOCK_ORDERS,
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: MOCK_ORDERS.length,
-          totalPages: 1,
-        },
-      }) as never,
-  );
+  return {
+    ...response,
+    data: (response.data ?? []).map(normalizeOrder),
+  };
+};
 export const fetchCustomerOrders = fetchOrders;
-export const fetchOrderDetail = (id: string) =>
-  withMock(
-    () => apiRequest(`/account/orders/${id}`),
-    () => {
-      const order = MOCK_ORDERS.find(
-        (o) => o._id === id || o.orderNumber === id,
-      );
-      if (!order) throw new Error("Order not found");
-      return { data: order } as never;
-    },
+export const fetchOrderDetail = async (id: string) => {
+  const response = await apiRequest<{ data: Record<string, unknown> }>(
+    `/account/orders/${id}`,
   );
+  return {
+    ...response,
+    data: normalizeOrder(response.data),
+  };
+};
 export const cancelOrder = (id: string) =>
-  withMock(
-    () => apiRequest(`/account/orders/${id}/cancel`, { method: "POST" }),
-    () => ({ success: true }) as never,
-  );
+  apiRequest(`/account/orders/${id}/cancel`, { method: "POST" });
 
-// ─── Checkout & payment endpoints ────────────────────────
 export const createOrder = (data: Record<string, unknown>) =>
-  withMock(
-    () => apiRequest("/orders", { method: "POST", body: JSON.stringify(data) }),
-    () =>
-      ({
-        data: {
-          ...MOCK_ORDERS[0],
-          _id: `order-${Date.now()}`,
-          orderNumber: `ORD-${Date.now()}`,
-        },
-      }) as never,
-  );
+  apiRequest("/orders", { method: "POST", body: JSON.stringify(data) });
 export const initiatePayment = (orderId: string) =>
-  withMock(
-    () => apiRequest(`/orders/${orderId}/pay`, { method: "POST" }),
-    () =>
-      ({
-        data: { paymentUrl: "#mock-payment", iframeId: "mock-iframe" },
-      }) as never,
-  );
+  apiRequest(`/orders/${orderId}/pay`, { method: "POST" });
 export const fetchOrderConfirmation = (orderId: string) =>
-  withMock(
-    () => apiRequest(`/orders/${orderId}/confirmation`),
-    () => {
-      const order = MOCK_ORDERS.find(
-        (o) => o._id === orderId || o.orderNumber === orderId,
-      );
-      return { data: order || MOCK_ORDERS[0] } as never;
-    },
-  );
+  apiRequest(`/orders/${orderId}/confirmation`);
 export const validateCoupon = (code: string) =>
-  withMock(
-    () =>
-      apiRequest("/coupons/validate", {
-        method: "POST",
-        body: JSON.stringify({ code }),
-      }),
-    () =>
-      ({
-        data: { valid: true, code, discountType: "fixed", discountValue: 500 },
-      }) as never,
-  );
+  apiRequest("/coupons/validate", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
 export const trackOrder = (orderNumber: string) =>
-  withMock(
-    () => apiRequest(`/orders/track/${orderNumber}`),
-    () => {
-      const order = MOCK_ORDERS.find((o) => o.orderNumber === orderNumber);
-      if (!order) throw new Error("Order not found");
-      return { data: order } as never;
-    },
-  );
+  apiRequest(`/orders/track/${orderNumber}`);

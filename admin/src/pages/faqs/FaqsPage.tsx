@@ -1,15 +1,17 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { FAQ } from "@/types";
-import { MOCK_FAQS } from "@/lib/mock-data";
+import { deleteFaq, fetchFaqs } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
 import Badge from "@/components/common/Badge";
 import SearchInput from "@/components/common/SearchInput";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import { useLanguage } from "@/context/LanguageContext";
+import { localizedSearchText } from "@/lib/localization";
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                */
@@ -24,58 +26,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
-
-/* ------------------------------------------------------------------ */
-/*  Extended mock data                                                */
-/* ------------------------------------------------------------------ */
-
-const EXTENDED_FAQS: FAQ[] = [
-  ...MOCK_FAQS,
-  {
-    id: "f4",
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept Visa, Mastercard, mobile wallets (Vodafone Cash, Orange Money), and cash on delivery for orders within Cairo and Giza.",
-    category: "Payment",
-    displayOrder: 1,
-    isActive: true,
-    createdAt: "2024-02-01T00:00:00Z",
-    updatedAt: "2024-02-01T00:00:00Z",
-  },
-  {
-    id: "f5",
-    question: "How long does shipping take?",
-    answer:
-      "Delivery within Cairo and Giza takes 2-3 business days. Other governorates may take 3-5 business days.",
-    category: "Shipping",
-    displayOrder: 2,
-    isActive: true,
-    createdAt: "2024-02-15T00:00:00Z",
-    updatedAt: "2024-02-15T00:00:00Z",
-  },
-  {
-    id: "f6",
-    question: "Do you provide maintenance contracts?",
-    answer:
-      "Yes, we offer annual maintenance contracts that include periodic cleaning and inspection of your AC units.",
-    category: "Services",
-    displayOrder: 1,
-    isActive: false,
-    createdAt: "2024-03-01T00:00:00Z",
-    updatedAt: "2024-03-01T00:00:00Z",
-  },
-  {
-    id: "f7",
-    question: "Can I return a product?",
-    answer:
-      "Products can be returned within 14 days of delivery if unopened and in original packaging. Installation voids the return policy.",
-    category: "General",
-    displayOrder: 2,
-    isActive: true,
-    createdAt: "2024-03-10T00:00:00Z",
-    updatedAt: "2024-03-10T00:00:00Z",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Categories                                                        */
@@ -95,10 +45,15 @@ const CATEGORIES = [
 /* ------------------------------------------------------------------ */
 
 export default function FaqsPage() {
-  const [faqs, setFaqs] = useState(EXTENDED_FAQS);
+  const { localize } = useLanguage();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [deleteTarget, setDeleteTarget] = useState<FAQ | null>(null);
+
+  useEffect(() => {
+    void fetchFaqs().then((response) => setFaqs(response.data));
+  }, []);
 
   /* ---------- filtered data ---------- */
 
@@ -113,8 +68,12 @@ export default function FaqsPage() {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (f) =>
-          f.question.toLowerCase().includes(term) ||
-          f.answer.toLowerCase().includes(term),
+          localizedSearchText(
+            f.question,
+            f.questionAr,
+            f.answer,
+            f.answerAr,
+          ).includes(term),
       );
     }
 
@@ -123,8 +82,9 @@ export default function FaqsPage() {
 
   /* ---------- handlers ---------- */
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
+    await deleteFaq(deleteTarget.id);
     setFaqs((prev) => prev.filter((f) => f.id !== deleteTarget.id));
     setDeleteTarget(null);
   };
@@ -190,9 +150,11 @@ export default function FaqsPage() {
             <Card>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-navy mb-1">{faq.question}</h3>
+                  <h3 className="font-medium text-navy mb-1">
+                    {localize(faq.question, faq.questionAr)}
+                  </h3>
                   <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                    {faq.answer}
+                    {localize(faq.answer, faq.answerAr)}
                   </p>
                   <div className="flex items-center gap-3 flex-wrap">
                     <Badge variant="teal">{faq.category}</Badge>
@@ -230,7 +192,7 @@ export default function FaqsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Delete FAQ"
-        message={`Are you sure you want to delete "${deleteTarget?.question ?? ""}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${localize(deleteTarget?.question, deleteTarget?.questionAr)}"? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
       />

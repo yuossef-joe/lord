@@ -26,7 +26,7 @@ export default function QuickViewModal({
   onClose,
 }: QuickViewModalProps) {
   const { addItem } = useCart();
-  const { t } = useLanguage();
+  const { t, localize } = useLanguage();
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
 
@@ -51,6 +51,13 @@ export default function QuickViewModal({
   const mainImage = product.images?.[0]?.url || "/placeholder.png";
   const isOutOfStock =
     product.stockQuantity !== undefined && product.stockQuantity <= 0;
+  const productName = localize(product.name, product.nameAr);
+  const brandName = localize(product.brand?.name, product.brand?.nameAr);
+  const categoryName = localize(product.category?.name, product.category?.nameAr);
+  const shortDescription = localize(
+    product.shortDescription,
+    product.shortDescriptionAr,
+  );
 
   return (
     <Dialog.Root open={open} onOpenChange={(val) => !val && onClose()}>
@@ -85,7 +92,7 @@ export default function QuickViewModal({
                   <div className="relative aspect-square w-full sm:w-[260px] flex-shrink-0 overflow-hidden rounded-card bg-off-white">
                     <Image
                       src={mainImage}
-                      alt={product.name}
+                      alt={productName}
                       fill
                       className="object-contain p-4"
                     />
@@ -97,7 +104,7 @@ export default function QuickViewModal({
                             : "bg-lord-teal"
                         }`}
                       >
-                        {product.brand.name}
+                        {brandName}
                       </span>
                     )}
                   </div>
@@ -105,12 +112,12 @@ export default function QuickViewModal({
                   {/* Info */}
                   <div className="flex flex-1 flex-col">
                     <Dialog.Title className="text-lg font-bold text-lord-navy mb-1">
-                      {product.name}
+                      {productName}
                     </Dialog.Title>
 
                     {product.category && (
                       <span className="text-xs text-medium-gray mb-3">
-                        {product.category.name}
+                        {categoryName}
                       </span>
                     )}
 
@@ -121,9 +128,9 @@ export default function QuickViewModal({
                       size="lg"
                     />
 
-                    {product.shortDescription && (
+                    {shortDescription && (
                       <p className="mt-3 text-sm text-dark-charcoal line-clamp-3">
-                        {product.shortDescription}
+                        {shortDescription}
                       </p>
                     )}
 
@@ -137,10 +144,10 @@ export default function QuickViewModal({
                               className="flex justify-between text-xs"
                             >
                               <span className="text-medium-gray">
-                                {spec.key}
+                                {localize(spec.key, spec.keyAr)}
                               </span>
                               <span className="font-medium text-lord-navy">
-                                {spec.value}
+                                {localize(spec.value, spec.valueAr)}
                               </span>
                             </div>
                           ))}

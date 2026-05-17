@@ -1,10 +1,13 @@
 import { RouterProvider } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { ToastContainer } from "react-toastify";
 import { router } from "@/routes";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function App() {
+function AppContent() {
+  const { isRTL } = useLanguage();
+
   return (
     <AuthProvider>
       <RouterProvider router={router} />
@@ -14,7 +17,7 @@ export default function App() {
         hideProgressBar={false}
         newestOnTop
         closeOnClick
-        rtl={false}
+        rtl={isRTL}
         pauseOnFocusLoss
         draggable
         pauseOnHover
@@ -22,5 +25,13 @@ export default function App() {
         toastClassName="!rounded-lg !shadow-lg"
       />
     </AuthProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

@@ -45,23 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const useMock = import.meta.env.VITE_USE_MOCK === "true";
-    if (useMock) {
-      if (username === "admin" && password === "admin") {
-        const mockAdmin: Admin = {
-          id: "1",
-          username: "admin",
-          name: "Admin User",
-          email: "admin@lordac.com",
-          role: "super_admin",
-        };
-        localStorage.setItem("cmsToken", "mock-jwt-token");
-        localStorage.setItem("cmsAdmin", JSON.stringify(mockAdmin));
-        setAdmin(mockAdmin);
-        return;
-      }
-      throw new Error("Invalid credentials");
-    }
     const res = await apiLogin(username, password);
     localStorage.setItem("cmsToken", res.token);
     localStorage.setItem("cmsAdmin", JSON.stringify(res.admin));
@@ -69,10 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    const useMock = import.meta.env.VITE_USE_MOCK === "true";
-    if (!useMock) {
-      apiLogout().catch(() => {});
-    }
+    apiLogout().catch(() => {});
     localStorage.removeItem("cmsToken");
     localStorage.removeItem("cmsAdmin");
     setAdmin(null);

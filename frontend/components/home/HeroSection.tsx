@@ -7,7 +7,12 @@ import Button from "@/components/common/Button";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  headline?: string;
+  tagline?: string;
+}
+
+export default function HeroSection({ headline, tagline }: HeroSectionProps) {
   const { t } = useLanguage();
   const [videoReady, setVideoReady] = useState(false);
 
@@ -53,7 +58,7 @@ export default function HeroSection() {
             transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
             className="text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-[56px]"
           >
-            {t("home.hero.headline")}
+            {headline || t("home.hero.headline")}
           </motion.h1>
 
           <motion.p
@@ -62,7 +67,7 @@ export default function HeroSection() {
             transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
             className="mt-4 text-lg text-white/80 md:text-xl"
           >
-            {t("home.hero.tagline")}
+            {tagline || t("home.hero.tagline")}
           </motion.p>
 
           <motion.div
@@ -94,13 +99,17 @@ export default function HeroSection() {
           >
             <div className="flex h-12 items-center rounded-lg border border-white/30 bg-white/15 backdrop-blur-sm px-5 py-2">
               <span className="text-sm font-semibold text-white">Carrier</span>
-              <span className="ml-2 text-xs text-white/70">Authorized</span>
+              <span className="ml-2 text-xs text-white/70">
+                {t("home.hero.authorized")}
+              </span>
             </div>
             <div className="flex h-12 items-center rounded-lg border border-white/30 bg-white/15 backdrop-blur-sm px-5 py-2">
               <span className="text-sm font-semibold text-lord-teal">
                 Midea
               </span>
-              <span className="ml-2 text-xs text-white/70">Authorized</span>
+              <span className="ml-2 text-xs text-white/70">
+                {t("home.hero.authorized")}
+              </span>
             </div>
           </motion.div>
         </div>

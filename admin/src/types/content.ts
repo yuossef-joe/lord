@@ -1,8 +1,19 @@
 export interface ContentPage {
   id: string;
   pageKey: string;
+  title?: string;
+  titleAr?: string;
   content: Record<string, unknown>;
-  seo?: { metaTitle?: string; metaDescription?: string };
+  seo?: {
+    metaTitle?: string;
+    metaTitleAr?: string;
+    metaDescription?: string;
+    metaDescriptionAr?: string;
+    title?: string;
+    titleAr?: string;
+    description?: string;
+    descriptionAr?: string;
+  };
   updatedAt: string;
 }
 

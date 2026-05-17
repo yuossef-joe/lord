@@ -352,7 +352,8 @@ export const fetchFaqs = (category?: string) =>
   apiRequest(`/faqs?active=true${category ? `&category=${category}` : ""}`);
 export const fetchContactSettings = () => apiRequest("/settings/contact");
 export const fetchSiteSettings = () => apiRequest("/settings/site");
-export const fetchShippingSettings = () => apiRequest("/settings/shipping");
+export const fetchShippingOptions = (params: string) =>
+  apiRequest(`/shipping/options?${params}`);
 
 // Inquiry & service request endpoints
 export const submitInquiry = (data: any) =>
@@ -968,7 +969,7 @@ export function useScrollReveal(threshold = 0.15) {
 
 **API Integration:**
 
-- [ ] Fetch from `GET /api/products` with query params (brand, type, capacity, price, search, sort, page, limit)
+- [ ] Fetch from `GET /api/products` with query params (brand, type, capacity, horsepower/HP, price, search, sort, page, limit)
 - [ ] Fetch from `GET /api/brands` for filter options
 - [ ] Fetch from `GET /api/product-categories` for type filter options
 
@@ -980,7 +981,7 @@ export function useScrollReveal(threshold = 0.15) {
 - [ ] Brand badge: top-left overlay (Carrier = Navy `#172041`, Midea = Teal `#0DBACA`, 12px caption, White text)
 - [ ] Optional badges: "New Arrival" (Green), "Bestseller" (Red), "Featured" (Amber)
 - [ ] Product name (`heading-3`, 22px Semi-Bold)
-- [ ] Capacity + Type (`body-sm`, Medium Gray)
+- [ ] Capacity + Type + HP when available (`body-sm`, Medium Gray)
 - [ ] Price (`heading-4`, Teal `#0DBACA`); or "Out of Stock" badge if `stockQuantity = 0`
 - [ ] **"Add to Cart"** Primary button (Teal); disabled with "Out of Stock" if stock = 0
 - [ ] Quick View eye icon on hover → opens `QuickViewModal`
@@ -1002,6 +1003,7 @@ export function useScrollReveal(threshold = 0.15) {
 - [ ] **Brand:** Checkboxes (Carrier, Midea) with brand logos
 - [ ] **Type:** Multi-select checkboxes (Split, Multi-Split, Cassette, Duct, Central, VRF/VRV, Window, Portable)
 - [ ] **Capacity:** Range slider (BTU/ton)
+- [ ] **Horsepower (HP):** Checkbox or segmented filter for common AC sizes (1.5 HP, 2.25 HP, 3 HP, 4 HP, 5 HP) with `hp`, `hpMin`, `hpMax` query params
 - [ ] **Price:** Range slider (EGP)
 - [ ] "Clear All Filters" button (Ghost style)
 - [ ] Active filter tags displayed as removable badges above product grid; use `@formkit/auto-animate` on the filter tags container for automatic add/remove animations
@@ -1200,7 +1202,7 @@ export function useScrollReveal(threshold = 0.15) {
   - Updates debounced (500ms) → calls API
 - [ ] **Price Summary Sidebar** (desktop) / **Bottom Sticky Bar** (mobile):
   - Subtotal
-  - Shipping (flat rate from settings or "Free" if subtotal ≥ threshold)
+  - Shipping (available method/zone from shipping options or "Free" if subtotal ≥ threshold)
   - Discount (if coupon applied — shows code + discount amount)
   - **Grand Total** (bold, large, Teal)
 - [ ] **Coupon Input:** Text input + "Apply" button; success: green badge; error: red text "Invalid code"
@@ -1223,7 +1225,7 @@ export function useScrollReveal(threshold = 0.15) {
 - [ ] Guest: Read/write from localStorage (`lord_cart` key); sync on page load
 - [ ] Authenticated: `GET /api/cart`, `PATCH /api/cart/items/:itemId`, `DELETE /api/cart/items/:itemId`
 - [ ] Coupon: `POST /api/cart/coupon`, `DELETE /api/cart/coupon`
-- [ ] Shipping: `GET /api/settings/shipping` (flat rate, free threshold)
+- [ ] Shipping: `GET /api/shipping/options?governorate=&city=&subtotal=` (available methods, rates, estimated delivery, free-shipping eligibility)
 
 ---
 
@@ -1343,6 +1345,8 @@ export function useScrollReveal(threshold = 0.15) {
 
 - [ ] Logged-in users: display saved address cards (selectable radio); pre-select default address
 - [ ] New address form: recipient name, phone, address line 1, address line 2 (optional), city, governorate (dropdown of Egyptian governorates), postal code
+- [ ] After governorate/city selection, show available shipping methods as clear selectable cards with fee, delivery estimate, and recommended/default option
+- [ ] Auto-calculate shipping fee and free-shipping eligibility before the user reaches review
 - [ ] "Save this address for future orders" checkbox (logged-in only)
 - [ ] Guest checkout form: name, national ID (14 digits, validated), email, phone + address fields
 - [ ] "Continue to Review" Primary CTA; "Back to Cart" Ghost link
@@ -1352,6 +1356,7 @@ export function useScrollReveal(threshold = 0.15) {
 
 - [ ] `GET /api/account/addresses` — fetch saved addresses (authenticated)
 - [ ] `POST /api/account/addresses` — save new address (if checkbox checked)
+- [ ] `GET /api/shipping/options?governorate=&city=&subtotal=` — fetch easy shipping choices for selected address
 
 ### Task 8.3: Step 2 — Order Review
 
@@ -1359,6 +1364,7 @@ export function useScrollReveal(threshold = 0.15) {
 
 - [ ] Read-only items list: thumbnail, name, qty, unit price, line total
 - [ ] Shipping address display with "Edit" link (returns to Step 1)
+- [ ] Shipping method display with fee, delivery estimate, and "Change" link
 - [ ] Price breakdown: Subtotal + Shipping + Discount = **Total (EGP)**
 - [ ] "Proceed to Payment" Primary CTA; "Back" Ghost link
 

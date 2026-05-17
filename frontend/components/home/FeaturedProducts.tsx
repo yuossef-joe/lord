@@ -10,7 +10,11 @@ import ProductCard from "@/components/products/ProductCard";
 import { fetchProducts } from "@/lib/api";
 import { Product } from "@/types/product";
 
-export default function FeaturedProducts() {
+interface FeaturedProductsProps {
+  title?: string;
+}
+
+export default function FeaturedProducts({ title }: FeaturedProductsProps) {
   const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +35,7 @@ export default function FeaturedProducts() {
         <ScrollReveal>
           <div className="mb-10 flex items-end justify-between">
             <h2 className="text-3xl font-bold text-lord-navy md:text-4xl">
-              {t("home.featured.title")}
+              {title || t("home.featured.title")}
             </h2>
             <Link
               href="/products"

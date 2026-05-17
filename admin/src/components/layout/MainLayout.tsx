@@ -4,48 +4,51 @@ import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 
-const pageTitleMap: Record<string, string> = {
-  "/": "Dashboard",
-  "/orders": "Orders",
-  "/customers": "Customers",
-  "/products": "Products",
-  "/brands": "Brands & Categories",
-  "/services": "Services",
-  "/inquiries": "Inquiries & Requests",
-  "/coupons": "Coupons & Promos",
-  "/content": "Content Pages",
-  "/testimonials": "Testimonials",
-  "/faqs": "FAQs",
-  "/settings": "Settings",
+const pageTitleMap: Record<string, TranslationKey> = {
+  "/": "nav.dashboard",
+  "/orders": "nav.orders",
+  "/customers": "nav.customers",
+  "/products": "nav.products",
+  "/brands": "nav.brands",
+  "/services": "nav.services",
+  "/inquiries": "nav.inquiries",
+  "/shipping": "nav.shipping",
+  "/coupons": "nav.coupons",
+  "/content": "nav.content",
+  "/testimonials": "nav.testimonials",
+  "/faqs": "nav.faqs",
+  "/settings": "nav.settings",
 };
 
-function getPageTitle(pathname: string): string {
+function getPageTitleKey(pathname: string): TranslationKey {
   // Exact match first
   if (pageTitleMap[pathname]) {
     return pageTitleMap[pathname];
   }
 
   // Detail pages
-  if (pathname.startsWith("/orders/")) return "Order Details";
-  if (pathname.startsWith("/customers/")) return "Customer Details";
-  if (pathname.startsWith("/products/")) return "Product Details";
-  if (pathname.startsWith("/brands/")) return "Brand Details";
-  if (pathname.startsWith("/services/")) return "Service Details";
-  if (pathname.startsWith("/inquiries/")) return "Inquiry Details";
-  if (pathname.startsWith("/coupons/")) return "Coupon Details";
-  if (pathname.startsWith("/content/")) return "Content Details";
-  if (pathname.startsWith("/testimonials/")) return "Testimonial Details";
-  if (pathname.startsWith("/faqs/")) return "FAQ Details";
-  if (pathname.startsWith("/settings/")) return "Settings";
+  if (pathname.startsWith("/orders/")) return "page.orderDetails";
+  if (pathname.startsWith("/customers/")) return "page.customerDetails";
+  if (pathname.startsWith("/products/")) return "page.productDetails";
+  if (pathname.startsWith("/brands/")) return "page.brandDetails";
+  if (pathname.startsWith("/services/")) return "page.serviceDetails";
+  if (pathname.startsWith("/inquiries/")) return "page.inquiryDetails";
+  if (pathname.startsWith("/coupons/")) return "page.couponDetails";
+  if (pathname.startsWith("/content/")) return "page.contentDetails";
+  if (pathname.startsWith("/testimonials/")) return "page.testimonialDetails";
+  if (pathname.startsWith("/faqs/")) return "page.faqDetails";
+  if (pathname.startsWith("/settings/")) return "nav.settings";
 
-  return "Dashboard";
+  return "nav.dashboard";
 }
 
 export default function MainLayout() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
-  const pageTitle = getPageTitle(location.pathname);
+  const pageTitle = t(getPageTitleKey(location.pathname));
 
   if (isLoading) {
     return (

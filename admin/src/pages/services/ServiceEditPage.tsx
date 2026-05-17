@@ -1,10 +1,13 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "motion/react";
-import { Plus, X, Wand2, Wrench } from "lucide-react";
-import { MOCK_SERVICES } from "@/lib/mock-data";
+import { ImagePlus, Plus, X, Wrench } from "lucide-react";
+import type { Service } from "@/types";
+import type { ServiceType } from "@/types";
+import { fetchService, fetchServiceTypes, updateService } from "@/lib/api";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Button from "@/components/common/Button";
 import Card from "@/components/common/Card";
@@ -15,16 +18,14 @@ import EmptyState from "@/components/common/EmptyState";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Required"),
-  slug: z.string().min(1, "Required"),
+  nameAr: z.string().min(1, "Required"),
   description: z.string().min(1, "Required"),
-  type: z.enum(["installation", "maintenance", "repair", "consultation"], {
-    error: "Required",
-  }),
+  descriptionAr: z.string().min(1, "Required"),
+  serviceTypeId: z.string().min(1, "Required"),
   price: z.number().min(0, "Must be 0 or more"),
   isActive: z.boolean(),
   scopeOfWork: z.string().optional(),
   applicableUnitTypes: z.array(z.object({ value: z.string() })).optional(),
-  imageUrl: z.string().optional(),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -51,64 +52,45 @@ const inputStyles =
 const selectStyles =
   "w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-teal focus:border-teal outline-none transition bg-white appearance-none";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
-
-const SERVICE_TYPES = [
-  { label: "Installation", value: "installation" },
-  { label: "Maintenance", value: "maintenance" },
-  { label: "Repair", value: "repair" },
-  { label: "Consultation", value: "consultation" },
-] as const;
 
 /* ── Component ────────────────────────────────────────── */
 
 export default function ServiceEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const service = MOCK_SERVICES.find((s) => s.id === id);
+  const [service, setService] = useState<Service | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
   const {
     register,
     handleSubmit,
     control,
-    setValue,
-    watch,
+    reset,
     formState: { errors },
   } = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
-    defaultValues: service
-      ? {
-          name: service.name,
-          slug: service.slug,
-          description: service.description ?? "",
-          type: service.type.name.toLowerCase() as ServiceFormValues["type"],
-          price: service.price ?? 0,
-          isActive: service.isActive,
-          scopeOfWork: service.scopeOfWork?.join("\n") ?? "",
-          applicableUnitTypes: (service.applicableUnitTypes ?? []).map((v) => ({
-            value: v,
-          })),
-          imageUrl: "",
-        }
-      : {
-          name: "",
-          slug: "",
-          description: "",
-          type: undefined,
-          price: 0,
-          isActive: true,
-          scopeOfWork: "",
-          applicableUnitTypes: [],
-          imageUrl: "",
-        },
+    defaultValues: {
+      name: "",
+      nameAr: "",
+      description: "",
+      descriptionAr: "",
+      serviceTypeId: "",
+      price: 0,
+      isActive: true,
+      scopeOfWork: "",
+      applicableUnitTypes: [],
+    },
   });
 
   const {
@@ -117,12 +99,60 @@ export default function ServiceEditPage() {
     remove: removeUnitType,
   } = useFieldArray({ control, name: "applicableUnitTypes" });
 
-  const nameValue = watch("name");
+  useEffect(() => {
+    void fetchServiceTypes().then((response) => setServiceTypes(response.data));
+  }, []);
 
-  const onSubmit = (_data: ServiceFormValues) => {
-    // Mock: update service
+  useEffect(() => {
+    if (!id) return;
+    void fetchService(id)
+      .then((response) => {
+        const nextService = response.data;
+        setService(nextService);
+        reset({
+          name: nextService.name,
+          nameAr: nextService.nameAr ?? "",
+          description: nextService.description ?? "",
+          descriptionAr: nextService.descriptionAr ?? "",
+          serviceTypeId: nextService.type.id,
+          price: nextService.price ?? 0,
+          isActive: nextService.isActive,
+          scopeOfWork: nextService.scopeOfWork?.join("\n") ?? "",
+          applicableUnitTypes: (nextService.applicableUnitTypes ?? []).map(
+            (value) => ({ value }),
+          ),
+        });
+        setImagePreview(nextService.imageUrl ?? "");
+      })
+      .finally(() => setIsLoading(false));
+  }, [id, reset]);
+
+  const onSubmit = async (data: ServiceFormValues) => {
+    if (!id) return;
+    const imageUrl = imageFile
+      ? await readFileAsDataUrl(imageFile)
+      : service?.imageUrl;
+    await updateService(id, {
+      name: data.name,
+      nameAr: data.nameAr,
+      description: data.description,
+      descriptionAr: data.descriptionAr,
+      serviceTypeId: data.serviceTypeId,
+      isActive: data.isActive,
+      content: {
+        bullets: data.scopeOfWork
+          ?.split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        applicableUnitTypes: data.applicableUnitTypes?.map((item) => item.value),
+        price: data.price,
+        imageUrl,
+      },
+    });
     navigate("/services");
   };
+
+  if (isLoading) return null;
 
   if (!service) {
     return (
@@ -183,51 +213,68 @@ export default function ServiceEditPage() {
                 Basic Info
               </h2>
               <div className="space-y-4">
-                <FormField label="Name" required error={errors.name?.message}>
-                  <input
-                    {...register("name")}
-                    className={inputStyles}
-                    placeholder="Service name"
-                  />
-                </FormField>
-
-                <FormField label="Slug" required error={errors.slug?.message}>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Name (English)"
+                    required
+                    error={errors.name?.message}
+                  >
                     <input
-                      {...register("slug")}
+                      {...register("name")}
                       className={inputStyles}
-                      placeholder="service-slug"
+                      placeholder="Service name"
+                      dir="ltr"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="md"
-                      onClick={() => setValue("slug", slugify(nameValue))}
-                      leftIcon={<Wand2 size={16} />}
-                    >
-                      Generate
-                    </Button>
-                  </div>
-                </FormField>
+                  </FormField>
 
-                <FormField
-                  label="Description"
-                  required
-                  error={errors.description?.message}
-                >
-                  <textarea
-                    {...register("description")}
-                    className={`${inputStyles} h-32 resize-none py-2`}
-                    placeholder="Service description…"
-                  />
-                </FormField>
+                  <FormField
+                    label="Name (Arabic)"
+                    required
+                    error={errors.nameAr?.message}
+                  >
+                    <input
+                      {...register("nameAr")}
+                      className={`${inputStyles} text-right`}
+                      placeholder="اسم الخدمة"
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
 
-                <FormField label="Type" required error={errors.type?.message}>
-                  <select {...register("type")} className={selectStyles}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Description (English)"
+                    required
+                    error={errors.description?.message}
+                  >
+                    <textarea
+                      {...register("description")}
+                      className={`${inputStyles} h-32 resize-none py-2`}
+                      placeholder="Service description..."
+                      dir="ltr"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Description (Arabic)"
+                    required
+                    error={errors.descriptionAr?.message}
+                  >
+                    <textarea
+                      {...register("descriptionAr")}
+                      className={`${inputStyles} h-32 resize-none py-2 text-right`}
+                      placeholder="وصف الخدمة..."
+                      dir="rtl"
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label="Type" required error={errors.serviceTypeId?.message}>
+                  <select {...register("serviceTypeId")} className={selectStyles}>
                     <option value="">Select type</option>
-                    {SERVICE_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {serviceTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
                       </option>
                     ))}
                   </select>
@@ -335,12 +382,35 @@ export default function ServiceEditPage() {
             {/* Image */}
             <Card>
               <h2 className="text-lg font-semibold text-navy mb-4">Image</h2>
-              <FormField label="Image URL" error={errors.imageUrl?.message}>
-                <input
-                  {...register("imageUrl")}
-                  className={inputStyles}
-                  placeholder="https://example.com/image.jpg"
-                />
+              <FormField label="Upload Image">
+                <label className="flex min-h-28 cursor-pointer items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3 transition hover:border-teal hover:bg-teal/5">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt=""
+                      className="h-20 w-20 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                      <ImagePlus size={24} />
+                    </span>
+                  )}
+                  <span className="text-sm text-gray-600">
+                    {imageFile ? imageFile.name : "Choose image"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setImageFile(file);
+                      setImagePreview(
+                        file ? URL.createObjectURL(file) : service.imageUrl ?? "",
+                      );
+                    }}
+                  />
+                </label>
               </FormField>
             </Card>
           </div>

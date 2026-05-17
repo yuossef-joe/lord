@@ -37,7 +37,9 @@ export interface ProductImage {
 
 export interface ProductSpecification {
   key: string;
+  keyAr?: string;
   value: string;
+  valueAr?: string;
 }
 
 export interface Product {
@@ -45,6 +47,7 @@ export interface Product {
   brand: Brand;
   category: ProductCategory;
   name: string;
+  nameAr?: string;
   slug: string;
   modelNumber: string;
   type: string;
@@ -62,8 +65,11 @@ export interface Product {
   weightJson?: { indoor: number; outdoor: number; unit: string };
   color?: string;
   shortDescription?: string;
+  shortDescriptionAr?: string;
   description?: string;
+  descriptionAr?: string;
   features?: string[];
+  featuresAr?: string[];
   specifications?: ProductSpecification[];
   price: number;
   originalPrice?: number;

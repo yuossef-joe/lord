@@ -17,8 +17,8 @@
   --color-whatsapp: #25d366;
 
   /* Fonts */
-  --font-inter: var(--font-inter-var);
-  --font-cairo: var(--font-cairo-var);
+  --font-inter: Inter, "Helvetica Neue", Arial, sans-serif;
+  --font-cairo: Cairo, "Noto Sans Arabic", "Segoe UI", sans-serif;
 
   /* Border Radius */
   --radius-card: 12px;
